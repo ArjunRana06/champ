@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Activity;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class ChatController extends Controller
+{
+    public function sendMessage(Request $request)
+    {
+        try {
+            // Validate input
+            $request->validate(['message' => 'required|string|max:1000']);
+
+            // Check authentication
+            if (!Auth::check()) {
+                return response()->json(['response' => 'Please log in first.'], 401);
+            }
+
+            // --- Database part – catch any error and return readable message ---
+            $context = "User's timeline memories (most recent first):\n";
+            $hasActivities = false;
+
+            try {
+                $activities = Activity::where('user_id', Auth::id())
+                    ->orderBy('created_at', 'desc')
+                    ->take(30)
+                    ->get();
+
+                foreach ($activities as $activity) {
+                    // Safely extract text
+                    $text = '';
+                    if (is_array($activity->content)) {
+                        $text = $activity->content['text'] ?? '';
+                    } elseif (method_exists($activity, 'parsed_content')) {
+                        $text = $activity->parsed_content;
+                    } elseif (is_string($activity->content)) {
+                        $text = $activity->content;
+                    }
+
+                    if (!empty($text)) {
+                        $context .= "- " . $activity->created_at->format('Y-m-d H:i') . " : " . $text . "\n";
+                        $hasActivities = true;
+                    }
+                }
+            } catch (\Exception $dbError) {
+                // If DB fails, return the error message directly (for debugging)
+                return response()->json([
+                    'response' => 'Database error: ' . $dbError->getMessage() . ' in ' . $dbError->getFile() . ' line ' . $dbError->getLine()
+                ], 500);
+            }
+
+            if (!$hasActivities) {
+                $context = "User has no timeline memories yet.\n";
+            }
+
+            // --- OpenRouter API call ---
+            $apiKey = env('OPENROUTER_API_KEY');
+            if (!$apiKey) {
+                return response()->json(['response' => 'Missing OPENROUTER_API_KEY in .env'], 500);
+            }
+
+            $model = env('OPENROUTER_MODEL', 'google/gemini-2.0-flash-001');
+            $systemPrompt = "You are a helpful assistant. Answer based ONLY on the user's timeline data below. If the answer is not in the timeline, say 'I don't have that memory.' Keep responses short.";
+            $fullPrompt = $systemPrompt . "\n\n" . $context . "\n\nUser question: " . $request->message;
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+            ])->timeout(30)->post('https://openrouter.ai/api/v1/chat/completions', [
+                'model' => $model,
+                'messages' => [['role' => 'user', 'content' => $fullPrompt]],
+                'max_tokens' => 500,
+                'temperature' => 0.7,
+            ]);
+
+            if ($response->successful()) {
+                $reply = $response->json()['choices'][0]['message']['content'] ?? 'No reply.';
+                return response()->json(['response' => $reply]);
+            } else {
+                $errorBody = $response->body();
+                Log::error('OpenRouter error', ['status' => $response->status(), 'body' => $errorBody]);
+                return response()->json(['response' => 'OpenRouter error: ' . $response->status() . ' - ' . substr($errorBody, 0, 200)], 500);
+            }
+        } catch (\Exception $e) {
+            // Catch-all: show the exact error in the JSON response
+            return response()->json([
+                'response' => 'Critical error: ' . $e->getMessage() . ' in ' . $e->getFile() . ' line ' . $e->getLine()
+            ], 500);
+        }
+    }
+}
