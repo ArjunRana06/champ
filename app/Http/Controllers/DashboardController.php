@@ -41,16 +41,16 @@ class DashboardController extends Controller
         // Monthly mood (line chart) – simplified
         $monthlyMood = Activity::where('user_id', $user->id)
             ->whereIn('type', ['text', 'emotion', 'emoji'])
-            ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as count')
-            ->groupBy('year', 'month')
+            ->selectRaw("EXTRACT(YEAR FROM created_at) as year, EXTRACT(MONTH FROM created_at) as month, COUNT(*) as count")
+            ->groupByRaw('EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at)')
             ->orderBy('year', 'desc')
             ->orderBy('month', 'desc')
             ->take(12)
             ->get()
             ->map(function ($item) {
                 return [
-                    'month' => date('M', mktime(0,0,0, $item->month, 1)),
-                    'score' => rand(5,9) // replace with real mood scoring logic
+                    'month' => date('M', mktime(0, 0, 0, $item->month, 1)),
+                    'score' => rand(5, 9) // replace with real mood scoring logic
                 ];
             })->reverse()->values();
 
@@ -80,12 +80,18 @@ class DashboardController extends Controller
             ->map(function ($activity) {
                 $mood = $activity->emotions->first()->emotion ?? 'neutral';
                 $moodIcon = [
-                    'happy' => '😊', 'excited' => '🤩', 'neutral' => '😐',
-                    'sad' => '😔', 'stressed' => '😫'
+                    'happy' => '😊',
+                    'excited' => '🤩',
+                    'neutral' => '😐',
+                    'sad' => '😔',
+                    'stressed' => '😫'
                 ][$mood] ?? '😊';
                 $moodColor = [
-                    'happy' => 'success', 'excited' => 'success', 'neutral' => 'info',
-                    'sad' => 'warning', 'stressed' => 'warning'
+                    'happy' => 'success',
+                    'excited' => 'success',
+                    'neutral' => 'info',
+                    'sad' => 'warning',
+                    'stressed' => 'warning'
                 ][$mood] ?? 'info';
                 $tags = $this->extractTagsFromString($activity->parsed_content);
                 return (object)[
