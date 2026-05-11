@@ -32,16 +32,12 @@ class ChatbotService
         foreach ($activities as $activity) {
             $text = '';
 
-            // For text/emoji/emotion – use parsed content
             if (in_array($activity->type, ['text', 'emoji', 'emotion'])) {
                 $text = $activity->parsed_content ?? '';
-            }
-            // For media files – create a descriptive entry
-            elseif (in_array($activity->type, ['image', 'video', 'voice'])) {
+            } elseif (in_array($activity->type, ['image', 'video', 'voice'])) {
                 $mediaType = $activity->type;
                 $fileName = $activity->file_path ? basename($activity->file_path) : 'file';
                 $text = "Uploaded a $mediaType ($fileName)";
-                // Append any text description if stored (e.g., from fallback in store())
                 $extra = $activity->parsed_content ?? '';
                 if ($extra && !str_contains($extra, 'Uploaded')) {
                     $text .= " – " . $extra;
@@ -63,8 +59,7 @@ class ChatbotService
         $systemPrompt = "You are a warm, helpful AI assistant. You can chat about anything.
 You know the user's identity from the profile below.
 You also have access to their personal timeline, including uploaded photos, videos, and voice notes.
-When the user asks if they have photos or videos, check the timeline. If there are media entries, you can say: 'Yes, I see you have uploaded a photo/video on [date].'
-If you don't see any media, say: 'I don't see any photos/videos in your timeline yet.'
+If the user asks about media, check the timeline. If no media, say 'I don't see any in your timeline yet.'
 Keep responses warm, natural, and concise.
 
 User profile:
@@ -89,6 +84,8 @@ $timeline";
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $apiKey,
+                'HTTP-Referer' => env('APP_URL'),
+                'X-Title' => 'Life Replay System',
                 'Content-Type' => 'application/json',
             ])->timeout(30)->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => $model,
@@ -100,7 +97,7 @@ $timeline";
             if ($response->successful()) {
                 return $response->json()['choices'][0]['message']['content'] ?? "No response.";
             } else {
-                Log::error('OpenRouter error', ['body' => $response->body()]);
+                Log::error('OpenRouter error', ['status' => $response->status(), 'body' => $response->body()]);
                 return "AI service temporarily unavailable.";
             }
         } catch (\Exception $e) {
