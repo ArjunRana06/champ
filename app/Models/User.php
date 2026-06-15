@@ -30,4 +30,17 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    // app/Models/User.php
+
+    // Inside the User class, add:
+    public function subjects()
+    {
+        return $this->hasMany(Subject::class);
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(Document::class);
+    }
 }

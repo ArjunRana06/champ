@@ -1,19 +1,17 @@
-{{-- resources/views/auth/confirm-password.blade.php --}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Confirm Password | Trip Planner Nepal</title>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <title>Confirm Password · AI Study Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* Same base styles as above – reuse from forgot-password */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
             min-height: 100vh;
-            background: #0a2b2e;
+            background: #f8fafc;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -21,273 +19,154 @@
             position: relative;
             overflow-x: hidden;
         }
-        .sky-bg {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: linear-gradient(145deg, #0f2c33 0%, #1e4b3e 100%);
-            z-index: -2;
+        .mesh-bg {
+            position: fixed; inset: 0; z-index: -1;
+            background:
+                radial-gradient(ellipse 80% 60% at 0% 20%, rgba(99,102,241,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 100% 0%, rgba(139,92,246,0.1) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 30% 60%, rgba(6,182,212,0.06) 0%, transparent 50%);
+            animation: meshShift 20s ease-in-out infinite alternate;
         }
-        .cloud {
-            position: absolute;
-            background: rgba(255,255,255,0.2);
-            border-radius: 1000px;
-            filter: blur(40px);
-            pointer-events: none;
-            z-index: -1;
+        @keyframes meshShift {
+            0% { transform: scale(1); opacity: 0.7; }
+            100% { transform: scale(1.05); opacity: 1; }
         }
-        .cloud1 { width: 300px; height: 120px; top: 10%; left: -100px; animation: floatCloud 40s linear infinite; }
-        .cloud2 { width: 450px; height: 180px; bottom: 15%; right: -150px; animation: floatCloud 50s linear infinite reverse; }
-        .cloud3 { width: 200px; height: 80px; top: 40%; right: 10%; animation: floatCloud 30s linear infinite; }
-        @keyframes floatCloud {
-            0% { transform: translateX(0) translateY(0); }
-            100% { transform: translateX(calc(100vw + 200px)) translateY(20px); }
+        .orb { position: fixed; border-radius: 50%; filter: blur(100px); pointer-events: none; z-index: -1; animation: orbFloat 25s ease-in-out infinite alternate; }
+        .orb:nth-child(1) { width: 500px; height: 500px; background: rgba(99,102,241,0.15); top: -10%; left: -10%; }
+        .orb:nth-child(2) { width: 400px; height: 400px; background: rgba(139,92,246,0.1); bottom: -5%; right: -5%; animation-delay: -8s; }
+        @keyframes orbFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(60px, -40px) scale(1.1); }
         }
-        .mountains {
-            position: fixed;
-            bottom: 0; left: 0;
-            width: 100%; height: 40%;
-            z-index: -1;
-            opacity: 0.6;
-        }
-        .lang-switcher {
-            position: fixed;
-            top: 1.5rem; right: 1.5rem;
-            z-index: 100;
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(8px);
-            border-radius: 2rem;
-            padding: 0.3rem;
-            display: flex;
-            gap: 0.3rem;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .lang-btn {
-            padding: 0.4rem 1rem;
-            border-radius: 2rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            background: transparent;
-            color: white;
-            border: none;
-        }
-        .lang-btn.active { background: #d4af37; color: #1e4b3e; }
-        .confirm-wrapper {
-            max-width: 1200px;
-            width: 100%;
-            margin: 0 auto;
-            display: flex;
-            flex-wrap: wrap;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(2px);
+        .wrapper {
+            max-width: 1000px; width: 100%; margin: 0 auto;
+            display: flex; flex-wrap: wrap;
+            background: rgba(255,255,255,0.55);
+            backdrop-filter: blur(24px) saturate(1.8);
             border-radius: 2.5rem;
-            box-shadow: 0 30px 50px rgba(0,0,0,0.2);
+            box-shadow: 0 25px 60px -12px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.5);
             overflow: hidden;
-            animation: fadeUp 0.8s cubic-bezier(0.2,0.9,0.4,1.1);
+            animation: cardIn 0.8s cubic-bezier(0.16,1,0.3,1);
+            position: relative; z-index: 2;
         }
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes cardIn {
+            0% { opacity: 0; transform: translateY(30px) scale(0.97); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
         }
         .hero-panel {
-            flex: 1;
-            background: linear-gradient(135deg, #1e4b3e 0%, #0f2c33 100%);
-            padding: 2.5rem 2rem;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            position: relative;
-            overflow: hidden;
+            flex: 1; padding: 3rem 2.5rem;
+            background: linear-gradient(135deg, #1e1b4b, #312e81, #581c87);
+            color: white; display: flex; flex-direction: column; justify-content: space-between;
+            position: relative; overflow: hidden;
         }
         .hero-panel::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" opacity="0.05"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>');
-            background-repeat: repeat;
-            background-size: 40px;
+            content: ''; position: absolute; inset: 0;
+            background: repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 8px);
             pointer-events: none;
         }
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1.5rem;
-            font-weight: 700;
+        .hero-panel::after {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,255,255,0.06) 0%, transparent 60%);
         }
-        .brand-icon { font-size: 2rem; }
-        .tagline {
-            margin-top: 2rem;
-        }
-        .tagline h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            line-height: 1.2;
-            margin-bottom: 1rem;
-        }
-        .tagline p {
-            font-size: 1rem;
-            opacity: 0.9;
-            max-width: 85%;
-        }
-        .adventure-stats {
-            display: flex;
-            gap: 2rem;
-            margin: 2rem 0;
-        }
+        .brand { display: flex; align-items: center; gap: 0.7rem; font-size: 1.4rem; font-weight: 700; position: relative; z-index: 1; }
+        .brand-icon { font-size: 1.8rem; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2)); }
+        .tagline { margin-top: 2.5rem; position: relative; z-index: 1; }
+        .tagline h1 { font-size: 2.2rem; font-weight: 800; line-height: 1.2; }
+        .tagline p { font-size: 0.95rem; opacity: 0.8; margin-top: 0.8rem; max-width: 88%; line-height: 1.6; }
+        .stats { display: flex; gap: 2rem; margin: 2.5rem 0; position: relative; z-index: 1; }
         .stat { text-align: center; }
-        .stat-number { font-size: 1.8rem; font-weight: 700; }
-        .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-number { font-size: 1.6rem; font-weight: 800; color: #c4b5fd; }
+        .stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; opacity: 0.7; margin-top: 0.2rem; }
         .testimonial {
-            border-top: 1px solid rgba(255,255,255,0.2);
-            padding-top: 1.5rem;
-            font-style: italic;
-            font-size: 0.9rem;
+            border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;
+            font-style: italic; font-size: 0.82rem; opacity: 0.85; position: relative; z-index: 1; line-height: 1.5;
         }
-        .testimonial-author {
-            margin-top: 0.5rem;
-            font-weight: 500;
-            font-size: 0.8rem;
-        }
+        .testimonial-author { margin-top: 0.5rem; font-weight: 600; font-size: 0.72rem; opacity: 0.7; font-style: normal; }
         .form-panel {
-            flex: 1;
-            padding: 2.5rem 2rem;
-            background: white;
+            flex: 1; padding: 3rem 2.5rem;
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(4px);
         }
-        .form-header {
-            margin-bottom: 2rem;
-        }
-        .form-header h2 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: #1f3b3c;
-        }
-        .form-header p {
-            color: #5b6e6e;
-            margin-top: 0.3rem;
-        }
-        .input-group {
-            margin-bottom: 1.5rem;
-        }
+        .form-header { margin-bottom: 2rem; }
+        .form-header h2 { font-size: 1.6rem; font-weight: 800; color: #1e1b4b; }
+        .form-header p { color: #6b7280; font-size: 0.9rem; margin-top: 0.3rem; }
+        .input-group { margin-bottom: 1.4rem; }
         .input-group label {
-            display: block;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-            color: #2c5a4a;
-            margin-bottom: 0.5rem;
+            display: block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.05em; color: #6366f1; margin-bottom: 0.5rem;
         }
         .input-group input {
-            width: 100%;
-            padding: 0.85rem 1rem;
-            font-size: 0.95rem;
-            border: 1px solid #dce8e4;
-            border-radius: 1.2rem;
-            background: #fefefe;
-            transition: all 0.2s;
+            width: 100%; padding: 0.85rem 1.1rem; font-size: 0.95rem;
+            border: 1.5px solid #e5e7eb; border-radius: 1rem;
+            background: white; color: #111827; transition: all 0.25s;
             font-family: 'Inter', sans-serif;
         }
         .input-group input:focus {
-            outline: none;
-            border-color: #2b8c5e;
-            box-shadow: 0 0 0 3px rgba(43,140,94,0.2);
+            outline: none; border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,0.1);
         }
-        .error {
-            font-size: 0.7rem;
-            color: #d9534f;
-            margin-top: 0.3rem;
-            display: block;
-        }
+        .input-group input::placeholder { color: #9ca3af; }
+        .error { font-size: 0.7rem; color: #ef4444; margin-top: 0.3rem; display: block; }
         .btn-submit {
-            background: #1f4e43;
-            color: white;
-            border: none;
-            padding: 0.9rem 1.8rem;
-            font-size: 0.9rem;
-            font-weight: 600;
-            border-radius: 2rem;
-            cursor: pointer;
-            transition: all 0.25s;
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.85rem 1.8rem; font-size: 0.9rem; font-weight: 600;
+            border: none; border-radius: 9999px; cursor: pointer;
             font-family: 'Inter', sans-serif;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            background: #111827; color: white;
+            transition: all 0.25s; box-shadow: 0 4px 14px rgba(0,0,0,0.1);
         }
-        .btn-submit:hover {
-            background: #0f3a30;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(31,78,67,0.2);
-        }
-        @media (max-width: 850px) {
-            .confirm-wrapper { flex-direction: column; border-radius: 1.8rem; }
+        .btn-submit:hover { background: #1f2937; transform: translateY(-1px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+        @media (max-width: 820px) {
+            .wrapper { flex-direction: column; border-radius: 1.8rem; }
             .hero-panel { text-align: center; padding: 2rem; }
             .tagline p { max-width: 100%; }
-            .adventure-stats { justify-content: center; }
+            .stats { justify-content: center; }
             .form-panel { padding: 2rem; }
-            .lang-switcher { top: 1rem; right: 1rem; }
+            .btn-submit { width: 100%; justify-content: center; }
         }
     </style>
 </head>
-<body x-data="{ lang: localStorage.getItem('lang') || 'en' }" x-init="$watch('lang', value => localStorage.setItem('lang', value)); document.documentElement.lang = lang;">
-    <div class="sky-bg"></div>
-    <div class="cloud cloud1"></div>
-    <div class="cloud cloud2"></div>
-    <div class="cloud cloud3"></div>
-    <svg class="mountains" viewBox="0 0 1440 320" preserveAspectRatio="none">
-        <path fill="rgba(255,255,255,0.1)" fill-opacity="0.5" d="M0,192L48,176C96,160,192,128,288,138.7C384,149,480,203,576,213.3C672,224,768,192,864,170.7C960,149,1056,139,1152,144C1248,149,1344,171,1392,181.3L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-        <path fill="rgba(255,255,255,0.2)" fill-opacity="0.4" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,208C672,213,768,203,864,197.3C960,192,1056,192,1152,197.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-    </svg>
+<body>
+    <div class="orb"></div><div class="orb"></div>
+    <div class="mesh-bg"></div>
 
-    <div class="lang-switcher">
-        <button class="lang-btn" :class="{ 'active': lang === 'en' }" @click="lang = 'en'">EN</button>
-        <button class="lang-btn" :class="{ 'active': lang === 'ne' }" @click="lang = 'ne'">नेपाली</button>
-    </div>
-
-    <div class="confirm-wrapper">
+    <div class="wrapper">
         <div class="hero-panel">
             <div>
                 <div class="brand">
-                    <span class="brand-icon">⛰️</span>
-                    <span x-text="lang === 'en' ? 'Trip Planner Nepal' : 'यात्रा योजनाकार नेपाल'"></span>
+                    <span class="brand-icon"><i class="fas fa-brain"></i></span>
+                    <span>AI Study</span>
                 </div>
                 <div class="tagline">
-                    <h1 x-html="lang === 'en' ? 'Secure area' : 'सुरक्षित क्षेत्र'"></h1>
-                    <p x-text="lang === 'en' ? 'Please confirm your password to continue.' : 'जारी राख्न कृपया आफ्नो पासवर्ड पुष्टि गर्नुहोस्।'"></p>
+                    <h1>Secure area</h1>
+                    <p>Please confirm your password to continue.</p>
                 </div>
-                <div class="adventure-stats">
-                    <div class="stat"><div class="stat-number">100+</div><div class="stat-label" x-text="lang === 'en' ? 'Curated Trips' : 'चयन गरिएका यात्राहरू'"></div></div>
-                    <div class="stat"><div class="stat-number">10k+</div><div class="stat-label" x-text="lang === 'en' ? 'Happy Travelers' : 'खुसी यात्रीहरू'"></div></div>
-                    <div class="stat"><div class="stat-number">24/7</div><div class="stat-label" x-text="lang === 'en' ? 'Local Support' : 'स्थानीय सहयोग'"></div></div>
+                <div class="stats">
+                    <div class="stat"><div class="stat-number">10k+</div><div class="stat-label">Students</div></div>
+                    <div class="stat"><div class="stat-number">50k+</div><div class="stat-label">Notes processed</div></div>
+                    <div class="stat"><div class="stat-number">98%</div><div class="stat-label">Success rate</div></div>
                 </div>
             </div>
             <div class="testimonial">
-                <span x-text="lang === 'en' ? '“Your security matters — this extra step ensures your trip plans stay safe.”' : '“तपाईंको सुरक्षा महत्त्वपूर्ण छ — यो अतिरिक्त चरणले तपाईंको यात्रा योजनाहरू सुरक्षित रहन सुनिश्चित गर्दछ।”'"></span>
-                <div class="testimonial-author" x-text="lang === 'en' ? '— Safety Team' : '— सुरक्षा टोली'"></div>
+                “Your security matters — this extra step ensures your study materials stay safe.”
+                <div class="testimonial-author">— Safety Team</div>
             </div>
         </div>
 
         <div class="form-panel">
             <div class="form-header">
-                <h2 x-text="lang === 'en' ? 'Confirm password' : 'पासवर्ड पुष्टि गर्नुहोस्'"></h2>
-                <p x-text="lang === 'en' ? 'This is a secure area. Please confirm your password before continuing.' : 'यो एक सुरक्षित क्षेत्र हो। जारी राख्नु अघि कृपया आफ्नो पासवर्ड पुष्टि गर्नुहोस्।'"></p>
+                <h2>Confirm password</h2>
+                <p>This is a secure area. Please confirm your password before continuing.</p>
             </div>
 
             <form method="POST" action="{{ route('password.confirm') }}">
                 @csrf
                 <div class="input-group">
-                    <label for="password" x-text="lang === 'en' ? 'Password' : 'पासवर्ड'"></label>
+                    <label for="password">Password</label>
                     <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="••••••••">
-                    @error('password')
-                        <span class="error">{{ $message }}</span>
-                    @enderror
+                    @error('password')<span class="error">{{ $message }}</span>@enderror
                 </div>
-
                 <div class="flex justify-end mt-6">
-                    <button type="submit" class="btn-submit" x-text="lang === 'en' ? 'Confirm' : 'पुष्टि गर्नुहोस्'"></button>
+                    <button type="submit" class="btn-submit">Confirm <i class="fas fa-arrow-right text-sm"></i></button>
                 </div>
             </form>
         </div>

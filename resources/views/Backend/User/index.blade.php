@@ -1,233 +1,177 @@
 @extends('Backend.master')
 
 @section('content')
-<div class="container-fluid px-4">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+<div class="container-fluid px-0">
+    <div class="page-header">
         <div>
-            <h1 class="display-6 fw-bold text-primary">
-                <i class="fas fa-users me-2"></i>User Management
-            </h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb bg-transparent p-0">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Users</li>
-                </ol>
-            </nav>
+            <h2>User Management</h2>
+            <p>Manage users, roles, and permissions</p>
         </div>
         @can('add user')
-            <button class="btn btn-primary shadow-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addUserModal">
-                <i class="fas fa-plus-circle me-1"></i> Add User
+            <button class="dark-btn" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                <i class="bi bi-person-plus"></i> Add User
             </button>
         @endcan
     </div>
 
-    <!-- Alerts -->
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3" role="alert">
-            <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="glass-card mb-4 d-flex align-items-center gap-3 py-3" style="border-left:4px solid #059669;">
+            <i class="bi bi-check-circle-fill" style="color:#059669;font-size:1.2rem;"></i>
+            <span style="color:#1e1b4b;font-size:0.9rem;">{{ session('success') }}</span>
         </div>
     @endif
 
     @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3" role="alert">
-            <i class="fas fa-exclamation-triangle me-2"></i> {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="glass-card mb-4 d-flex align-items-center gap-3 py-3" style="border-left:4px solid #dc2626;">
+            <i class="bi bi-exclamation-triangle-fill" style="color:#dc2626;font-size:1.2rem;"></i>
+            <span style="color:#1e1b4b;font-size:0.9rem;">{{ session('error') }}</span>
         </div>
     @endif
 
-    <!-- Stats Card -->
+    <!-- Stats -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 bg-gradient-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-white-50">Total Users</h6>
-                            {{-- <h2 class="fw-bold mb-0">{{ $users->total() }}</h2> --}}
-                        </div>
-                        <i class="fas fa-user-friends fa-2x opacity-50"></i>
-                    </div>
+            <div class="glass-card d-flex align-items-center gap-3">
+                <div style="width:50px;height:50px;border-radius:16px;background:linear-gradient(135deg,#6366f1,#818cf8);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:white;box-shadow:0 8px 16px rgba(99,102,241,0.2);flex-shrink:0;">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div>
+                    <h6 style="color:#6366f1;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin:0;">Total Users</h6>
+                    <h3 class="fw-bold mb-0" style="color:#1e1b4b;font-size:1.7rem;">{{ $totalUsers }}</h3>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Users Table Card -->
-    <div class="card border-0 shadow-lg rounded-4">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center rounded-top-4 border-bottom">
-            <div>
-                <i class="fas fa-table text-primary me-2"></i>
-                <strong>Users List</strong>
+    <!-- Users Table -->
+    <div class="glass-card p-0 overflow-hidden">
+        <div class="d-flex justify-content-between align-items-center px-4 py-3" style="border-bottom:1.5px solid #e5e7eb;">
+            <div style="color:#1e1b4b;font-weight:700;font-size:0.9rem;">
+                <i class="bi bi-table me-2" style="color:#6366f1;"></i> Users List
             </div>
-            <div class="input-group w-25">
-                <span class="input-group-text bg-transparent border-end-0"><i class="fas fa-search"></i></span>
-                <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Search user...">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-search" style="color:#9ca3af;"></i>
+                <input type="text" id="searchInput" placeholder="Search user..." style="border:1.5px solid #e5e7eb;border-radius:40px;padding:0.4rem 0.8rem;font-size:0.8rem;width:200px;outline:none;font-family:'Inter',sans-serif;">
             </div>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="usersTable">
-                    <thead class="bg-light">
+        <div class="table-responsive">
+            <table class="glass-table" id="usersTable">
+                <thead>
+                    <tr><th>ID</th><th>Name</th><th>Email</th><th>Roles</th><th>Registered</th><th class="text-center">Actions</th></tr>
+                </thead>
+                <tbody>
+                    @forelse($users as $user)
                         <tr>
-                            <th class="border-0 py-3">ID</th>
-                            <th class="border-0 py-3">Name</th>
-                            <th class="border-0 py-3">Email</th>
-                            <th class="border-0 py-3">Roles</th>
-                            <th class="border-0 py-3">Registered On</th>
-                            <th class="border-0 py-3 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($users as $user)
-                            <tr>
-                                <td class="fw-bold text-primary">{{ $user->id }}</td>
-                                <td>{{ $user->name }}</td>
-                                <td>{{ $user->email }}</td>
-                                <td>
-                                    @foreach ($user->roles as $role)
-                                        <span class="badge bg-primary bg-gradient rounded-pill px-3 py-1 me-1">
-                                            <i class="fas fa-tag me-1"></i> {{ $role->name }}
-                                        </span>
-                                    @endforeach
-                                </td>
-                                <td>{{ $user->created_at->format('d M Y, h:i A') }}</td>
-                                <td class="text-center">
+                            <td style="color:#6366f1;font-weight:700;">{{ $user->id }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:0.75rem;flex-shrink:0;">
+                                        {{ substr($user->name, 0, 1) }}
+                                    </span>
+                                    {{ $user->name }}
+                                </div>
+                            </td>
+                            <td style="color:#6b7280;">{{ $user->email }}</td>
+                            <td>
+                                @foreach ($user->roles as $role)
+                                    <span style="font-size:0.7rem;padding:0.15rem 0.6rem;border-radius:20px;background:#eef2ff;color:#6366f1;display:inline-block;margin-right:0.25rem;">
+                                        <i class="bi bi-tag me-1"></i> {{ $role->name }}
+                                    </span>
+                                @endforeach
+                            </td>
+                            <td style="color:#6b7280;font-size:0.8rem;">{{ $user->created_at->format('d M Y, h:i A') }}</td>
+                            <td class="text-center">
+                                <div class="d-flex gap-1 justify-content-center">
                                     @can('view users')
-                                        <a href="{{ route('users.show', $user->id) }}" class="btn btn-sm btn-outline-info rounded-pill px-3 me-1">
-                                            <i class="fas fa-eye"></i> View
-                                        </a>
+                                        <a href="{{ route('users.show', $user->id) }}" class="btn-soft py-1 px-2" style="font-size:0.75rem;" title="View"><i class="bi bi-eye"></i></a>
                                     @endcan
                                     @can('edit users')
-                                        <a href="{{ route('users.edit', $user->id) }}" class="btn btn-sm btn-outline-warning rounded-pill px-3 me-1">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </a>
+                                        <a href="{{ route('users.edit', $user->id) }}" class="btn-soft py-1 px-2" style="font-size:0.75rem;" title="Edit"><i class="bi bi-pencil"></i></a>
                                     @endcan
-                                    @php
-                                        $isAdmin = $user->roles->contains('name', 'admin');
-                                    @endphp
+                                    @php $isAdmin = $user->roles->contains('name', 'admin'); @endphp
                                     @if ($isAdmin)
-                                        <span class="text-muted"><i class="fas fa-shield-alt me-1"></i>Admin cannot be deleted</span>
+                                        <span style="color:#9ca3af;font-size:0.75rem;padding:0.25rem 0.5rem;" title="Admin cannot be deleted"><i class="bi bi-shield-check"></i></span>
                                     @else
                                         @can('delete users')
                                             <form action="{{ route('users.destroy', $user->id) }}" method="POST" style="display:inline-block;">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"
-                                                        onclick="return confirm('⚠️ Delete this user? This action cannot be undone.')">
-                                                    <i class="fas fa-trash-alt"></i> Delete
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="btn-soft py-1 px-2" style="font-size:0.75rem;color:#dc2626;" title="Delete" onclick="return confirm('⚠️ Delete this user? This action cannot be undone.')">
+                                                    <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
                                         @endcan
                                     @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="text-center py-5">
-                                    <i class="fas fa-database fa-3x text-muted mb-3"></i>
-                                    <p class="text-muted mb-0">No users found. Click "Add User" to create one.</p>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="card-footer bg-white py-3 rounded-bottom-4">
-            <div class="d-flex justify-content-center">
-                {{-- {{ $users->links() }} --}}
-            </div>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="text-center py-5" style="color:#9ca3af;">
+                                <i class="bi bi-database" style="font-size:2.5rem;color:#c7d2fe;display:block;margin-bottom:0.5rem;"></i>
+                                No users found. Click "Add User" to create one.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
-<!-- Add User Modal (Design upgraded, functionality unchanged) -->
-<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-md">
-        <div class="modal-content border-0 shadow-lg rounded-4">
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:rgba(255,255,255,0.85);backdrop-filter:blur(24px) saturate(1.8);border:1px solid rgba(255,255,255,0.5);border-radius:1.5rem;box-shadow:0 25px 60px -12px rgba(0,0,0,0.15);">
             <form action="{{ route('users.store') }}" method="POST">
                 @csrf
-                <div class="modal-header bg-primary text-white rounded-top-4 border-0">
-                    <h5 class="modal-title" id="addUserModalLabel">
-                        <i class="fas fa-user-plus me-2"></i>Add New User
+                <div class="modal-header border-0" style="padding:1.5rem 1.5rem 0;">
+                    <h5 class="modal-title" style="color:#1e1b4b;font-weight:800;">
+                        <i class="bi bi-person-plus me-2" style="color:#6366f1;"></i> Add New User
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4">
+                <div class="modal-body" style="padding:1.5rem;">
                     <div class="mb-3">
-                        <label for="name" class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-user text-primary"></i></span>
-                            <input type="text" class="form-control border-start-0" id="name" name="name" required placeholder="e.g., John Doe">
-                        </div>
+                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6366f1;margin-bottom:0.4rem;display:block;">Full Name *</label>
+                        <input type="text" class="form-control" name="name" required placeholder="John Doe" style="background:white;border:1.5px solid #e5e7eb;border-radius:1rem;padding:0.7rem 1.1rem;font-size:0.9rem;width:100%;font-family:'Inter',sans-serif;">
                     </div>
                     <div class="mb-3">
-                        <label for="email" class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-envelope text-primary"></i></span>
-                            <input type="email" class="form-control border-start-0" id="email" name="email" required placeholder="user@example.com">
-                        </div>
+                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6366f1;margin-bottom:0.4rem;display:block;">Email *</label>
+                        <input type="email" class="form-control" name="email" required placeholder="user@example.com" style="background:white;border:1.5px solid #e5e7eb;border-radius:1rem;padding:0.7rem 1.1rem;font-size:0.9rem;width:100%;font-family:'Inter',sans-serif;">
                     </div>
                     <div class="mb-3">
-                        <label for="password" class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-lock text-primary"></i></span>
-                            <input type="password" class="form-control border-start-0" id="password" name="password" required>
-                        </div>
+                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6366f1;margin-bottom:0.4rem;display:block;">Password *</label>
+                        <input type="password" class="form-control" name="password" required style="background:white;border:1.5px solid #e5e7eb;border-radius:1rem;padding:0.7rem 1.1rem;font-size:0.9rem;width:100%;font-family:'Inter',sans-serif;">
                     </div>
                     <div class="mb-3">
-                        <label for="password_confirmation" class="form-label fw-semibold">Confirm Password</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-check-circle text-primary"></i></span>
-                            <input type="password" class="form-control border-start-0" id="password_confirmation" name="password_confirmation" required>
-                        </div>
+                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6366f1;margin-bottom:0.4rem;display:block;">Confirm Password</label>
+                        <input type="password" class="form-control" name="password_confirmation" required style="background:white;border:1.5px solid #e5e7eb;border-radius:1rem;padding:0.7rem 1.1rem;font-size:0.9rem;width:100%;font-family:'Inter',sans-serif;">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Assign Role</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-shield-alt text-primary"></i></span>
-                            <select name="role" class="form-select border-start-0" required>
-                                <option value="">-- Select Role --</option>
-                                @foreach ($roles as $role)
-                                    <option value="{{ $role->name }}">{{ $role->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6366f1;margin-bottom:0.4rem;display:block;">Assign Role</label>
+                        <select name="role" class="form-select" required style="background:white;border:1.5px solid #e5e7eb;border-radius:1rem;padding:0.7rem 1.1rem;font-size:0.9rem;width:100%;font-family:'Inter',sans-serif;">
+                            <option value="">-- Select Role --</option>
+                            @foreach ($roles as $role)
+                                <option value="{{ $role->name }}">{{ $role->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-0 rounded-bottom-4">
-                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i> Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
-                        <i class="fas fa-save me-1"></i> Create User
-                    </button>
+                <div class="modal-footer border-0" style="padding:0 1.5rem 1.5rem;">
+                    <button type="button" class="btn-soft" data-bs-dismiss="modal"><i class="bi bi-x"></i> Cancel</button>
+                    <button type="submit" class="dark-btn"><i class="bi bi-check-lg"></i> Create User</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Inline Search Script -->
 <script>
     document.getElementById('searchInput')?.addEventListener('keyup', function() {
-        let value = this.value.toLowerCase();
-        let rows = document.querySelectorAll('#usersTable tbody tr');
-        rows.forEach(row => {
-            let text = row.innerText.toLowerCase();
-            row.style.display = text.includes(value) ? '' : 'none';
+        const value = this.value.toLowerCase();
+        document.querySelectorAll('#usersTable tbody tr').forEach(row => {
+            row.style.display = row.innerText.toLowerCase().includes(value) ? '' : 'none';
         });
     });
 </script>
 @endsection
-
-@push('scripts')
-    {{-- Optional: DataTables can still be used if uncommented --}}
-    <script>
-        // $(document).ready(function() {
-        //     $('#usersTable').DataTable();
-        // });
-    </script>
-@endpush

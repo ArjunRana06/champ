@@ -1,479 +1,945 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Life Replay — Rewind. Reflect. Relive. ✨</title>
-  <!-- Tailwind CSS + Google Fonts + Font Awesome -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-    body {
-      background: radial-gradient(circle at 10% 20%, #eef9ff, #d9f0fa);
-      overflow-x: hidden;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>AI Study Assistant · Next‑Gen Learning</title>
+    <meta name="description" content="Upload your notes and study smarter with AI. Chat with your materials, generate quizzes, and master subjects faster.">
+    <meta property="og:title" content="AI Study Assistant · Next‑Gen Learning">
+    <meta property="og:description" content="Upload your notes and study smarter with AI. Chat with your materials, generate quizzes, and master subjects faster.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; }
 
-    /* Animated gradient background that shifts */
-    .animated-bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(125deg, #e0f2fe, #bae6fd, #f0f9ff, #cffafe);
-      background-size: 300% 300%;
-      animation: gradientFlow 16s ease infinite;
-      z-index: -2;
-    }
-    @keyframes gradientFlow {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+        /* Animated gradient mesh */
+        .mesh-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background:
+                radial-gradient(ellipse 80% 60% at 0% 20%, rgba(99,102,241,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 100% 0%, rgba(139,92,246,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 70% 40% at 50% 100%, rgba(236,72,153,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 30% 60%, rgba(6,182,212,0.06) 0%, transparent 50%);
+            animation: meshShift 20s ease-in-out infinite alternate;
+        }
+        @keyframes meshShift {
+            0% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+            50% { transform: scale(1.05) rotate(1deg); opacity: 1; }
+            100% { transform: scale(1) rotate(-1deg); opacity: 0.8; }
+        }
 
-    /* Floating orbs with glow */
-    .glow-orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.4;
-      pointer-events: none;
-      z-index: -1;
-      animation: orbFloat 20s infinite alternate ease-in-out;
-    }
-    @keyframes orbFloat {
-      0% { transform: translate(0, 0) scale(1); }
-      100% { transform: translate(40px, -40px) scale(1.2); }
-    }
+        /* Floating orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            pointer-events: none;
+            z-index: -1;
+            animation: orbFloat 25s ease-in-out infinite alternate;
+        }
+        .orb:nth-child(1) { width: 500px; height: 500px; background: rgba(99,102,241,0.2); top: -10%; left: -10%; }
+        .orb:nth-child(2) { width: 400px; height: 400px; background: rgba(139,92,246,0.15); bottom: -5%; right: -5%; animation-delay: -8s; }
+        .orb:nth-child(3) { width: 300px; height: 300px; background: rgba(236,72,153,0.1); top: 40%; left: 50%; animation-delay: -15s; }
+        @keyframes orbFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(60px, -40px) scale(1.1); }
+        }
 
-    /* Dynamic cursor-following glow */
-    .cursor-glow {
-      position: fixed;
-      width: 350px;
-      height: 350px;
-      background: radial-gradient(circle, rgba(56,189,248,0.25) 0%, rgba(56,189,248,0) 70%);
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 9999;
-      transform: translate(-50%, -50%);
-      transition: transform 0.05s linear;
-      will-change: transform;
-    }
+        /* Glass card refined */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px) saturate(1.8);
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.04);
+        }
+        .glass-card-strong {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(24px) saturate(2);
+            border: 1px solid rgba(255,255,255,0.6);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.06);
+        }
 
-    /* Floating glass droplets (enhanced) */
-    .droplet-premium {
-      position: absolute;
-      background: radial-gradient(circle, rgba(255,255,255,0.5), rgba(56,189,248,0.2));
-      border-radius: 60% 40% 50% 50%;
-      backdrop-filter: blur(4px);
-      pointer-events: none;
-      animation: floatDrop 14s infinite ease-in-out;
-      z-index: -1;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-    }
-    @keyframes floatDrop {
-      0% { transform: translateY(0) rotate(0deg); opacity: 0; }
-      30% { opacity: 0.6; }
-      100% { transform: translateY(-150px) rotate(20deg); opacity: 0; }
-    }
+        /* Animated border */
+        .animated-border {
+            position: relative;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .animated-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 9999px;
+            padding: 2px;
+            background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899, #6366f1);
+            background-size: 300% 100%;
+            animation: borderSpin 4s linear infinite;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+        @keyframes borderSpin {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 300% 50%; }
+        }
 
-    /* Memory sparkles */
-    .sparkle {
-      position: absolute;
-      background: #fff;
-      border-radius: 50%;
-      filter: blur(2px);
-      pointer-events: none;
-      animation: sparkleTwinkle 3s infinite alternate;
-    }
-    @keyframes sparkleTwinkle {
-      0% { opacity: 0; transform: scale(0); }
-      100% { opacity: 1; transform: scale(1); }
-    }
+        /* Gradient text with glow */
+        .text-glow {
+            background: linear-gradient(135deg, #4f46e5, #a855f7, #ec4899);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: shimmer 4s linear infinite;
+            filter: drop-shadow(0 0 30px rgba(168,85,247,0.15));
+        }
+        @keyframes shimmer {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
 
-    /* Glass card (luxury style) */
-    .glass-premium {
-      background: rgba(255, 255, 255, 0.4);
-      backdrop-filter: blur(14px);
-      border: 1px solid rgba(255,255,255,0.6);
-      box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1), 0 0 0 0.5px rgba(255,255,255,0.3);
-      transition: all 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-    }
-    .glass-premium:hover {
-      background: rgba(255, 255, 255, 0.65);
-      transform: translateY(-8px) scale(1.01);
-      border-color: rgba(14, 165, 233, 0.5);
-      box-shadow: 0 28px 40px -12px rgba(2, 132, 199, 0.3);
-    }
+        /* Hero image mockup */
+        .mockup {
+            position: relative;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            box-shadow: 0 30px 80px rgba(79,70,229,0.15), 0 0 0 1px rgba(255,255,255,0.3);
+            transform: perspective(1000px) rotateY(-2deg) rotateX(2deg);
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .mockup:hover {
+            transform: perspective(1000px) rotateY(0deg) rotateX(0deg);
+        }
+        .mockup-glow {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(99,102,241,0.1), transparent, rgba(236,72,153,0.1));
+            pointer-events: none;
+            z-index: 1;
+        }
 
-    /* 3D flip on timeline cards (subtle) */
-    .timeline-card {
-      transition: all 0.4s ease;
-      transform-style: preserve-3d;
-    }
-    .timeline-card:hover {
-      transform: translateY(-8px) rotateX(2deg) rotateY(1deg);
-    }
+        /* Feature cards with depth */
+        .feature-card {
+            position: relative;
+            border-radius: 1.5rem;
+            padding: 2rem;
+            background: rgba(255,255,255,0.55);
+            backdrop-filter: blur(16px) saturate(1.6);
+            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .feature-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: 0 20px 60px rgba(99,102,241,0.1);
+            border-color: rgba(99,102,241,0.2);
+            background: rgba(255,255,255,0.7);
+        }
+        .feature-icon {
+            width: 56px; height: 56px;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: white;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
+        }
+        .feature-icon::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: inherit;
+            background: inherit;
+            opacity: 0.2;
+            filter: blur(8px);
+            transition: all 0.4s;
+        }
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1) rotate(-3deg);
+        }
+        .feature-card:hover .feature-icon::after {
+            opacity: 0.4;
+            filter: blur(12px);
+        }
 
-    /* Typewriter with neon glow */
-    .typewriter-glow {
-      text-shadow: 0 0 8px rgba(14,165,233,0.3);
-    }
+        /* Step cards */
+        .step-card {
+            position: relative;
+            border-radius: 1.5rem;
+            padding: 2rem 1.5rem;
+            background: rgba(255,255,255,0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            overflow: hidden;
+        }
+        .step-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 4px;
+            background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .step-card:hover::before { transform: scaleX(1); }
+        .step-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255,255,255,0.6);
+            box-shadow: 0 20px 50px rgba(99,102,241,0.08);
+        }
+        .step-number {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            font-family: 'Space Grotesk', sans-serif;
+            transition: all 0.4s;
+        }
+        .step-card:hover .step-number { transform: scale(1.15); }
 
-    /* Ripple button premium */
-    .btn-ripple {
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s;
-    }
-    .btn-ripple:after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      background: rgba(255,255,255,0.5);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      transition: width 0.5s, height 0.5s;
-    }
-    .btn-ripple:active:after {
-      width: 400px;
-      height: 400px;
-      opacity: 0;
-      transition: 0s;
-    }
+        /* Marquee testimonials */
+        .testimonial-track {
+            display: flex;
+            gap: 1.5rem;
+            animation: marquee 40s linear infinite;
+            width: max-content;
+            padding: 0.5rem 0;
+        }
+        .testimonial-track:hover { animation-play-state: paused; }
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .testimonial-card {
+            flex-shrink: 0;
+            width: 360px;
+            border-radius: 1.5rem;
+            padding: 1.75rem;
+            background: rgba(255,255,255,0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.03);
+            transition: all 0.3s;
+        }
+        .testimonial-card:hover {
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 12px 40px rgba(99,102,241,0.08);
+            transform: translateY(-2px);
+        }
 
-    /* Pulse ring enhanced */
-    .pulse-super {
-      animation: superPulse 2.2s infinite;
-    }
-    @keyframes superPulse {
-      0% { box-shadow: 0 0 0 0 rgba(14,165,233,0.6); }
-      70% { box-shadow: 0 0 0 18px rgba(14,165,233,0); }
-      100% { box-shadow: 0 0 0 0 rgba(14,165,233,0); }
-    }
+        /* Reveal animations */
+        .reveal, .reveal-left, .reveal-right, .reveal-scale {
+            opacity: 0;
+            transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .reveal { transform: translateY(50px); }
+        .reveal-left { transform: translateX(-50px); }
+        .reveal-right { transform: translateX(50px); }
+        .reveal-scale { transform: scale(0.92); }
+        .reveal.active, .reveal-left.active, .reveal-right.active, .reveal-scale.active {
+            opacity: 1;
+            transform: translate(0) scale(1);
+        }
 
-    /* Scroll reveal with zoom */
-    .reveal-zoom {
-      opacity: 0;
-      transform: scale(0.95) translateY(30px);
-      transition: opacity 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.1), transform 0.7s ease;
-    }
-    .reveal-zoom.active {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
+        /* CTA gradient sweep */
+        .cta-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 2.5rem;
+            background: linear-gradient(135deg, #1e1b4b, #312e81, #581c87, #831843);
+            background-size: 400% 400%;
+            animation: ctaGradient 12s ease infinite;
+        }
+        @keyframes ctaGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .cta-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,255,255,0.08) 0%, transparent 60%);
+        }
+        .cta-sweep {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+            transform: skewX(-12deg) translateX(-100%);
+            transition: transform 0.8s;
+        }
+        .cta-card:hover .cta-sweep { transform: skewX(-12deg) translateX(200%); }
 
-    /* Chat bubble animations */
-    .chat-glow {
-      transition: all 0.2s;
-    }
+        /* FAQ */
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .faq-answer.open { max-height: 300px; }
+        .faq-toggle .fa-chevron-down { transition: transform 0.4s; }
 
-    /* Custom scrollbar luxury */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #cbd5e1; border-radius: 10px; }
-    ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #38bdf8, #0ea5e9); border-radius: 10px; }
-  </style>
+        /* Counter */
+        .counter { font-variant-numeric: tabular-nums; }
+
+        /* Nav */
+        .nav-link {
+            position: relative;
+            color: #4b5563;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px; left: 0;
+            width: 0; height: 2px;
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            transition: width 0.3s;
+            border-radius: 1px;
+        }
+        .nav-link:hover { color: #4f46e5; }
+        .nav-link:hover::after { width: 100%; }
+
+        /* Mobile menu */
+        .mobile-menu {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            transform: translateX(-100%);
+            transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .mobile-menu.open { transform: translateX(0); }
+
+        /* Back to top */
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem; right: 2rem;
+            z-index: 50;
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 30px rgba(99,102,241,0.3);
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(20px);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            cursor: pointer;
+        }
+        .back-to-top.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        .back-to-top:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 12px 40px rgba(99,102,241,0.4); }
+
+        /* Typing animation */
+        .typing-text {
+            display: inline-block;
+            overflow: hidden;
+            white-space: nowrap;
+            border-right: 3px solid #6366f1;
+            animation: typing 3.5s steps(30) 1s forwards, blink 0.8s step-end infinite;
+            max-width: fit-content;
+        }
+        @keyframes typing {
+            0% { width: 0; }
+            100% { width: 100%; }
+        }
+        @keyframes blink {
+            50% { border-color: transparent; }
+        }
+
+        /* Particles */
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particleFloat 15s infinite linear;
+        }
+        @keyframes particleFloat {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.4; }
+            90% { opacity: 0.2; }
+            100% { transform: translateY(-20vh) rotate(360deg); opacity: 0; }
+        }
+
+        @media (max-width: 640px) {
+            .typing-text { white-space: normal; border-right: none; animation: none; }
+            .mockup { transform: none; }
+            .testimonial-card { width: 300px; }
+        }
+    </style>
 </head>
 <body>
+    <!-- Background -->
+    <div class="orb"></div><div class="orb"></div><div class="orb"></div>
+    <div class="mesh-bg"></div>
+    <div id="particles" class="fixed inset-0 z-0 pointer-events-none"></div>
 
-  <!-- Animated gradient background layer -->
-  <div class="animated-bg"></div>
-
-  <!-- Glowing orbs -->
-  <div class="glow-orb" style="width: 500px; height: 500px; background: #7dd3fc; top: -200px; left: -150px;"></div>
-  <div class="glow-orb" style="width: 600px; height: 600px; background: #a5f3fc; bottom: -200px; right: -150px; animation-duration: 25s;"></div>
-  <div class="glow-orb" style="width: 400px; height: 400px; background: #bae6fd; top: 40%; left: 70%; animation-duration: 18s;"></div>
-
-  <!-- Premium droplets & sparkles containers -->
-  <div id="premiumDrops" class="absolute inset-0 pointer-events-none z-0"></div>
-  <div id="sparklesLayer" class="absolute inset-0 pointer-events-none z-0"></div>
-
-  <!-- Mouse follower glow -->
-  <div class="cursor-glow" id="cursorGlow"></div>
-
-  <!-- HERO section - immersive -->
-  <section class="relative min-h-screen flex items-center justify-start overflow-hidden">
-    <div class="relative z-10 max-w-6xl mx-auto px-5 md:px-8 w-full py-16">
-      <div class="inline-flex items-center gap-2 bg-white/50 backdrop-blur-md px-5 py-2 rounded-full text-sm text-sky-800 border border-white/60 shadow-lg mb-6 animate-pulse">
-        <i class="fas fa-infinity text-sky-500"></i>
-        <span class="font-semibold">AI‑powered time capsule ✨</span>
-      </div>
-      <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-800 drop-shadow-sm text-left">
-        <span id="typewriterSpan" class="bg-gradient-to-r from-sky-700 via-cyan-600 to-blue-600 bg-clip-text text-transparent typewriter-glow"></span>
-      </h1>
-      <p class="text-lg md:text-xl text-slate-700 max-w-2xl mt-6 drop-shadow-sm text-left leading-relaxed backdrop-blur-sm bg-white/20 p-3 rounded-2xl inline-block">
-        Relive every heartbeat, every twist, every triumph — your personal timeline, brought to life with serenity.
-      </p>
-      <div class="mt-10 flex flex-wrap gap-5 justify-start">
-        <a href="/login" class="btn-ripple pulse-super bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 text-white font-bold py-4 px-10 rounded-full text-lg transition-all duration-300 hover:scale-105 shadow-2xl flex items-center gap-3">
-          <i class="fas fa-play-circle text-2xl"></i> Start Replaying Your Life
-        </a>
-        <a href="#timeline" class="bg-white/40 backdrop-blur-md border border-white/50 text-sky-800 font-semibold py-4 px-8 rounded-full hover:bg-white/70 transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-xl">
-          <i class="fas fa-scroll"></i> Explore timeline
-        </a>
-      </div>
-      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce z-10">
-        <i class="fas fa-chevron-down text-sky-500 text-2xl"></i>
-      </div>
-    </div>
-  </section>
-
-  <!-- TIMELINE PREVIEW SECTION - 3D interactive -->
-  <section id="timeline" class="py-24 relative">
-    <div class="max-w-6xl mx-auto px-6">
-      <div class="text-center mb-16 reveal-zoom">
-        <span class="text-sky-700 font-semibold tracking-wide bg-white/50 backdrop-blur-md px-4 py-1.5 rounded-full text-sm border border-sky-200 shadow-sm">
-          <i class="fas fa-timeline"></i> your life chapters
-        </span>
-        <h2 class="text-4xl md:text-5xl font-bold text-slate-800 mt-4">Watch your story <span class="text-sky-500 animate-pulse">unfold</span></h2>
-        <p class="text-slate-600 max-w-2xl mx-auto mt-3">Every moment is a frame — scroll to relive the journey.</p>
-      </div>
-
-      <div class="relative">
-        <!-- Glowing timeline line -->
-        <div class="absolute left-5 md:left-1/2 transform md:-translate-x-0.5 top-0 bottom-0 w-0.5 bg-gradient-to-b from-sky-300 via-cyan-400 to-sky-300 rounded-full shadow-lg"></div>
-
-        <div class="space-y-12">
-          <!-- Enhanced timeline cards with 3D tilt -->
-          <div class="relative flex flex-col md:flex-row md:items-center gap-6 reveal-zoom">
-            <div class="md:w-1/2 md:pr-12 md:text-right">
-              <div class="glass-premium rounded-2xl p-6 timeline-card">
-                <div class="inline-block px-3 py-1 rounded-full text-sky-700 text-sm font-bold bg-sky-100/80 shadow-sm">2024 · Spring</div>
-                <h3 class="text-2xl font-bold mt-2 text-slate-800 flex items-center gap-2 justify-end"><span>🎓</span> New chapter · College begins</h3>
-                <p class="text-slate-600 mt-2">First taste of independence, late‑night coding sessions, and friendships that felt like home.</p>
-                <div class="mt-3 text-sky-500 text-xs flex gap-2 justify-end"><i class="fas fa-heart"></i> 24 memories</div>
-              </div>
+    <!-- Navigation -->
+    <nav class="fixed top-5 left-1/2 -translate-x-1/2 w-[92%] md:w-[85%] max-w-6xl z-50 glass-card-strong px-5 md:px-8 py-3">
+        <div class="flex items-center justify-between">
+            <a href="#hero" class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                    <i class="fas fa-brain text-white text-lg"></i>
+                </div>
+                <span class="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-700 hidden sm:block" style="font-family: 'Space Grotesk', sans-serif;">AI Study</span>
+            </a>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#how-it-works" class="nav-link">How it works</a>
+                <a href="#testimonials" class="nav-link">Testimonials</a>
+                <a href="#faq" class="nav-link">FAQ</a>
             </div>
-            <div class="absolute left-2 md:left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-cyan-400 border-4 border-white shadow-xl z-10 animate-pulse"></div>
-            <div class="md:w-1/2 md:pl-12"></div>
-          </div>
-
-          <div class="relative flex flex-col md:flex-row md:items-center gap-6 reveal-zoom" style="transition-delay: 0.1s">
-            <div class="md:w-1/2 md:pr-12"></div>
-            <div class="absolute left-2 md:left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-sky-400 border-4 border-white shadow-xl z-10 animate-pulse"></div>
-            <div class="md:w-1/2 md:pl-12">
-              <div class="glass-premium rounded-2xl p-6 timeline-card">
-                <div class="inline-block px-3 py-1 rounded-full text-indigo-700 text-sm font-bold bg-indigo-50/80">2024 · Summer</div>
-                <h3 class="text-2xl font-bold mt-2 text-slate-800"><span>🤝</span> First real bond · True friendship</h3>
-                <p class="text-slate-600 mt-2">Vulnerability, trust, and moments that reminded you that connection heals.</p>
-                <div class="mt-3 text-indigo-400 text-xs flex gap-2"><i class="fas fa-hand-holding-heart"></i> 18 shared moments</div>
-              </div>
+            <div class="hidden md:flex items-center gap-3">
+                <a href="/login" class="px-5 py-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition">Sign in</a>
+                <a href="/register" class="animated-border">
+                    <span class="block px-5 py-2 text-sm font-semibold text-white bg-gray-900 rounded-full hover:bg-gray-800 transition-colors">Get started</span>
+                </a>
             </div>
-          </div>
+            <button id="menuToggle" class="md:hidden text-gray-600 text-2xl focus:outline-none p-1" aria-label="Toggle menu">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
 
-          <div class="relative flex flex-col md:flex-row md:items-center gap-6 reveal-zoom" style="transition-delay: 0.2s">
-            <div class="md:w-1/2 md:pr-12 md:text-right">
-              <div class="glass-premium rounded-2xl p-6 timeline-card">
-                <div class="inline-block px-3 py-1 rounded-full text-amber-600 text-sm font-bold bg-amber-50/80">2025 · Winter</div>
-                <h3 class="text-2xl font-bold mt-2 text-slate-800"><span>⚡</span> Pressure period · Growth through fire</h3>
-                <p class="text-slate-600 mt-2">Stressful deadlines and inner battles — but resilience was forged stronger.</p>
-                <div class="mt-3 text-amber-500 text-xs flex gap-2 justify-end"><i class="fas fa-fire"></i> breakthrough energy</div>
-              </div>
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="mobile-menu">
+        <div class="absolute inset-0 bg-black/20 backdrop-blur-sm" id="menuOverlay"></div>
+        <div class="relative w-72 h-full bg-white/95 backdrop-blur-xl shadow-2xl p-8 pt-28">
+            <button id="menuClose" class="absolute top-8 right-6 text-gray-400 hover:text-gray-600 text-2xl transition" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="flex flex-col gap-5">
+                <a href="#features" class="text-gray-700 hover:text-indigo-600 text-lg font-medium transition mobile-link">Features</a>
+                <a href="#how-it-works" class="text-gray-700 hover:text-indigo-600 text-lg font-medium transition mobile-link">How it works</a>
+                <a href="#testimonials" class="text-gray-700 hover:text-indigo-600 text-lg font-medium transition mobile-link">Testimonials</a>
+                <a href="#faq" class="text-gray-700 hover:text-indigo-600 text-lg font-medium transition mobile-link">FAQ</a>
+                <hr class="border-gray-100 my-2">
+                <a href="/login" class="text-gray-700 hover:text-indigo-600 text-lg font-medium transition">Sign in</a>
+                <a href="/register" class="inline-flex items-center justify-center px-6 py-3 text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full font-semibold shadow-lg mt-2">Get started free</a>
             </div>
-            <div class="absolute left-2 md:left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-400 border-4 border-white shadow-xl z-10 animate-pulse"></div>
-            <div class="md:w-1/2 md:pl-12"></div>
-          </div>
+        </div>
+    </div>
 
-          <div class="relative flex flex-col md:flex-row md:items-center gap-6 reveal-zoom" style="transition-delay: 0.3s">
-            <div class="md:w-1/2 md:pr-12"></div>
-            <div class="absolute left-2 md:left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-400 border-4 border-white shadow-xl z-10 animate-pulse"></div>
-            <div class="md:w-1/2 md:pl-12">
-              <div class="glass-premium rounded-2xl p-6 timeline-card">
-                <div class="inline-block px-3 py-1 rounded-full text-emerald-700 text-sm font-bold bg-emerald-50/80">2025 · Present</div>
-                <h3 class="text-2xl font-bold mt-2 text-slate-800"><span>🌱</span> Breakthrough · Bloom phase</h3>
-                <p class="text-slate-600 mt-2">Self‑discovery, purpose, and learning to enjoy the unfolding journey.</p>
-                <div class="mt-3 text-emerald-500 text-xs flex gap-2"><i class="fas fa-leaf"></i> thriving now</div>
-              </div>
+    <!-- Hero Section -->
+    <section id="hero" class="relative z-10 pt-36 pb-24 md:pt-48 md:pb-36 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid md:grid-cols-2 gap-12 lg:gap-20 items-center">
+                <div class="reveal">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 backdrop-blur-sm border border-indigo-200/50 text-indigo-700 text-sm font-semibold mb-6 shadow-sm">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                        AI-powered learning companion
+                    </div>
+                    <h1 class="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] text-gray-900">
+                        Your notes,
+                        <span class="text-glow">supercharged</span>
+                        <span class="block text-gray-800">with AI</span>
+                    </h1>
+                    <p class="mt-6 text-lg sm:text-xl text-gray-500 max-w-lg leading-relaxed">
+                        Upload PDFs, slides, handwritten notes — then chat, summarise, generate quizzes, and master your subjects faster.
+                    </p>
+                    <div class="mt-8 flex flex-col sm:flex-row gap-4">
+                        <a href="/register" class="group inline-flex items-center justify-center gap-2 px-7 py-3.5 text-base font-bold rounded-full text-white bg-gray-900 hover:bg-gray-800 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-0.5">
+                            Get started free
+                            <i class="fas fa-arrow-right text-sm group-hover:translate-x-1 transition-transform"></i>
+                        </a>
+                        <a href="#how-it-works" class="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-base font-semibold rounded-full bg-white/70 backdrop-blur-sm border border-gray-200 text-gray-700 hover:bg-white hover:border-indigo-300 transition-all duration-300">
+                            <i class="fas fa-play-circle text-indigo-500"></i>
+                            See how it works
+                        </a>
+                    </div>
+                    <div class="mt-8 flex flex-wrap items-center gap-5 text-sm text-gray-400">
+                        <span class="flex items-center gap-1.5"><i class="fas fa-check-circle text-emerald-500"></i> No credit card</span>
+                        <span class="flex items-center gap-1.5"><i class="fas fa-check-circle text-emerald-500"></i> Free for students</span>
+                        <span class="flex items-center gap-1.5"><i class="fas fa-check-circle text-emerald-500"></i> Privacy first</span>
+                    </div>
+                </div>
+
+                <!-- Hero Mockup -->
+                <div class="relative reveal" style="transition-delay: 0.15s;">
+                    <div class="mockup bg-white">
+                        <div class="mockup-glow"></div>
+                        <div class="p-5">
+                            <div class="flex items-center justify-between mb-5">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-md">
+                                        <i class="fas fa-robot text-white text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-semibold text-gray-800">AI Assistant</div>
+                                        <div class="text-xs text-gray-400">Online</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <span class="text-xs text-emerald-600 font-medium">Active</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex items-start gap-2.5">
+                                    <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <i class="fas fa-user text-indigo-600 text-xs"></i>
+                                    </div>
+                                    <div class="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm text-gray-700">
+                                        Explain DBMS normalization from my notes.
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-2.5">
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-md">
+                                        <i class="fas fa-robot text-white text-xs"></i>
+                                    </div>
+                                    <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm text-gray-800 border-l-2 border-indigo-400 shadow-sm">
+                                        Based on your slides: Normalization removes redundancy using 1NF, 2NF, 3NF...
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-2.5">
+                                    <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <i class="fas fa-user text-indigo-600 text-xs"></i>
+                                    </div>
+                                    <div class="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm text-gray-700">
+                                        Generate MCQ from Unit 4.
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between pt-1">
+                                    <div class="flex items-center gap-1.5 text-xs text-indigo-600 bg-indigo-50 rounded-full px-3 py-1.5">
+                                        <i class="fas fa-file-alt text-xs"></i>
+                                        <span>3 sources cited</span>
+                                    </div>
+                                    <div class="flex -space-x-2">
+                                        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 border-2 border-white flex items-center justify-center text-[10px] font-bold text-white shadow-sm">A</div>
+                                        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white flex items-center justify-center text-[10px] font-bold text-white shadow-sm">B</div>
+                                        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-pink-400 to-pink-600 border-2 border-white flex items-center justify-center text-[10px] font-bold text-white shadow-sm">C</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="absolute -top-8 -right-8 w-40 h-40 bg-purple-400/20 rounded-full blur-3xl -z-10 animate-pulse"></div>
+                    <div class="absolute -bottom-8 -left-8 w-40 h-40 bg-indigo-400/20 rounded-full blur-3xl -z-10 animate-pulse" style="animation-delay: 2s;"></div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- AI CHAT - with glassmorphism and neat glow -->
-  <section class="py-20 relative">
-    <div class="max-w-3xl mx-auto px-6">
-      <div class="text-center mb-10 reveal-zoom">
-        <i class="fas fa-robot text-5xl text-sky-500 mb-3 animate-bounce"></i>
-        <h2 class="text-3xl md:text-4xl font-bold text-slate-800">🧠 Meet your memory AI</h2>
-        <p class="text-slate-600 mt-2">Ask anything — get insights from your imagined timeline.</p>
-      </div>
-
-      <div class="glass-premium rounded-2xl shadow-2xl overflow-hidden reveal-zoom">
-        <div class="bg-white/50 backdrop-blur-lg px-5 py-3 border-b border-white/40 flex items-center gap-2">
-          <i class="fas fa-brain text-sky-500 text-xl"></i>
-          <span class="font-bold text-slate-700">Life Replay Assistant</span>
-          <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full ml-auto shadow-sm">✨ emotional AI</span>
+    <!-- Stats Banner -->
+    <section class="relative z-10 pb-8 px-4">
+        <div class="max-w-5xl mx-auto reveal-scale">
+            <div class="glass-card-strong rounded-2xl p-8 md:p-12">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
+                    <div>
+                        <div class="text-4xl md:text-5xl font-black text-indigo-600 counter font-[Space_Grotesk]" data-target="10">0</div>
+                        <div class="text-gray-500 text-sm font-medium mt-1">Active students <span class="text-indigo-400">(k+)</span></div>
+                    </div>
+                    <div class="sm:border-x border-gray-200/60">
+                        <div class="text-4xl md:text-5xl font-black text-purple-600 counter font-[Space_Grotesk]" data-target="50">0</div>
+                        <div class="text-gray-500 text-sm font-medium mt-1">Notes processed <span class="text-purple-400">(k+)</span></div>
+                    </div>
+                    <div>
+                        <div class="text-4xl md:text-5xl font-black text-pink-600 counter font-[Space_Grotesk]" data-target="98">0</div>
+                        <div class="text-gray-500 text-sm font-medium mt-1">Success rate</div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div id="chatContainer" class="h-80 overflow-y-auto p-5 space-y-4 bg-white/30 custom-scroll"></div>
-        <div class="border-t border-white/40 p-4 bg-white/40 flex gap-3">
-          <input type="text" id="chatInput" placeholder="Try: 'Summarize my life' or 'How was 2025 for me?'" class="flex-1 rounded-xl bg-white/80 border border-sky-200 px-4 py-2 text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-sky-400 focus:border-transparent outline-none transition shadow-sm">
-          <button id="sendChatBtn" class="bg-gradient-to-r from-sky-500 to-cyan-500 hover:scale-105 text-white px-5 rounded-xl transition-all flex items-center gap-2 shadow-lg">
-            <i class="fas fa-paper-plane"></i> Send
-          </button>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="relative z-10 py-20 md:py-28 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16 max-w-2xl mx-auto reveal">
+                <span class="text-indigo-600 font-semibold tracking-wider uppercase text-xs">Features</span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mt-3 leading-tight">
+                    Everything you need to
+                    <span class="text-glow">study smarter</span>
+                </h2>
+                <p class="text-gray-500 text-lg mt-4">Upload once, ask anything — AI that knows only your materials.</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+                <div class="feature-card reveal" style="transition-delay: 0s;">
+                    <div class="feature-icon bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-200">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mt-5">Smart uploads</h3>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">PDF, PPT, images, handwritten notes — OCR extracts text automatically. Drag & drop with progress.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 0.07s;">
+                    <div class="feature-icon bg-gradient-to-br from-purple-500 to-pink-600 shadow-lg shadow-purple-200">
+                        <i class="fas fa-comment-dots"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mt-5">AI chat</h3>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Ask questions, get answers with citations from your notes. Full conversation history & markdown.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 0.14s;">
+                    <div class="feature-icon bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg shadow-blue-200">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mt-5">Quiz generator</h3>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Auto‑generate MCQs, true/false from your materials. Answer keys & explanations included.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 0.07s;">
+                    <div class="feature-icon bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg shadow-emerald-200">
+                        <i class="fas fa-folder-tree"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mt-5">Subject organization</h3>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Organize documents by subject, semester, and course code. Everything in one place.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 0.14s;">
+                    <div class="feature-icon bg-gradient-to-br from-orange-500 to-red-500 shadow-lg shadow-orange-200">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mt-5">OCR support</h3>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Handwritten notes and scanned documents processed with OCR. Nothing gets left behind.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 0.21s;">
+                    <div class="feature-icon bg-gradient-to-br from-teal-500 to-cyan-600 shadow-lg shadow-teal-200">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mt-5">Privacy first</h3>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Your data stays yours. AI only accesses materials you upload. No training on your content.</p>
+                </div>
+            </div>
         </div>
-        <div class="text-center text-xs text-slate-500 py-2 bg-white/20">
-          <i class="fas fa-shield-alt"></i> Demo AI — reflects emotional storytelling
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="relative z-10 py-20 md:py-28 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16 max-w-2xl mx-auto reveal">
+                <span class="text-indigo-600 font-semibold tracking-wider uppercase text-xs">How it works</span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mt-3 leading-tight">
+                    Four steps to
+                    <span class="text-glow">smarter learning</span>
+                </h2>
+                <p class="text-gray-500 text-lg mt-4">Get started in minutes — no setup required.</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+                <div class="step-card reveal">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl shadow-lg shadow-indigo-200">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <div class="step-number bg-indigo-100 text-indigo-700">1</div>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900">Upload</h3>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Drag & drop your PDFs, slides, or handwritten notes. We support all formats.</p>
+                </div>
+                <div class="step-card reveal" style="transition-delay: 0.1s;">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white text-xl shadow-lg shadow-purple-200">
+                            <i class="fas fa-microchip"></i>
+                        </div>
+                        <div class="step-number bg-purple-100 text-purple-700">2</div>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900">Process</h3>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">AI extracts text, splits into chunks, and creates embeddings automatically.</p>
+                </div>
+                <div class="step-card reveal" style="transition-delay: 0.2s;">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-xl shadow-lg shadow-blue-200">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div class="step-number bg-blue-100 text-blue-700">3</div>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900">Chat & Quiz</h3>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Ask questions, get answers cited from your notes. Generate MCQs instantly.</p>
+                </div>
+                <div class="step-card reveal" style="transition-delay: 0.3s;">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white text-xl shadow-lg shadow-emerald-200">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="step-number bg-emerald-100 text-emerald-700">4</div>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900">Master</h3>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Review, practice, and track your progress. Ace your exams with confidence.</p>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- FINAL CTA with particle burst -->
-  <section class="py-20 text-center relative">
-    <div class="max-w-4xl mx-auto px-6 reveal-zoom">
-      <h2 class="text-4xl md:text-5xl font-bold text-slate-800">Ready to capture your journey?</h2>
-      <p class="text-slate-600 text-lg mt-4 max-w-xl mx-auto">Start writing your legacy, track moods, and let AI guide your reflection.</p>
-      <a href="#" class="inline-flex items-center gap-2 mt-8 px-10 py-4 bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 text-white font-bold rounded-full shadow-2xl transition-all duration-300 text-lg pulse-super hover:scale-105">
-        <i class="fas fa-play-circle"></i> Begin your Life Replay
-      </a>
-    </div>
-  </section>
-
-  <footer class="border-t border-sky-200/50 py-8 text-center text-slate-500 text-sm bg-white/30 backdrop-blur-sm">
-    <p>© 2025 Life Replay System — Rewind. Reflect. Relive. ✨</p>
-  </footer>
-
-  <script>
-    // Generate premium droplets (more organic)
-    const dropsContainer = document.getElementById('premiumDrops');
-    for (let i = 0; i < 60; i++) {
-      let d = document.createElement('div');
-      d.classList.add('droplet-premium');
-      let size = Math.random() * 60 + 15;
-      d.style.width = size + 'px';
-      d.style.height = size * 0.9 + 'px';
-      d.style.left = Math.random() * 100 + '%';
-      d.style.top = Math.random() * 100 + '%';
-      d.style.animationDuration = 10 + Math.random() * 18 + 's';
-      d.style.animationDelay = Math.random() * 15 + 's';
-      dropsContainer.appendChild(d);
-    }
-
-    // Generate sparkling stars
-    const sparkleLayer = document.getElementById('sparklesLayer');
-    for (let i = 0; i < 150; i++) {
-      let s = document.createElement('div');
-      s.classList.add('sparkle');
-      let sz = Math.random() * 4 + 1;
-      s.style.width = sz + 'px';
-      s.style.height = sz + 'px';
-      s.style.left = Math.random() * 100 + '%';
-      s.style.top = Math.random() * 100 + '%';
-      s.style.animationDuration = 2 + Math.random() * 4 + 's';
-      s.style.animationDelay = Math.random() * 5 + 's';
-      s.style.backgroundColor = `rgba(255, 255, 255, ${0.5 + Math.random() * 0.5})`;
-      sparkleLayer.appendChild(s);
-    }
-
-    // Cursor glow effect
-    const cursorGlow = document.getElementById('cursorGlow');
-    document.addEventListener('mousemove', (e) => {
-      cursorGlow.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
-    });
-    document.addEventListener('mouseleave', () => {
-      cursorGlow.style.opacity = '0';
-    });
-    document.addEventListener('mouseenter', () => {
-      cursorGlow.style.opacity = '1';
-    });
-
-    // Typewriter effect
-    const fullText = "Your life is not forgotten. It's replayed.";
-    let idx = 0;
-    const typeSpan = document.getElementById('typewriterSpan');
-    typeSpan.innerHTML = '';
-    function typeNextLetter() {
-      if (idx < fullText.length) {
-        typeSpan.innerHTML += fullText.charAt(idx);
-        idx++;
-        setTimeout(typeNextLetter, 65);
-      } else {
-        typeSpan.style.borderRight = 'none';
-      }
-    }
-    typeNextLetter();
-
-    // Scroll reveal zoom
-    const revealObs = new IntersectionObserver((entries) => {
-      entries.forEach(e => e.isIntersecting && e.target.classList.add('active'));
-    }, { threshold: 0.2 });
-    document.querySelectorAll('.reveal-zoom').forEach(el => revealObs.observe(el));
-
-    // CHAT LOGIC upgraded
-    const chatContainer = document.getElementById('chatContainer');
-    function appendMessage(sender, text) {
-      const msgDiv = document.createElement('div');
-      msgDiv.className = `chat-message flex justify-start`;
-      msgDiv.innerHTML = `
-        <div class="max-w-[85%] ${sender === 'user' ? 'bg-gradient-to-r from-sky-500 to-cyan-500 text-white rounded-br-none shadow-md' : 'glass-premium text-slate-700 rounded-bl-none'} rounded-2xl px-4 py-2 backdrop-blur-sm">
-          <div class="text-xs opacity-90 mb-0.5 font-semibold">${sender === 'user' ? 'You' : '🧠 AI · Life Replay'}</div>
-          <p class="text-sm">${text}</p>
+    <!-- Testimonials -->
+    <section id="testimonials" class="relative z-10 py-20 md:py-28 px-4 overflow-hidden">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-12 max-w-2xl mx-auto reveal">
+                <span class="text-indigo-600 font-semibold tracking-wider uppercase text-xs">Testimonials</span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mt-3 leading-tight">
+                    Loved by
+                    <span class="text-glow">students</span>
+                </h2>
+                <p class="text-gray-500 text-lg mt-4">Join thousands who study smarter with AI.</p>
+            </div>
+            <div class="relative">
+                <div class="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[#f8fafc] to-transparent z-10 pointer-events-none"></div>
+                <div class="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#f8fafc] to-transparent z-10 pointer-events-none"></div>
+                <div class="testimonial-track">
+                    @php
+                        $testimonials = [
+                            ['name' => 'Priya S.', 'role' => 'Computer Science', 'avatar' => 'P', 'gradient' => 'from-indigo-500 to-purple-600', 'text' => 'This tool saved my semester! I uploaded all my DBMS notes and the AI answered every query perfectly. The MCQ generator is a game-changer.'],
+                            ['name' => 'James M.', 'role' => 'Engineering', 'avatar' => 'J', 'gradient' => 'from-purple-500 to-pink-600', 'text' => 'The way it cites sources from my own PDFs is incredible. No more searching through 200 pages for that one concept.'],
+                            ['name' => 'Aisha K.', 'role' => 'Medicine', 'avatar' => 'A', 'gradient' => 'from-pink-500 to-rose-600', 'text' => 'OCR on handwritten notes works flawlessly. I scanned all my lecture notes and the AI understands everything. Highly recommend!'],
+                            ['name' => 'Raj P.', 'role' => 'Data Science', 'avatar' => 'R', 'gradient' => 'from-blue-500 to-cyan-600', 'text' => 'I use it daily for revision. The chat remembers context across sessions. It feels like having a personal tutor 24/7.'],
+                            ['name' => 'Sarah L.', 'role' => 'Business', 'avatar' => 'S', 'gradient' => 'from-emerald-500 to-green-600', 'text' => 'Finally an AI tool that actually respects privacy. My notes are mine, the AI just helps me understand them better. Brilliant.'],
+                            ['name' => 'Carlos G.', 'role' => 'Languages', 'avatar' => 'C', 'gradient' => 'from-orange-500 to-red-600', 'text' => 'Uploaded 30+ documents and it processes everything fast. The subject organization keeps everything tidy. Love it!'],
+                        ];
+                    @endphp
+                    @foreach($testimonials as $t)
+                    <div class="testimonial-card">
+                        <div class="flex items-center gap-1 text-amber-400 text-sm mb-3">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
+                        <p class="text-gray-600 text-sm leading-relaxed mb-5">"{{ $t['text'] }}"</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br {{ $t['gradient'] }} flex items-center justify-center text-white font-bold text-sm shadow-md">{{ $t['avatar'] }}</div>
+                            <div>
+                                <div class="text-sm font-bold text-gray-900">{{ $t['name'] }}</div>
+                                <div class="text-xs text-gray-400">{{ $t['role'] }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                    @foreach($testimonials as $t)
+                    <div class="testimonial-card">
+                        <div class="flex items-center gap-1 text-amber-400 text-sm mb-3">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
+                        <p class="text-gray-600 text-sm leading-relaxed mb-5">"{{ $t['text'] }}"</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br {{ $t['gradient'] }} flex items-center justify-center text-white font-bold text-sm shadow-md">{{ $t['avatar'] }}</div>
+                            <div>
+                                <div class="text-sm font-bold text-gray-900">{{ $t['name'] }}</div>
+                                <div class="text-xs text-gray-400">{{ $t['role'] }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
         </div>
-      `;
-      chatContainer.appendChild(msgDiv);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
+    </section>
 
-    function simulateAiTyping(response) {
-      const typingDiv = document.createElement('div');
-      typingDiv.className = 'flex justify-start chat-message';
-      typingDiv.innerHTML = `<div class="glass-premium rounded-2xl px-4 py-2"><span class="text-sm text-slate-600">AI <span class="typing-dots"></span></span></div>`;
-      chatContainer.appendChild(typingDiv);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-      setTimeout(() => {
-        typingDiv.remove();
-        appendMessage('ai', response);
-      }, 1300);
-    }
+    <!-- FAQ -->
+    <section id="faq" class="relative z-10 py-20 md:py-28 px-4">
+        <div class="max-w-3xl mx-auto">
+            <div class="text-center mb-12 max-w-xl mx-auto reveal">
+                <span class="text-indigo-600 font-semibold tracking-wider uppercase text-xs">FAQ</span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mt-3 leading-tight">
+                    Got questions?
+                    <span class="text-glow">We've got answers</span>
+                </h2>
+            </div>
+            <div class="space-y-3 reveal">
+                @php
+                    $faqs = [
+                        ['q' => 'What file formats are supported?', 'a' => 'We support PDF, DOCX, PPTX, TXT, and image files (JPG, PNG) with OCR. Most common academic formats are covered.'],
+                        ['q' => 'Is my data private and secure?', 'a' => 'Absolutely. Your uploaded documents are stored securely and are only accessible to you. We never train AI models on your content. Your data stays yours.'],
+                        ['q' => 'How does the AI chat work?', 'a' => 'When you ask a question, the AI searches through your uploaded materials to find relevant information. It answers based only on your notes, with citations to the source documents.'],
+                        ['q' => 'Can I generate quizzes from my notes?', 'a' => 'Yes! You can generate multiple-choice questions from any subject or document. The AI analyzes your materials and creates questions with answer keys and explanations.'],
+                        ['q' => 'Is there a limit on how many documents I can upload?', 'a' => 'Free tier includes generous limits for students. We believe in making learning accessible — no hidden caps or surprise billing.'],
+                        ['q' => 'Do I need a credit card to sign up?', 'a' => 'Not at all. Our student plan is completely free with no credit card required. Just sign up and start uploading your notes.'],
+                    ];
+                @endphp
+                @foreach($faqs as $faq)
+                <div class="bg-white/50 backdrop-blur-sm rounded-2xl border border-white/40 shadow-sm hover:shadow-md transition-all duration-300">
+                    <button class="faq-toggle w-full flex items-center justify-between p-5 md:p-6 text-left focus:outline-none group">
+                        <span class="font-semibold text-gray-800 text-sm md:text-base pr-4 group-hover:text-indigo-600 transition-colors">{{ $faq['q'] }}</span>
+                        <i class="fas fa-chevron-down text-indigo-400 flex-shrink-0"></i>
+                    </button>
+                    <div class="faq-answer px-5 md:px-6">
+                        <p class="text-gray-500 text-sm leading-relaxed pb-5 md:pb-6">{{ $faq['a'] }}</p>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </section>
 
-    function handleUserMessage(msg) {
-      appendMessage('user', msg);
-      const lower = msg.toLowerCase();
-      if (lower.includes('summarize my life')) {
-        simulateAiTyping("✨ Your life replay shows a beautiful arc: 2024 was about new beginnings and deep bonds. 2025 brought storms that turned into strength. Right now you're blooming with purpose. Keep writing your legacy.");
-      } else if (lower.includes('how was 2025')) {
-        simulateAiTyping("📆 2025 was a year of transformation. The winter challenged you, but by spring you found resilience. Your timeline glows with growth — from pressure to breakthrough.");
-      } else if (lower.includes('happiness') || lower.includes('mood')) {
-        simulateAiTyping("😊 Your happiest moments cluster around creative nights and heart-to-heart talks. Your mood elevation peaks on weekends — those are your golden hours.");
-      } else if (lower.includes('grateful')) {
-        simulateAiTyping("🙏 Gratitude flows strongest during autumn memories and friend reunions. You've recorded 32 thankful moments — a heart full of warmth.");
-      } else {
-        simulateAiTyping("💫 I'm your memory companion. Try 'Summarize my life', 'How was 2025?', or 'What makes me happy?' I'll reveal emotional insights from your journey.");
-      }
-    }
+    <!-- CTA -->
+    <section class="relative z-10 py-16 md:py-24 px-4">
+        <div class="max-w-4xl mx-auto reveal-scale">
+            <div class="cta-card p-8 sm:p-12 md:p-16 text-center">
+                <div class="cta-sweep"></div>
+                <div class="relative">
+                    <h2 class="text-2xl sm:text-3xl md:text-5xl font-bold text-white mb-4 leading-tight">Ready to revolutionise your learning?</h2>
+                    <p class="text-indigo-200 text-base md:text-lg mb-8 max-w-md mx-auto">Join thousands of students who study with their personal AI assistant.</p>
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <a href="/register" class="animated-border">
+                            <span class="block px-8 py-3.5 text-base font-bold rounded-full text-gray-900 bg-white hover:bg-gray-50 transition-colors shadow-xl">
+                                <i class="fas fa-sparkles mr-2"></i> Sign up free
+                            </span>
+                        </a>
+                        <a href="/login" class="inline-flex items-center gap-2 px-8 py-3.5 text-base font-semibold rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-all duration-300">
+                            <i class="fas fa-arrow-right"></i> Sign in
+                        </a>
+                    </div>
+                    <p class="text-indigo-300/80 text-sm mt-8">✨ Free forever for students · No hidden fees · Privacy guaranteed ✨</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    document.getElementById('sendChatBtn').addEventListener('click', () => {
-      const input = document.getElementById('chatInput');
-      const txt = input.value.trim();
-      if (txt) handleUserMessage(txt);
-      input.value = '';
-    });
-    document.getElementById('chatInput').addEventListener('keypress', (e) => e.key === 'Enter' && document.getElementById('sendChatBtn').click());
+    <!-- Footer -->
+    <footer class="relative z-10 border-t border-gray-200/50 bg-white/40 backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto px-4 md:px-8 py-12">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 pb-8 border-b border-gray-200/40">
+                <div class="sm:col-span-2 md:col-span-1">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-9 h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center shadow-md">
+                            <i class="fas fa-brain text-white text-sm"></i>
+                        </div>
+                        <span class="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-700" style="font-family: 'Space Grotesk', sans-serif;">AI Study</span>
+                    </div>
+                    <p class="text-gray-500 text-sm leading-relaxed max-w-xs">Empowering students with AI-powered study tools. Upload, chat, quiz — and master any subject.</p>
+                    <div class="flex gap-3 mt-5">
+                        <a href="#" class="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 hover:bg-indigo-100 transition text-sm" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="w-9 h-9 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 hover:bg-purple-100 transition text-sm" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                        <a href="#" class="w-9 h-9 rounded-full bg-pink-50 flex items-center justify-center text-pink-600 hover:bg-pink-100 transition text-sm" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" class="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 hover:bg-blue-100 transition text-sm" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-800 text-sm mb-4">Product</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#features" class="text-gray-500 hover:text-indigo-600 transition text-sm">Features</a></li>
+                        <li><a href="#how-it-works" class="text-gray-500 hover:text-indigo-600 transition text-sm">How it works</a></li>
+                        <li><a href="#testimonials" class="text-gray-500 hover:text-indigo-600 transition text-sm">Testimonials</a></li>
+                        <li><a href="#faq" class="text-gray-500 hover:text-indigo-600 transition text-sm">FAQ</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-800 text-sm mb-4">Company</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-gray-500 hover:text-indigo-600 transition text-sm">About</a></li>
+                        <li><a href="#" class="text-gray-500 hover:text-indigo-600 transition text-sm">Blog</a></li>
+                        <li><a href="#" class="text-gray-500 hover:text-indigo-600 transition text-sm">Careers</a></li>
+                        <li><a href="#" class="text-gray-500 hover:text-indigo-600 transition text-sm">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-800 text-sm mb-4">Legal</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-gray-500 hover:text-indigo-600 transition text-sm">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-500 hover:text-indigo-600 transition text-sm">Terms of Service</a></li>
+                        <li><a href="#" class="text-gray-500 hover:text-indigo-600 transition text-sm">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="flex flex-col sm:flex-row items-center justify-between pt-6 text-gray-400 text-xs">
+                <p>&copy; {{ date('Y') }} AI Study Assistant. Built with <i class="fas fa-heart text-red-400"></i> for students.</p>
+                <p class="mt-2 sm:mt-0">Powered by Champ & AI</p>
+            </div>
+        </div>
+    </footer>
 
-    setTimeout(() => {
-      appendMessage('ai', "👋 Hi, I'm your Life Replay AI. Ask me to 'Summarize my life' or explore your emotional timeline. Every moment matters.");
-    }, 500);
+    <!-- Back to Top -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
 
-    // additional 3D tilt on timeline cards (intensified)
-    const cards = document.querySelectorAll('.timeline-card');
-    cards.forEach(card => {
-      card.addEventListener('mousemove', (e) => {
-        const rect = card.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / rect.width - 0.5;
-        const y = (e.clientY - rect.top) / rect.height - 0.5;
-        card.style.transform = `perspective(1200px) rotateY(${x * 8}deg) rotateX(${y * -5}deg) translateY(-6px)`;
-      });
-      card.addEventListener('mouseleave', () => {
-        card.style.transform = '';
-      });
-    });
-  </script>
+    <script>
+        // Particles
+        (function() {
+            const c = document.getElementById('particles');
+            if (!c) return;
+            for (let i = 0; i < 40; i++) {
+                const p = document.createElement('div');
+                p.classList.add('particle');
+                const s = Math.random() * 5 + 2;
+                p.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${Math.random()*12+10}s;animation-delay:${Math.random()*5}s;background:radial-gradient(circle,rgba(${99+Math.random()*40},${102+Math.random()*40},241,0.4) 0%,rgba(139,92,246,0) 80%)`;
+                c.appendChild(p);
+            }
+        })();
+
+        // Mobile menu
+        const menuToggle = document.getElementById('menuToggle');
+        const menuClose = document.getElementById('menuClose');
+        const menuOverlay = document.getElementById('menuOverlay');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileLinks = document.querySelectorAll('.mobile-link');
+
+        function openMenu() { mobileMenu.classList.add('open'); document.body.style.overflow = 'hidden'; }
+        function closeMenu() { mobileMenu.classList.remove('open'); document.body.style.overflow = ''; }
+
+        if (menuToggle) menuToggle.addEventListener('click', openMenu);
+        if (menuClose) menuClose.addEventListener('click', closeMenu);
+        if (menuOverlay) menuOverlay.addEventListener('click', closeMenu);
+        mobileLinks.forEach(l => l.addEventListener('click', closeMenu));
+
+        // Scroll reveal
+        (function() {
+            const els = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+            if (!els.length) return;
+            const ob = new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    if (e.isIntersecting) { e.target.classList.add('active'); ob.unobserve(e.target); }
+                });
+            }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+            els.forEach(el => ob.observe(el));
+        })();
+
+        // Counters
+        (function() {
+            const counters = document.querySelectorAll('.counter');
+            if (!counters.length) return;
+            const ob = new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    if (!e.isIntersecting) return;
+                    const el = e.target;
+                    const target = parseInt(el.dataset.target);
+                    if (isNaN(target)) return;
+                    const suffix = target >= 98 ? '%' : '';
+                    let current = 0;
+                    const step = Math.ceil(target / 50);
+                    const interval = setInterval(() => {
+                        current += step;
+                        if (current >= target) { current = target; clearInterval(interval); }
+                        el.textContent = current + suffix;
+                    }, 30);
+                    ob.unobserve(el);
+                });
+            }, { threshold: 0.5 });
+            counters.forEach(c => ob.observe(c));
+        })();
+
+        // FAQ
+        document.querySelectorAll('.faq-toggle').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const answer = this.nextElementSibling;
+                const icon = this.querySelector('.fa-chevron-down');
+                const isOpen = answer.classList.contains('open');
+                document.querySelectorAll('.faq-answer.open').forEach(a => {
+                    a.classList.remove('open');
+                    a.previousElementSibling.querySelector('.fa-chevron-down').style.transform = 'rotate(0deg)';
+                });
+                if (!isOpen) {
+                    answer.classList.add('open');
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            });
+        });
+
+        // Back to top
+        const backToTop = document.getElementById('backToTop');
+        if (backToTop) {
+            window.addEventListener('scroll', () => backToTop.classList.toggle('visible', window.scrollY > 400));
+            backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        }
+    </script>
 </body>
 </html>

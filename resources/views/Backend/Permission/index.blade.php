@@ -15,11 +15,11 @@
                 </ol>
             </nav>
         </div>
-        @can('manage permissions')
+        {{-- @can('manage permissions') --}}
         <button class="btn btn-primary shadow-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#permissionModal" onclick="openCreate()">
             <i class="fas fa-plus-circle me-1"></i> Create New Permission
         </button>
-        @endcan
+        {{-- @endcan --}}
     </div>
 
     <!-- Alerts -->
@@ -90,7 +90,7 @@
                                 <td><span class="badge bg-secondary bg-gradient">{{ $permission->guard_name ?? 'web' }}</span></td>
                                 <td>{{ $permission->created_at->format('d M Y, h:i A') }}</td>
                                 <td class="text-center">
-                                    @can('manage permissions')
+                                    {{-- @can('manage permissions') --}}
                                     <a href="{{route('permissions.edit', $permission->id)}}" class="btn btn-sm btn-outline-warning rounded-pill px-3 me-1">
                                         <i class="fas fa-edit"></i> Edit
                                     </a>
@@ -102,7 +102,7 @@
                                             <i class="fas fa-trash-alt"></i> Delete
                                         </button>
                                     </form>
-                                    @endcan
+                                    {{-- @endcan --}}
                                 </td>
                             </tr>
                         @empty

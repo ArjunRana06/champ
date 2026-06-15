@@ -1,80 +1,93 @@
 <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        <h4>{{ config('app.name') }}</h4>
+    <div class="sidebar-brand">
+        <span class="brand-icon"><i class="bi bi-brain"></i></span>
+        <span class="brand-text">{{ config('app.name') }}</span>
+        <span class="brand-badge">v2.0</span>
     </div>
-    <nav class="nav">
+
+    <nav class="sidebar-nav">
+        <div class="nav-section-label">Main</div>
+
         <div class="nav-item">
             <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                <i class="bi bi-speedometer2"></i>
+                <i class="bi bi-grid-1x2-fill"></i>
                 <span>Dashboard</span>
             </a>
         </div>
-        @can('is admin')
+
+        @role('Admin')
         <div class="nav-item">
-            <a href="#" class="nav-link" data-bs-toggle="collapse" data-bs-target="#usersSubmenu"
-                aria-expanded="false">
-                <i class="bi bi-people"></i>
+            <a href="#usersSubmenu" class="nav-link {{ request()->routeIs('users.*') || request()->routeIs('roles.*') || request()->routeIs('permissions.*') ? 'active' : '' }}"
+               data-bs-toggle="collapse" role="button" aria-expanded="{{ request()->routeIs('users.*') || request()->routeIs('roles.*') || request()->routeIs('permissions.*') ? 'true' : 'false' }}">
+                <i class="bi bi-people-fill"></i>
                 <span>Users</span>
-                <i class="bi bi-chevron-down ms-auto" style="font-size: 0.8rem;"></i>
+                <i class="bi bi-chevron-down chevron"></i>
             </a>
-            <div class="collapse" id="usersSubmenu">
-                <a href="{{ route('users.index') }}" class="nav-link ps-5 fs-6">
-                    All Users
+            <div class="collapse submenu {{ request()->routeIs('users.*') || request()->routeIs('roles.*') || request()->routeIs('permissions.*') ? 'show' : '' }}" id="usersSubmenu">
+                @can('view users')
+                <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.index') ? 'active' : '' }}">
+                    <i class="bi bi-person"></i>
+                    <span>All Users</span>
                 </a>
-                <a href="{{ route('roles.index') }}" class="nav-link ps-5" style="font-size: 0.9rem;">
+                @endcan
+                @can('manage roles')
+                <a href="{{ route('roles.index') }}" class="nav-link {{ request()->routeIs('roles.*') ? 'active' : '' }}">
+                    <i class="bi bi-shield-check"></i>
                     <span>Roles</span>
                 </a>
-                <a href="{{ route('permissions.index') }}" class="nav-link ps-5" style="font-size: 0.9rem;">
+                @endcan
+                @can('manage permissions')
+                <a href="{{ route('permissions.index') }}" class="nav-link {{ request()->routeIs('permissions.*') ? 'active' : '' }}">
+                    <i class="bi bi-key"></i>
                     <span>Permissions</span>
                 </a>
+                @endcan
             </div>
         </div>
-        @endcan
+        @endrole
+
+        <div class="nav-section-label">Study</div>
+
         <div class="nav-item">
-            <a href="{{route('events.index')}}" class="nav-link">
-                <i class="bi bi-clock-history"></i>
-                <span>Activities</span>
+            <a href="{{ route('subjects.index') }}" class="nav-link {{ request()->routeIs('subjects.*') ? 'active' : '' }}">
+                <i class="bi bi-bookmark-star-fill"></i>
+                <span>Subjects</span>
             </a>
         </div>
+
         <div class="nav-item">
-            <a href="{{ route('ai.chat') }}" class="nav-link">
+            <a href="{{ route('documents.index') }}" class="nav-link {{ request()->routeIs('documents.*') ? 'active' : '' }}">
+                <i class="bi bi-file-earmark-arrow-up-fill"></i>
+                <span>Uploads</span>
+            </a>
+        </div>
+
+        <div class="nav-item">
+            <a href="{{ route('mcqs.index') }}" class="nav-link {{ request()->routeIs('mcqs.*') ? 'active' : '' }}">
+                <i class="bi bi-patch-question-fill"></i>
+                <span>MCQ Generator</span>
+            </a>
+        </div>
+
+        <div class="nav-item">
+            <a href="{{ route('ai.chat') }}" class="nav-link {{ request()->routeIs('ai.chat') ? 'active' : '' }}">
                 <i class="bi bi-robot"></i>
                 <span>AI Assistant</span>
             </a>
         </div>
     </nav>
+
+    <div class="sidebar-footer">
+        <div class="mini-avatar">
+            {{ substr(auth()->user()->name, 0, 1) }}
+        </div>
+        <div class="sidebar-user-info">
+            <div class="name">{{ auth()->user()->name }}</div>
+            <div class="role">{{ auth()->user()->roles->first()?->name ?? 'Student' }}</div>
+        </div>
+        <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form-sidebar').submit();" title="Logout">
+            <i class="bi bi-box-arrow-right"></i>
+        </a>
+        <form id="logout-form-sidebar" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
+    </div>
 </aside>
-
-<!-- JavaScript for mobile toggle and submenu handling -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const toggleBtn = document.getElementById('sidebarToggle');
-        const sidebar = document.getElementById('sidebar');
-        if (toggleBtn && sidebar) {
-            toggleBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('show');
-            });
-        }
-
-        // Ensure submenus work correctly when sidebar is collapsed
-        const sidebarLinks = document.querySelectorAll('.sidebar .nav-link[data-bs-toggle="collapse"]');
-        sidebarLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                if (sidebar.offsetWidth < 100) {
-                    // If sidebar is collapsed, expand it first
-                    sidebar.style.width = '280px';
-                    setTimeout(() => {
-                        // Trigger collapse after a short delay
-                        const target = document.querySelector(link.getAttribute(
-                            'data-bs-target'));
-                        if (target) {
-                            new bootstrap.Collapse(target, {
-                                toggle: true
-                            });
-                        }
-                    }, 300);
-                }
-            });
-        });
-    });
-</script>

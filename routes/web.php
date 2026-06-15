@@ -8,6 +8,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\McqController;
 
 // Frontend routes (public pages)
 Route::get('/', function () {
@@ -24,21 +27,25 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // backend routes (admin panel)
-    Route::resource('users', UserController::class);
-    Route::resource('/roles', RoleController::class);
-    Route::resource('/permissions', PermissionController::class);
+    // backend routes (admin only)
+    Route::resource('users', UserController::class)->middleware('role:Admin');
+    Route::resource('/roles', RoleController::class)->middleware('role:Admin');
+    Route::resource('/permissions', PermissionController::class)->middleware('role:Admin');
 
-    Route::resource('/events', EventController::class);
-    Route::put('/events/{event}', [EventController::class, 'update'])->name('events.update');
-    Route::get('/events/filter/{type}', [EventController::class, 'filterByType'])->name('events.filter');
+    Route::resource('subjects', SubjectController::class);
+
+     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
+    Route::post('/documents/upload', [DocumentController::class, 'upload'])->name('documents.upload');
+    Route::get('/documents/{id}/preview', [DocumentController::class, 'preview'])->name('documents.
+    preview');
+
+    Route::resource('mcqs', McqController::class)->except(['show', 'edit', 'update']);
+Route::post('/mcqs/generate', [McqController::class, 'generate'])->name('mcqs.generate');
 
 
     Route::post('/chat', [ChatController::class, 'sendMessage'])->name('chat.send');
     Route::get('/ai-chat', [ChatController::class, 'showChatPage'])->name('ai.chat');
 
 });
-
-
 
 require __DIR__ . '/auth.php';

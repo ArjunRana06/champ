@@ -19,7 +19,8 @@ class UserController extends Controller
     {
         $users = User::with('roles')->get();
         $roles = Role::all();
-        return view('Backend.User.index', compact('users', 'roles'));
+        $totalUsers = $users->count();
+        return view('Backend.User.index', compact('users', 'roles', 'totalUsers'));
     }
 
     /**
