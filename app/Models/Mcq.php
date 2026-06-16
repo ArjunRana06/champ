@@ -11,7 +11,7 @@ class Mcq extends Model
 
     protected $fillable = [
         'user_id', 'subject_id', 'document_id', 'question',
-        'options', 'correct_answer', 'explanation', 'difficulty'
+        'options', 'correct_answer', 'explanation', 'difficulty', 'is_public'
     ];
 
     protected $casts = [
@@ -26,6 +26,11 @@ class Mcq extends Model
     public function subject()
     {
         return $this->belongsTo(Subject::class);
+    }
+
+    public function peerReviews()
+    {
+        return $this->morphMany(PeerReview::class, 'reviewable');
     }
 
     public function document()

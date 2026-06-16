@@ -10,16 +10,47 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#6366f1">
 
     <style>
+        :root {
+            --bg-body: #f8fafc;
+            --text-primary: #1e1b4b;
+            --text-secondary: #6b7280;
+            --glass-bg: rgba(255,255,255,0.6);
+            --glass-bg-hover: rgba(255,255,255,0.75);
+            --glass-border: rgba(255,255,255,0.5);
+            --card-shadow: 0 25px 50px -12px rgba(0,0,0,0.08);
+            --navbar-bg: rgba(255,255,255,0.6);
+            --footer-bg: rgba(255,255,255,0.5);
+            --input-bg: white;
+            --table-row-hover: rgba(99,102,241,0.03);
+            --table-header-bg: rgba(99,102,241,0.04);
+        }
+        [data-theme="dark"] {
+            --bg-body: #0f172a;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --glass-bg: rgba(30,41,59,0.6);
+            --glass-bg-hover: rgba(30,41,59,0.75);
+            --glass-border: rgba(51,65,85,0.5);
+            --card-shadow: 0 25px 50px -12px rgba(0,0,0,0.3);
+            --navbar-bg: rgba(15,23,42,0.6);
+            --footer-bg: rgba(15,23,42,0.5);
+            --input-bg: #1e293b;
+            --table-row-hover: rgba(99,102,241,0.08);
+            --table-header-bg: rgba(99,102,241,0.1);
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
-            background: #f8fafc;
-            color: #1e1b4b;
+            background: var(--bg-body);
+            color: var(--text-primary);
             overflow-x: hidden;
             position: relative;
             min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
         }
         .mesh-bg {
             position: fixed; inset: 0; z-index: 0;
@@ -28,7 +59,9 @@
                 radial-gradient(ellipse 60% 50% at 100% 0%, rgba(139,92,246,0.1) 0%, transparent 60%),
                 radial-gradient(ellipse 50% 40% at 30% 60%, rgba(6,182,212,0.06) 0%, transparent 50%);
             animation: meshShift 20s ease-in-out infinite alternate;
+            transition: opacity 0.3s;
         }
+        [data-theme="dark"] .mesh-bg { opacity: 0.3; }
         @keyframes meshShift {
             0% { transform: scale(1); opacity: 0.7; }
             100% { transform: scale(1.05); opacity: 1; }
@@ -58,6 +91,7 @@
             background: linear-gradient(135deg, #1e1b4b, #312e81, #581c87);
             color: white;
             display: flex;
+            transition: transform 0.3s ease;
             flex-direction: column;
             position: sticky;
             top: 0;
@@ -204,9 +238,9 @@
 
         /* NAVBAR */
         .navbar-top {
-            background: rgba(255,255,255,0.6);
+            background: var(--navbar-bg);
             backdrop-filter: blur(20px) saturate(1.8);
-            border-bottom: 1px solid rgba(255,255,255,0.5);
+            border-bottom: 1px solid var(--glass-border);
             padding: 0.75rem 1.5rem;
             display: flex;
             align-items: center;
@@ -342,15 +376,15 @@
 
         /* FOOTER */
         .dashboard-footer {
-            background: rgba(255,255,255,0.5);
+            background: var(--footer-bg);
             backdrop-filter: blur(12px) saturate(1.8);
-            border-top: 1px solid rgba(255,255,255,0.5);
+            border-top: 1px solid var(--glass-border);
             padding: 1rem 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 0.82rem;
-            color: #6b7280;
+            color: var(--text-secondary);
         }
         .dashboard-footer a {
             color: #6b7280;
@@ -388,16 +422,16 @@
 
         /* GLASS CARD — matches login page glass */
         .glass-card {
-            background: rgba(255,255,255,0.6);
+            background: var(--glass-bg);
             backdrop-filter: blur(20px) saturate(1.8);
-            border: 1px solid rgba(255,255,255,0.5);
+            border: 1px solid var(--glass-border);
             border-radius: 1.5rem;
             padding: 1.25rem;
             transition: all 0.3s ease;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.08);
+            box-shadow: var(--card-shadow);
         }
         .glass-card:hover {
-            background: rgba(255,255,255,0.75);
+            background: var(--glass-bg-hover);
             box-shadow: 0 25px 60px -12px rgba(0,0,0,0.12);
         }
 
@@ -405,20 +439,20 @@
             width: 100%; border-collapse: separate; border-spacing: 0;
         }
         .glass-table thead th {
-            background: rgba(99,102,241,0.04);
+            background: var(--table-header-bg);
             color: #6366f1;
             font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
-            padding: 0.85rem 1rem; border-bottom: 1.5px solid #e5e7eb;
+            padding: 0.85rem 1rem; border-bottom: 1.5px solid var(--glass-border);
             font-weight: 600;
         }
         .glass-table tbody td {
             padding: 0.85rem 1rem;
-            border-bottom: 1px solid #f1f5f9;
-            color: #374151;
+            border-bottom: 1px solid var(--glass-border);
+            color: var(--text-primary);
             font-size: 0.85rem;
         }
         .glass-table tbody tr:last-child td { border-bottom: none; }
-        .glass-table tbody tr:hover td { background: rgba(99,102,241,0.03); }
+        .glass-table tbody tr:hover td { background: var(--table-row-hover); }
 
         /* DARK BUTTON — matches login btn */
         .dark-btn {
@@ -481,10 +515,10 @@
         }
         .page-header h2 {
             font-weight: 800; font-size: 1.5rem;
-            color: #1e1b4b;
+            color: var(--text-primary);
         }
         .page-header p {
-            color: #6b7280; font-size: 0.88rem; margin: 0.2rem 0 0;
+            color: var(--text-secondary); font-size: 0.88rem; margin: 0.2rem 0 0;
         }
 
         .form-glass {
@@ -557,6 +591,11 @@
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('{{ asset("sw.js") }}').catch(() => {});
+        }
+    </script>
+    <script>
         AOS.init({ duration: 600, once: true, offset: 30 });
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -567,8 +606,31 @@
                     sidebar.classList.toggle('show');
                 });
             }
+
+            // Dark mode
+            const dmBtn = document.getElementById('darkModeToggle');
+            if (dmBtn) {
+                const saved = localStorage.getItem('theme');
+                if (saved === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    dmBtn.innerHTML = '<i class="bi bi-sun"></i>';
+                }
+                dmBtn.addEventListener('click', function() {
+                    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                    if (isDark) {
+                        document.documentElement.removeAttribute('data-theme');
+                        localStorage.setItem('theme', 'light');
+                        dmBtn.innerHTML = '<i class="bi bi-moon-stars"></i>';
+                    } else {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                        localStorage.setItem('theme', 'dark');
+                        dmBtn.innerHTML = '<i class="bi bi-sun"></i>';
+                    }
+                });
+            }
         });
     </script>
     @stack('scripts')
+    <div id="modal-root"></div>
 </body>
 </html>

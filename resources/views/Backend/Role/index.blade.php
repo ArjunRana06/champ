@@ -8,7 +8,7 @@
             <p>Manage user roles and their permissions</p>
         </div>
         @can('manage roles')
-            <button class="dark-btn" data-bs-toggle="modal" data-bs-target="#roleModal" onclick="openCreate()">
+            <button class="dark-btn" id="createRoleBtn">
                 <i class="bi bi-shield-plus"></i> Create New Role
             </button>
         @endcan
@@ -82,8 +82,11 @@
                             <td class="text-center">
                                 @can('manage roles')
                                 <div class="d-flex gap-1 justify-content-center">
-                                    <button class="btn-soft py-1 px-2" style="font-size:0.75rem;" title="Edit"
-                                        onclick="openEdit({{ $role->id }}, '{{ $role->name }}', '{{ $role->guard_name ?? 'web' }}', {{ json_encode($role->permissions->pluck('id')) }})">
+                                    <button class="btn-soft py-1 px-2 edit-role-btn" style="font-size:0.75rem;" title="Edit"
+                                        data-id="{{ $role->id }}"
+                                        data-name="{{ $role->name }}"
+                                        data-guard="{{ $role->guard_name ?? 'web' }}"
+                                        data-permissions='{{ json_encode($role->permissions->pluck('id')) }}'>
                                         <i class="bi bi-pencil"></i>
                                     </button>
                                     <form action="{{ route('roles.destroy', $role->id) }}" method="POST" style="display:inline-block;">
@@ -112,9 +115,9 @@
 </div>
 
 <!-- Modal for Create/Edit Role -->
-<div class="modal fade" id="roleModal" tabindex="-1" aria-hidden="true">
+<div class="modal" id="roleModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content" style="background:rgba(255,255,255,0.85);backdrop-filter:blur(24px) saturate(1.8);border:1px solid rgba(255,255,255,0.5);border-radius:1.5rem;box-shadow:0 25px 60px -12px rgba(0,0,0,0.15);">
+        <div class="modal-content border-0 shadow rounded-4">
             <form id="roleForm" method="POST">
                 @csrf
                 <input type="hidden" name="_method" id="methodField" value="POST">
@@ -192,23 +195,33 @@
 
     function openCreate() {
         let form = document.getElementById('roleForm');
-        form.action = storeUrl;
-        document.getElementById('methodField').value = 'POST';
-        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-shield-plus me-2" style="color:#6366f1;"></i> Create Role';
-        document.getElementById('roleName').value = '';
-        document.getElementById('guardName').value = 'web';
-        document.getElementById('saveBtn').innerHTML = '<i class="bi bi-check-lg"></i> Save Role';
+        if (form) form.action = storeUrl;
+        let mf = document.getElementById('methodField');
+        if (mf) mf.value = 'POST';
+        let mt = document.getElementById('modalTitle');
+        if (mt) mt.innerHTML = '<i class="bi bi-shield-plus me-2" style="color:#6366f1;"></i> Create Role';
+        let rn = document.getElementById('roleName');
+        if (rn) rn.value = '';
+        let gn = document.getElementById('guardName');
+        if (gn) gn.value = 'web';
+        let sb = document.getElementById('saveBtn');
+        if (sb) sb.innerHTML = '<i class="bi bi-check-lg"></i> Save Role';
         document.querySelectorAll('.permission-checkbox').forEach(cb => cb.checked = false);
     }
 
     function openEdit(id, name, guard, permissionsArray) {
         let form = document.getElementById('roleForm');
-        form.action = updateUrlPattern.replace(':id', id);
-        document.getElementById('methodField').value = 'PUT';
-        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil me-2" style="color:#6366f1;"></i> Edit Role';
-        document.getElementById('roleName').value = name;
-        document.getElementById('guardName').value = guard;
-        document.getElementById('saveBtn').innerHTML = '<i class="bi bi-check-lg"></i> Update Role';
+        if (form) form.action = updateUrlPattern.replace(':id', id);
+        let mf = document.getElementById('methodField');
+        if (mf) mf.value = 'PUT';
+        let mt = document.getElementById('modalTitle');
+        if (mt) mt.innerHTML = '<i class="bi bi-pencil me-2" style="color:#6366f1;"></i> Edit Role';
+        let rn = document.getElementById('roleName');
+        if (rn) rn.value = name;
+        let gn = document.getElementById('guardName');
+        if (gn) gn.value = guard;
+        let sb = document.getElementById('saveBtn');
+        if (sb) sb.innerHTML = '<i class="bi bi-check-lg"></i> Update Role';
 
         document.querySelectorAll('.permission-checkbox').forEach(cb => cb.checked = false);
         if (permissionsArray && permissionsArray.length) {
@@ -220,12 +233,38 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        let modal = document.getElementById('roleModal');
-        if (modal) {
-            modal.addEventListener('hidden.bs.modal', function () {
-                openCreate();
-            });
+        let modalEl = document.getElementById('roleModal');
+        if (!modalEl) return;
+        let modal = new bootstrap.Modal(modalEl);
+
+        function ensureModalInRoot() {
+            let root = document.getElementById('modal-root');
+            if (root && modalEl.parentNode !== root) {
+                root.appendChild(modalEl);
+            }
         }
+
+        document.getElementById('createRoleBtn')?.addEventListener('click', function () {
+            openCreate();
+            ensureModalInRoot();
+            modal.show();
+        });
+
+        document.querySelectorAll('.edit-role-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                let permissions = [];
+                try {
+                    permissions = JSON.parse(this.dataset.permissions || '[]');
+                } catch (e) {}
+                openEdit(this.dataset.id, this.dataset.name, this.dataset.guard, permissions);
+                ensureModalInRoot();
+                modal.show();
+            });
+        });
+
+        modalEl.addEventListener('hidden.bs.modal', function () {
+            openCreate();
+        });
     });
 </script>
 @endpush

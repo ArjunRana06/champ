@@ -12,16 +12,18 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use thiagoalessio\TesseractOCR\TesseractOCR;
+use App\Services\NotificationService;
 use Smalot\PdfParser\Parser;
 use PhpOffice\PhpWord\IOFactory as WordFactory;
+use PhpOffice\PhpPresentation\PhpPresentation;
+use PhpOffice\PhpSpreadsheet\IOFactory as SpreadsheetFactory;
 
 class ProcessDocumentJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, SerializesModels;
 
-    // Increase timeout for large documents (10 minutes)
-    public $timeout = 600;
+    public $timeout = 1800;
+    public $maxExceptions = 1;
 
     protected $document;
 
@@ -33,32 +35,38 @@ class ProcessDocumentJob implements ShouldQueue
     public function handle()
     {
         Log::info('Processing document: ' . $this->document->id);
-        $this->document->update(['status' => 'processing']);
+        $this->updateProgress(5, 'Starting processing...');
 
         try {
-            // 1. Extract full text
+            $this->updateProgress(10, 'Extracting text...');
             $fullText = $this->extractText();
-            Log::info('Extracted text length: ' . strlen($fullText));
 
             if (empty(trim($fullText))) {
                 throw new \Exception('No text could be extracted from the file.');
             }
 
-            // 2. Store full extracted text
             $this->document->update(['extracted_text' => $fullText]);
+            $this->updateProgress(30, 'Text extracted, splitting into chunks...');
 
-            // 3. Split into chunks (larger = fewer chunks)
-            $chunks = $this->splitIntoChunks($fullText, 2000, 300);
+            $textLength = strlen($fullText);
+            $chunkSize = $textLength > 500000 ? 3000 : 2000;
+            $overlap = $textLength > 500000 ? 200 : 300;
+
+            $chunks = $this->splitIntoChunks($fullText, $chunkSize, $overlap);
             $totalChunks = count($chunks);
             Log::info("Number of chunks: $totalChunks");
 
-            // 4. Generate embeddings for all chunks in ONE request (batching)
+            $this->updateProgress(40, "Generating embeddings ($totalChunks chunks)...");
+
             $embeddings = $this->generateEmbeddingsBatch($chunks);
             if (count($embeddings) !== $totalChunks) {
                 throw new \Exception('Embedding response size mismatch');
             }
 
-            // 5. Store chunks and embeddings
+            $this->updateProgress(70, 'Storing chunks and embeddings...');
+
+            $insertBatch = [];
+            $chunkModels = [];
             foreach ($chunks as $index => $chunkText) {
                 $chunk = DocumentChunk::create([
                     'document_id' => $this->document->id,
@@ -66,23 +74,52 @@ class ProcessDocumentJob implements ShouldQueue
                     'content' => $chunkText,
                     'vector_id' => null,
                 ]);
+                $chunkModels[] = $chunk;
 
                 Embedding::create([
                     'document_chunk_id' => $chunk->id,
                     'embedding' => json_encode($embeddings[$index]),
                 ]);
+
+                if ($index % 10 === 0 || $index === $totalChunks - 1) {
+                    $pct = 70 + round((($index + 1) / $totalChunks) * 25);
+                    $this->updateProgress($pct, "Stored chunk $index of $totalChunks");
+                }
             }
 
             $this->document->update([
                 'status' => 'completed',
                 'total_chunks' => $totalChunks,
+                'processing_progress' => 100,
+                'processing_message' => 'Completed',
             ]);
+
+            app(NotificationService::class)->notifyDocumentProcessed(
+                $this->document->user_id,
+                $this->document->original_name,
+                $this->document->id
+            );
 
             Log::info('Document processed successfully: ' . $this->document->id);
         } catch (\Exception $e) {
             Log::error('Document processing failed: ' . $e->getMessage());
-            $this->document->update(['status' => 'failed']);
+            $this->document->update([
+                'status' => 'failed',
+                'processing_message' => 'Error: ' . $e->getMessage(),
+            ]);
             throw $e;
+        }
+    }
+
+    private function updateProgress(int $progress, string $message): void
+    {
+        try {
+            $this->document->update([
+                'processing_progress' => $progress,
+                'processing_message' => $message,
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Failed to update progress: ' . $e->getMessage());
         }
     }
 
@@ -95,26 +132,133 @@ class ProcessDocumentJob implements ShouldQueue
 
         $mime = $this->document->mime_type;
 
-        if ($mime === 'application/pdf') {
-            $parser = new Parser();
-            $pdf = $parser->parseFile($path);
-            return $pdf->getText();
+        try {
+            // PDF
+            if ($mime === 'application/pdf') {
+                return $this->extractPdfText($path);
+            }
+
+            // Word documents
+            if (in_array($mime, [
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/msword',
+            ])) {
+                return $this->extractWordText($path, $mime);
+            }
+
+            // Presentations
+            if (in_array($mime, [
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'application/vnd.ms-powerpoint',
+            ])) {
+                return $this->extractPptText($path);
+            }
+
+            // Spreadsheets
+            if (in_array($mime, [
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.ms-excel',
+            ])) {
+                return $this->extractSpreadsheetText($path);
+            }
+
+            // Images (OCR)
+            if (in_array($mime, [
+                'image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp',
+            ])) {
+                return $this->extractImageText($path);
+            }
+
+            // Plain text
+            if ($mime === 'text/plain' || $mime === 'text/csv' || $mime === 'text/rtf') {
+                return file_get_contents($path);
+            }
+
+            // Fallback: try by extension
+            $ext = strtolower(pathinfo($this->document->original_name, PATHINFO_EXTENSION));
+            if (in_array($ext, ['txt', 'csv'])) {
+                return file_get_contents($path);
+            }
+            if ($ext === 'rtf') {
+                return file_get_contents($path);
+            }
+
+            throw new \Exception('Unsupported file type: ' . $mime);
+
+        } catch (\Exception $e) {
+            Log::error('Extraction error: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    private function extractPdfText(string $path): string
+    {
+        $tmpPath = $path . '.tmp.txt';
+        $escapedPath = escapeshellarg($path);
+        $escapedTmp = escapeshellarg($tmpPath);
+        $cmd = "pdftotext -layout $escapedPath $escapedTmp 2>&1";
+        $output = null;
+        $returnCode = null;
+        exec($cmd, $output, $returnCode);
+
+        if ($returnCode === 0 && file_exists($tmpPath)) {
+            $text = file_get_contents($tmpPath);
+            @unlink($tmpPath);
+            if (!empty(trim($text))) {
+                return $text;
+            }
         }
 
-        if ($mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-            $phpWord = WordFactory::load($path);
-            $text = '';
-            foreach ($phpWord->getSections() as $section) {
-                foreach ($section->getElements() as $element) {
-                    if (method_exists($element, 'getText')) {
-                        $text .= $element->getText() . "\n";
+        $parser = new Parser();
+        $pdf = $parser->parseFile($path);
+        return $pdf->getText();
+    }
+
+    private function extractWordText(string $path, string $mime): string
+    {
+        $phpWord = WordFactory::load($path);
+        $text = '';
+        foreach ($phpWord->getSections() as $section) {
+            foreach ($section->getElements() as $element) {
+                if (method_exists($element, 'getText')) {
+                    $text .= $element->getText() . "\n";
+                }
+                if (method_exists($element, 'getElements')) {
+                    foreach ($element->getElements() as $child) {
+                        if (method_exists($child, 'getText')) {
+                            $text .= $child->getText() . "\n";
+                        }
                     }
                 }
+            }
+        }
+        return $text;
+    }
+
+    private function extractPptText(string $path): string
+    {
+        if ($this->document->mime_type === 'application/vnd.ms-powerpoint') {
+            $zip = new \ZipArchive();
+            $text = '';
+            if ($zip->open($path) === true) {
+                for ($i = 1; $i <= 200; $i++) {
+                    $slideXml = $zip->getFromName("ppt/slides/slide{$i}.xml");
+                    if ($slideXml === false) break;
+                    $xml = @simplexml_load_string($slideXml);
+                    if ($xml) {
+                        $xml->registerXPathNamespace('a', 'http://schemas.openxmlformats.org/drawingml/2006/main');
+                        foreach ($xml->xpath('//a:t') as $t) {
+                            $text .= (string)$t . ' ';
+                        }
+                        $text .= "\n";
+                    }
+                }
+                $zip->close();
             }
             return $text;
         }
 
-        if ($mime === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
+        try {
             $zip = new \ZipArchive();
             $text = '';
             if ($zip->open($path) === true) {
@@ -126,17 +270,46 @@ class ProcessDocumentJob implements ShouldQueue
                 $zip->close();
             }
             return $text;
+        } catch (\Exception $e) {
+            return '';
         }
+    }
 
-        if (in_array($mime, ['image/jpeg', 'image/png'])) {
-            return (new TesseractOCR($path))->run();
+    private function extractSpreadsheetText(string $path): string
+    {
+        try {
+            $spreadsheet = SpreadsheetFactory::load($path);
+            $text = '';
+            foreach ($spreadsheet->getAllSheets() as $sheet) {
+                foreach ($sheet->getRowIterator() as $row) {
+                    $cells = [];
+                    foreach ($row->getCellIterator() as $cell) {
+                        $val = $cell->getValue();
+                        if ($val !== null) {
+                            $cells[] = $val;
+                        }
+                    }
+                    if (!empty($cells)) {
+                        $text .= implode("\t", $cells) . "\n";
+                    }
+                }
+                $text .= "\n--- Next Sheet ---\n\n";
+            }
+            return $text;
+        } catch (\Exception $e) {
+            Log::warning('Spreadsheet extraction failed: ' . $e->getMessage());
+            return '';
         }
+    }
 
-        if ($mime === 'text/plain') {
-            return file_get_contents($path);
+    private function extractImageText(string $path): string
+    {
+        try {
+            return (new \thiagoalessio\TesseractOCR\TesseractOCR($path))->run();
+        } catch (\Exception $e) {
+            Log::warning('OCR failed: ' . $e->getMessage());
+            return '';
         }
-
-        return '';
     }
 
     private function splitIntoChunks(string $text, int $chunkSize = 2000, int $overlap = 300): array
@@ -149,13 +322,13 @@ class ProcessDocumentJob implements ShouldQueue
             $para = trim($para);
             if (empty($para)) continue;
 
-            if (strlen($currentChunk) + strlen($para) <= $chunkSize) {
+            if (mb_strlen($currentChunk) + mb_strlen($para) <= $chunkSize) {
                 $currentChunk .= $para . "\n\n";
             } else {
                 if (!empty($currentChunk)) {
                     $chunks[] = trim($currentChunk);
                 }
-                $overlapText = substr($currentChunk, -$overlap);
+                $overlapText = mb_substr($currentChunk, -$overlap);
                 $currentChunk = $overlapText . "\n\n" . $para . "\n\n";
             }
         }
@@ -165,25 +338,19 @@ class ProcessDocumentJob implements ShouldQueue
         return $chunks;
     }
 
-    /**
-     * Generate embeddings for multiple texts in one API call.
-     * Falls back to individual calls if batch fails or the array is too large.
-     */
     private function generateEmbeddingsBatch(array $texts): array
     {
         $apiKey = env('OPENROUTER_API_KEY');
         $model = env('OPENROUTER_EMBEDDING_MODEL', 'openai/text-embedding-3-small');
 
-        // OpenRouter supports up to 2048 inputs per request, but some providers have lower limits.
-        // Split into batches of 100 to be safe.
-        $batches = array_chunk($texts, 100);
+        $batches = array_chunk($texts, 50);
         $allEmbeddings = [];
 
-        foreach ($batches as $batch) {
+        foreach ($batches as $batchIndex => $batch) {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type' => 'application/json',
-            ])->timeout(60)->post('https://openrouter.ai/api/v1/embeddings', [
+            ])->timeout(120)->post('https://openrouter.ai/api/v1/embeddings', [
                 'model' => $model,
                 'input' => $batch,
             ]);
@@ -197,7 +364,6 @@ class ProcessDocumentJob implements ShouldQueue
                 throw new \Exception('Invalid embedding batch response');
             }
 
-            // Sort by index (OpenRouter returns in same order)
             $sorted = [];
             foreach ($data['data'] as $item) {
                 $sorted[$item['index']] = $item['embedding'];
@@ -205,6 +371,9 @@ class ProcessDocumentJob implements ShouldQueue
             for ($i = 0; $i < count($batch); $i++) {
                 $allEmbeddings[] = $sorted[$i];
             }
+
+            $pct = 40 + round((($batchIndex + 1) / count($batches)) * 30);
+            $this->updateProgress($pct, "Embeddings batch $batchIndex of " . count($batches));
         }
 
         return $allEmbeddings;

@@ -63,16 +63,127 @@
         </div>
 
         <div class="nav-item">
-            <a href="{{ route('mcqs.index') }}" class="nav-link {{ request()->routeIs('mcqs.*') ? 'active' : '' }}">
+            <a href="#questionsSubmenu" class="nav-link {{ request()->routeIs('mcqs.*') || request()->routeIs('true-false.*') || request()->routeIs('short-answers.*') || request()->routeIs('fill-blanks.*') || request()->routeIs('matching.*') || request()->routeIs('flashcards.*') ? 'active' : '' }}"
+               data-bs-toggle="collapse" role="button" aria-expanded="{{ request()->routeIs('mcqs.*') || request()->routeIs('true-false.*') || request()->routeIs('short-answers.*') || request()->routeIs('fill-blanks.*') || request()->routeIs('matching.*') || request()->routeIs('flashcards.*') ? 'true' : 'false' }}">
                 <i class="bi bi-patch-question-fill"></i>
-                <span>MCQ Generator</span>
+                <span>Question Generator</span>
+                <i class="bi bi-chevron-down chevron"></i>
             </a>
+            <div class="collapse submenu {{ request()->routeIs('mcqs.*') || request()->routeIs('true-false.*') || request()->routeIs('short-answers.*') || request()->routeIs('fill-blanks.*') || request()->routeIs('matching.*') || request()->routeIs('flashcards.*') ? 'show' : '' }}" id="questionsSubmenu">
+                <a href="{{ route('mcqs.index') }}" class="nav-link {{ request()->routeIs('mcqs.*') ? 'active' : '' }}">
+                    <i class="bi bi-ui-radios"></i>
+                    <span>Multiple Choice</span>
+                </a>
+                <a href="{{ route('true-false.index') }}" class="nav-link {{ request()->routeIs('true-false.*') ? 'active' : '' }}">
+                    <i class="bi bi-check2-circle"></i>
+                    <span>True / False</span>
+                </a>
+                <a href="{{ route('short-answers.index') }}" class="nav-link {{ request()->routeIs('short-answers.*') ? 'active' : '' }}">
+                    <i class="bi bi-pencil-square"></i>
+                    <span>Short Answer</span>
+                </a>
+                <a href="{{ route('fill-blanks.index') }}" class="nav-link {{ request()->routeIs('fill-blanks.*') ? 'active' : '' }}">
+                    <i class="bi bi-input-cursor-text"></i>
+                    <span>Fill in the Blank</span>
+                </a>
+                <a href="{{ route('matching.index') }}" class="nav-link {{ request()->routeIs('matching.*') ? 'active' : '' }}">
+                    <i class="bi bi-arrow-left-right"></i>
+                    <span>Matching</span>
+                </a>
+                <a href="{{ route('flashcards.index') }}" class="nav-link {{ request()->routeIs('flashcards.*') ? 'active' : '' }}">
+                    <i class="bi bi-card-text"></i>
+                    <span>Flashcards</span>
+                </a>
+            </div>
         </div>
 
         <div class="nav-item">
             <a href="{{ route('ai.chat') }}" class="nav-link {{ request()->routeIs('ai.chat') ? 'active' : '' }}">
                 <i class="bi bi-robot"></i>
                 <span>AI Assistant</span>
+            </a>
+        </div>
+
+        <div class="nav-section-label">Practice</div>
+
+        <div class="nav-item">
+            <a href="{{ route('quiz-attempts.index') }}" class="nav-link {{ request()->routeIs('quiz-attempts.*') ? 'active' : '' }}">
+                <i class="bi bi-pencil-square"></i>
+                <span>Quiz</span>
+            </a>
+        </div>
+
+        <div class="nav-item">
+            <a href="{{ route('study-plans.index') }}" class="nav-link {{ request()->routeIs('study-plans.*') ? 'active' : '' }}">
+                <i class="bi bi-calendar-week"></i>
+                <span>Study Plans</span>
+            </a>
+        </div>
+
+        <div class="nav-item">
+            <a href="{{ route('exams.index') }}" class="nav-link {{ request()->routeIs('exams.*') ? 'active' : '' }}">
+                <i class="bi bi-calendar-check"></i>
+                <span>Exam Calendar</span>
+            </a>
+        </div>
+
+        <div class="nav-item">
+            <a href="{{ route('pomodoro.index') }}" class="nav-link {{ request()->routeIs('pomodoro.*') ? 'active' : '' }}">
+                <i class="bi bi-clock-history"></i>
+                <span>Pomodoro Timer</span>
+            </a>
+        </div>
+
+        <div class="nav-item">
+            <a href="{{ route('time-entries.index') }}" class="nav-link {{ request()->routeIs('time-entries.*') ? 'active' : '' }}">
+                <i class="bi bi-stopwatch"></i>
+                <span>Time Tracking</span>
+            </a>
+        </div>
+
+        <div class="nav-section-label">Tools</div>
+
+        <div class="nav-item">
+            <a href="{{ route('bookmarks.index') }}" class="nav-link {{ request()->routeIs('bookmarks.*') ? 'active' : '' }}">
+                <i class="bi bi-bookmark"></i>
+                <span>Bookmarks</span>
+            </a>
+        </div>
+
+        <div class="nav-item">
+            <a href="{{ route('notifications.index') }}" class="nav-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}">
+                <i class="bi bi-bell"></i>
+                <span>Notifications</span>
+            </a>
+        </div>
+
+        <div class="nav-item">
+            <a href="{{ route('export.form') }}" class="nav-link {{ request()->routeIs('export.*') ? 'active' : '' }}">
+                <i class="bi bi-download"></i>
+                <span>Export</span>
+            </a>
+        </div>
+
+        <div class="nav-section-label">Community</div>
+
+        <div class="nav-item">
+            <a href="{{ route('study-groups.index') }}" class="nav-link {{ request()->routeIs('study-groups.*') ? 'active' : '' }}">
+                <i class="bi bi-people"></i>
+                <span>Study Groups</span>
+            </a>
+        </div>
+
+        <div class="nav-item">
+            <a href="{{ route('shared-questions.index') }}" class="nav-link {{ request()->routeIs('shared-questions.*') ? 'active' : '' }}">
+                <i class="bi bi-share"></i>
+                <span>Shared Questions</span>
+            </a>
+        </div>
+
+        <div class="nav-item">
+            <a href="{{ route('peer-reviews.index') }}" class="nav-link {{ request()->routeIs('peer-reviews.*') ? 'active' : '' }}">
+                <i class="bi bi-star"></i>
+                <span>Peer Reviews</span>
             </a>
         </div>
     </nav>

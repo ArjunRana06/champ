@@ -176,14 +176,20 @@
             renderPendingQueue();
         };
 
+        function getExt(name) { const p = name.split('.'); return p.length>1 ? p.pop().toLowerCase() : ''; }
+
         function addFiles(files) {
-            const allowedExts = ['pdf', 'docx', 'pptx', 'txt', 'jpg', 'png'];
+            const allowedExt = ['pdf','doc','docx','ppt','pptx','xls','xlsx','txt','jpg','jpeg','png','gif','bmp','webp','csv','rtf','odt'];
+            const allowedMime = ['text/plain','text/csv','text/rtf','application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-powerpoint','application/vnd.openxmlformats-officedocument.presentationml.presentation','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','image/jpeg','image/png','image/gif','image/bmp','image/webp'];
+            const maxSize = 50 * 1024 * 1024;
             const validFiles = Array.from(files).filter(f => {
-                const ext = f.name.split('.').pop().toLowerCase();
-                return allowedExts.includes(ext) && f.size <= 20 * 1024 * 1024;
+                const ext = getExt(f.name);
+                const extOk = allowedExt.includes(ext);
+                const mimeOk = allowedMime.includes(f.type) || f.type.startsWith('text/');
+                return (extOk || mimeOk || (!ext && !f.type)) && f.size <= maxSize;
             });
             if (validFiles.length !== files.length) {
-                alert('Some files were skipped (unsupported format or >20MB)');
+                alert('Some files were skipped (unsupported format or >50MB)');
             }
             pendingFiles.push(...validFiles);
             renderPendingQueue();

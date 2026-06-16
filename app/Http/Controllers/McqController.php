@@ -6,15 +6,18 @@ use App\Models\Mcq;
 use App\Models\Subject;
 use App\Models\Document;
 use App\Services\McqGeneratorService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class McqController extends Controller
 {
     protected $mcqService;
+    protected $notificationService;
 
-    public function __construct(McqGeneratorService $mcqService)
+    public function __construct(McqGeneratorService $mcqService, NotificationService $notificationService)
     {
         $this->mcqService = $mcqService;
+        $this->notificationService = $notificationService;
     }
 
     public function index()
@@ -72,7 +75,41 @@ class McqController extends Controller
             ]);
         }
 
+        $this->notificationService->notifyQuizGenerated($userId, 'MCQ', $request->count);
+
         return redirect()->route('mcqs.index')->with('success', $request->count . ' MCQs generated successfully!');
+    }
+
+    public function edit(Mcq $mcq)
+    {
+        if ($mcq->user_id !== auth()->id()) abort(403);
+        $subjects = auth()->user()->subjects;
+        return view('Backend.mcq.edit', compact('mcq', 'subjects'));
+    }
+
+    public function update(Request $request, Mcq $mcq)
+    {
+        if ($mcq->user_id !== auth()->id()) abort(403);
+
+        $request->validate([
+            'question' => 'required|string',
+            'options' => 'required|array|min:2',
+            'correct_answer' => 'required|string',
+            'explanation' => 'nullable|string',
+            'difficulty' => 'nullable|in:easy,medium,hard',
+            'subject_id' => 'nullable|exists:subjects,id',
+        ]);
+
+        $mcq->update([
+            'question' => $request->question,
+            'options' => $request->options,
+            'correct_answer' => $request->correct_answer,
+            'explanation' => $request->explanation,
+            'difficulty' => $request->difficulty ?? 'medium',
+            'subject_id' => $request->subject_id,
+        ]);
+
+        return redirect()->route('mcqs.index')->with('success', 'MCQ updated successfully.');
     }
 
     public function destroy(Mcq $mcq)

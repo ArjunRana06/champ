@@ -107,44 +107,38 @@ class ChatbotService
         return "😊 $userName, I'm here to help with your studies! Feel free to ask about any topic from your uploaded notes.\n\n📝 What subject or concept can I help you with today?";
     }
 
-    public function chat(string $userMessage, array $history = []): string
+    public function chat(string $userMessage, array $history = [], string $persona = 'default'): string
     {
         $userProfile = $this->getUserProfileData();
         $metadata = $this->getMetadata();
 
-        // 1. Handle language questions directly
         if ($this->isLanguageQuestion($userMessage)) {
             return $this->answerLanguageQuestion($userMessage);
         }
 
-        // 2. Handle pure casual conversation (greetings, small talk)
         if ($this->isCasualConversation($userMessage)) {
             return $this->casualResponse($userMessage);
         }
 
-        // 3. Try to find relevant content in uploaded notes
         $documentContext = $this->getDocumentContext($userMessage);
         $hasRelevantContent = !str_contains($documentContext, "No relevant content found") &&
                               !str_contains($documentContext, "You have not uploaded any processed documents");
 
-        // 4. Choose the appropriate system prompt
-        if ($hasRelevantContent) {
-            // Answer using only the user's notes
-            $systemPrompt = "You are a brilliant, enthusiastic professor. Your answers must be based **only** on the provided excerpts from the student's uploaded materials. If the excerpts contain the answer, explain it thoroughly with examples. Use emojis, numbered lists, and bullet points. Never invent facts. Use plain text only, no HTML.
+        // Build system prompt based on persona
+        $personaIntro = $this->getPersonaIntro($persona);
+        $sourceCitation = "\n\n**IMPORTANT — Source Citation Rule:** After each piece of information drawn from the user's materials, cite the source in parentheses like `[Source: DocumentName.pdf]`. If you use general knowledge (not from their notes), mark it clearly with `[General Knowledge]`.";
 
-**Format:** Use 📚 for overview, 🔍 for details, 💡 for examples, 📊 for takeaways, 🎓 for summary. Use double line breaks.
+        if ($hasRelevantContent) {
+            $systemPrompt = "{$personaIntro} Your answers must be based **only** on the provided excerpts from the student's uploaded materials. If the excerpts contain the answer, explain it thoroughly with examples. Use emojis, numbered lists, and bullet points. Never invent facts. Use plain text only, no HTML.{$sourceCitation}
 
 **Context:** $userProfile\n$metadata
 
-**User question:** $userMessage
-
-**Excerpts from notes:**
+**Excerpts from notes:
 $documentContext
 
-Now produce a detailed answer based strictly on those excerpts.";
+Now produce a detailed answer based strictly on those excerpts. Always cite the source document name in parentheses after each key point.";
         } else {
-            // No relevant notes – force general knowledge answer
-            $systemPrompt = "⚠️ IMPORTANT: The user's uploaded study materials do NOT contain the answer to the current question. You are now **required** to answer using your own general knowledge.
+            $systemPrompt = "⚠️ IMPORTANT: The user's uploaded study materials do NOT contain the answer to the current question. You are now **required** to answer using your own general knowledge.{$sourceCitation}
 
 **Rule:** Do NOT say that the information is missing from their notes. Instead, answer the question directly, clearly, and educationally. Start your answer with: '⚠️ Your uploaded notes do not cover this topic. Here is a general answer based on my knowledge:'
 
@@ -152,8 +146,6 @@ Then provide a detailed, well-structured answer. Use emojis, bullet points, and 
 
 **User profile:** $userProfile
 **Metadata:** $metadata
-
-**User's question:** $userMessage
 
 Now answer the question thoroughly using your general knowledge.";
         }
@@ -196,5 +188,17 @@ Now answer the question thoroughly using your general knowledge.";
             Log::error('Chat exception: ' . $e->getMessage());
             return "Sorry, I encountered an error: " . $e->getMessage();
         }
+    }
+
+    private function getPersonaIntro(string $persona): string
+    {
+        $personas = [
+            'default' => "You are a brilliant, enthusiastic professor.",
+            'strict' => "You are a strict, no-nonsense professor. Be direct, precise, and formal. Use technical terminology. Do not use emojis. Focus on accuracy and completeness.",
+            'friendly' => "You are a friendly, encouraging peer tutor. Be warm, supportive, and use casual language. Celebrate small wins with the student. Use emojis freely.",
+            'socratic' => "You are a Socratic tutor. Do NOT give direct answers. Instead, guide the student by asking probing questions that lead them to discover the answer themselves. Use questions like 'What do you think...?', 'How would you define...?', 'What evidence supports...?'.",
+            'simplifier' => "You are an expert at explaining complex topics simply. Use analogies, metaphors, and real-world examples. Break down difficult concepts into digestible chunks. Assume the student has no prior knowledge of the topic.",
+        ];
+        return $personas[$persona] ?? $personas['default'];
     }
 }

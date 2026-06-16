@@ -47,9 +47,17 @@
                             font-weight:600;">
                             {{ ucfirst($mcq->difficulty) }}
                         </span>
-                        <button class="btn-soft py-1 px-2" style="font-size:0.75rem;color:#dc2626;" onclick="confirmDelete({{ $mcq->id }})">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                        <div class="d-flex gap-1">
+                            <a href="{{ route('mcqs.edit', $mcq) }}" class="btn-soft py-1 px-2" style="font-size:0.75rem;color:#6366f1;">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button class="btn-soft py-1 px-2" style="font-size:0.75rem;color:#f59e0b;" onclick="toggleBookmark('App\\Models\\Mcq', {{ $mcq->id }}, this)">
+                                <i class="bi bi-bookmark"></i>
+                            </button>
+                            <button class="btn-soft py-1 px-2" style="font-size:0.75rem;color:#dc2626;" onclick="confirmDelete({{ $mcq->id }})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <p style="color:#1e1b4b;font-weight:600;font-size:0.95rem;margin-bottom:1rem;">{{ $mcq->question }}</p>
@@ -208,6 +216,19 @@
 
     function confirmDelete(id) {
         if (confirm('Delete this MCQ?')) document.getElementById('delete-form-' + id).submit();
+    }
+
+    function toggleBookmark(type, id, btn) {
+        fetch('/bookmarks/toggle', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+            body: JSON.stringify({bookmarkable_type: type, bookmarkable_id: id})
+        })
+        .then(r => r.json())
+        .then(data => {
+            const icon = btn.querySelector('i');
+            icon.className = data.bookmarked ? 'bi bi-bookmark-fill' : 'bi bi-bookmark';
+        });
     }
 </script>
 

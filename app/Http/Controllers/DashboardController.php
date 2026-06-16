@@ -2,8 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Subject;
+use App\Models\Document;
+use App\Models\Mcq;
+use App\Models\TrueFalseQuestion;
+use App\Models\ShortAnswer;
+use App\Models\FillBlank;
+use App\Models\MatchingQuestion;
+use App\Models\Flashcard;
 use App\Models\Activity;
-use App\Models\Emotion;
+use App\Models\QuizAttempt;
+use App\Models\StudyPlan;
+use App\Models\Exam;
+use App\Models\PomodoroSession;
+use App\Models\TimeEntry;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
@@ -13,162 +25,165 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        // Total memories
-        $totalMemories = Activity::where('user_id', $user->id)->count();
+        // Real counts
+        $subjectsCount = Subject::where('user_id', $user->id)->count();
+        $documentsCount = Document::where('user_id', $user->id)->count();
 
-        // Mood counts
-        $moodStats = Emotion::whereHas('activity', fn($q) => $q->where('user_id', $user->id))
-            ->selectRaw('emotion, count(*) as count')
-            ->groupBy('emotion')
-            ->get()
-            ->pluck('count', 'emotion')
-            ->toArray();
+        $mcqsCount = Mcq::where('user_id', $user->id)->count();
+        $tfCount = TrueFalseQuestion::where('user_id', $user->id)->count();
+        $saCount = ShortAnswer::where('user_id', $user->id)->count();
+        $fbCount = FillBlank::where('user_id', $user->id)->count();
+        $matchCount = MatchingQuestion::where('user_id', $user->id)->count();
+        $fcCount = Flashcard::where('user_id', $user->id)->count();
 
-        $happyCount = $moodStats['happy'] ?? 0;
-        $excitedCount = $moodStats['excited'] ?? 0;
-        $neutralCount = $moodStats['neutral'] ?? 0;
-        $sadCount = $moodStats['sad'] ?? 0;
-        $stressedCount = $moodStats['stressed'] ?? 0;
+        $totalQuestions = $mcqsCount + $tfCount + $saCount + $fbCount + $matchCount + $fcCount;
+        $activitiesCount = Activity::where('user_id', $user->id)->count();
 
-        $moodData = [
-            'Happy'    => $happyCount,
-            'Excited'  => $excitedCount,
-            'Neutral'  => $neutralCount,
-            'Sad'      => $sadCount,
-            'Stressed' => $stressedCount,
+        // Performance Analytics
+        $quizAttempts = QuizAttempt::where('user_id', $user->id)->count();
+        $avgScore = QuizAttempt::where('user_id', $user->id)->avg('score_percentage');
+        $recentQuizzes = QuizAttempt::where('user_id', $user->id)->latest()->take(5)->get();
+        $studyPlansCount = StudyPlan::where('user_id', $user->id)->count();
+        $examsCount = Exam::where('user_id', $user->id)->count();
+        $pomodoroCount = PomodoroSession::where('user_id', $user->id)->count();
+        $focusMinutes = TimeEntry::where('user_id', $user->id)->sum('duration_minutes');
+
+        // Monthly question generation for chart
+        $monthlyQuestions = collect();
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $start = $month->copy()->startOfMonth();
+            $end = $month->copy()->endOfMonth();
+
+            $count = Mcq::where('user_id', $user->id)->whereBetween('created_at', [$start, $end])->count()
+                + TrueFalseQuestion::where('user_id', $user->id)->whereBetween('created_at', [$start, $end])->count()
+                + ShortAnswer::where('user_id', $user->id)->whereBetween('created_at', [$start, $end])->count()
+                + FillBlank::where('user_id', $user->id)->whereBetween('created_at', [$start, $end])->count()
+                + MatchingQuestion::where('user_id', $user->id)->whereBetween('created_at', [$start, $end])->count()
+                + Flashcard::where('user_id', $user->id)->whereBetween('created_at', [$start, $end])->count();
+
+            $monthlyQuestions->push([
+                'month' => $month->format('M'),
+                'count' => $count,
+            ]);
+        }
+
+        // Quiz type distribution for pie chart
+        $quizDistribution = [
+            'MCQ' => $mcqsCount,
+            'True/False' => $tfCount,
+            'Short Answer' => $saCount,
+            'Fill Blanks' => $fbCount,
+            'Matching' => $matchCount,
+            'Flashcards' => $fcCount,
         ];
 
-        // Monthly mood (line chart) – simplified
-        $monthlyMood = Activity::where('user_id', $user->id)
-            ->whereIn('type', ['text', 'emotion', 'emoji'])
-            ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as count')
-            ->groupBy('year', 'month')
-            ->orderBy('year', 'desc')
-            ->orderBy('month', 'desc')
-            ->take(12)
+        // Recent documents
+        $recentDocuments = Document::where('user_id', $user->id)
+            ->with('subject')
+            ->latest()
+            ->take(5)
             ->get()
-            ->map(function ($item) {
-                return [
-                    'month' => date('M', mktime(0,0,0, $item->month, 1)),
-                    'score' => rand(5,9) // replace with real mood scoring logic
-                ];
-            })->reverse()->values();
+            ->map(fn($doc) => (object)[
+                'id' => $doc->id,
+                'title' => $doc->original_name ?? 'Untitled',
+                'subject' => $doc->subject?->name ?? 'Uncategorized',
+                'date' => $doc->created_at->format('M d, Y'),
+                'status' => $doc->status ?? 'completed',
+            ]);
 
-        // Recent activities
+        // Top subjects by document count
+        $topSubjects = Subject::where('user_id', $user->id)
+            ->withCount('documents')
+            ->orderBy('documents_count', 'desc')
+            ->take(5)
+            ->get()
+            ->map(fn($sub) => [
+                'name' => $sub->name,
+                'code' => $sub->code,
+                'documents' => $sub->documents_count,
+                'questions' =>
+                    Mcq::where('subject_id', $sub->id)->count()
+                    + TrueFalseQuestion::where('subject_id', $sub->id)->count()
+                    + ShortAnswer::where('subject_id', $sub->id)->count()
+                    + FillBlank::where('subject_id', $sub->id)->count()
+                    + MatchingQuestion::where('subject_id', $sub->id)->count()
+                    + Flashcard::where('subject_id', $sub->id)->count(),
+            ]);
+
+        // Recent activity
         $recentActivities = Activity::where('user_id', $user->id)
             ->with('emotions')
             ->latest()
-            ->take(4)
+            ->take(5)
             ->get();
 
-        // Tags extraction
-        $tagCounts = $this->extractTagsFromActivities($user->id);
-        $topTags = collect($tagCounts)->sortDesc()->take(4)->map(function ($count, $tag) {
-            return [
-                'tag' => $tag,
-                'count' => $count,
-                'trend' => rand(5, 30) // placeholder
-            ];
-        })->values();
-        $uniqueTagsCount = count($tagCounts);
-
-        // Recent memories table
-        $recentMemories = Activity::where('user_id', $user->id)
-            ->latest()
-            ->take(4)
+        // Subject distribution for donut chart
+        $subjectNames = Subject::where('user_id', $user->id)
+            ->withCount('documents')
             ->get()
-            ->map(function ($activity) {
-                $mood = $activity->emotions->first()->emotion ?? 'neutral';
-                $moodIcon = [
-                    'happy' => '😊', 'excited' => '🤩', 'neutral' => '😐',
-                    'sad' => '😔', 'stressed' => '😫'
-                ][$mood] ?? '😊';
-                $moodColor = [
-                    'happy' => 'success', 'excited' => 'success', 'neutral' => 'info',
-                    'sad' => 'warning', 'stressed' => 'warning'
-                ][$mood] ?? 'info';
-                $tags = $this->extractTagsFromString($activity->parsed_content);
-                return (object)[
-                    'id' => $activity->id,
-                    'title' => $activity->parsed_content ? Str::limit($activity->parsed_content, 40) : 'Untitled',
-                    'mood' => $mood,
-                    'mood_icon' => $moodIcon,
-                    'mood_color' => $moodColor,
-                    'date' => $activity->created_at->format('M d, Y'),
-                    'tags' => implode(' ', array_map(fn($t) => '#' . $t, $tags)),
-                ];
-            });
+            ->pluck('documents_count', 'name')
+            ->toArray();
 
-        // Increases – compute from real data (or fallback)
-        $happyIncrease = $this->getMoodIncrease($user->id, 'happy');
-        $totalIncrease = $this->getTotalIncrease($user->id);
-        $tagIncrease = '+6';
-        $aiInsightsCount = 42;
-        $aiInsightsIncrease = '+8%';
+        // Trend calculations
+        $lastMonth = now()->subMonth();
+        $subjectsTrend = $this->getTrend(
+            Subject::where('user_id', $user->id)->whereMonth('created_at', now()->month)->count(),
+            Subject::where('user_id', $user->id)->whereMonth('created_at', $lastMonth->month)->count()
+        );
+        $documentsTrend = $this->getTrend(
+            Document::where('user_id', $user->id)->whereMonth('created_at', now()->month)->count(),
+            Document::where('user_id', $user->id)->whereMonth('created_at', $lastMonth->month)->count()
+        );
+        $questionsTrend = $this->getTrend(
+            $this->questionsThisMonth($user->id, now()),
+            $this->questionsThisMonth($user->id, $lastMonth)
+        );
+        $activitiesTrend = $this->getTrend(
+            Activity::where('user_id', $user->id)->whereMonth('created_at', now()->month)->count(),
+            Activity::where('user_id', $user->id)->whereMonth('created_at', $lastMonth->month)->count()
+        );
 
-        // Pass all variables to the view
-        return view('dashboard', [
-            'totalMemories' => $totalMemories,
-            'happyCount' => $happyCount,
-            'excitedCount' => $excitedCount,
-            'neutralCount' => $neutralCount,
-            'sadCount' => $sadCount,
-            'stressedCount' => $stressedCount,
-            'moodData' => $moodData,
-            'monthlyMood' => $monthlyMood,
-            'recentActivities' => $recentActivities,
-            'topTags' => $topTags,
-            'uniqueTagsCount' => $uniqueTagsCount,
-            'recentMemories' => $recentMemories,
-            'happyIncrease' => $happyIncrease,
-            'totalIncrease' => $totalIncrease,
-            'tagIncrease' => $tagIncrease,
-            'aiInsightsCount' => $aiInsightsCount,
-            'aiInsightsIncrease' => $aiInsightsIncrease,
-        ]);
+        return view('dashboard', compact(
+            'subjectsCount',
+            'documentsCount',
+            'totalQuestions',
+            'activitiesCount',
+            'monthlyQuestions',
+            'quizDistribution',
+            'recentDocuments',
+            'topSubjects',
+            'recentActivities',
+            'subjectNames',
+            'subjectsTrend',
+            'documentsTrend',
+            'questionsTrend',
+            'activitiesTrend',
+            'quizAttempts',
+            'avgScore',
+            'recentQuizzes',
+            'studyPlansCount',
+            'examsCount',
+            'pomodoroCount',
+            'focusMinutes',
+        ));
     }
 
-    private function extractTagsFromActivities($userId)
+    private function questionsThisMonth($userId, $date)
     {
-        $activities = Activity::where('user_id', $userId)
-            ->whereIn('type', ['text', 'emoji', 'emotion'])
-            ->get();
-        $tags = [];
-        foreach ($activities as $act) {
-            $found = $this->extractTagsFromString($act->parsed_content);
-            foreach ($found as $tag) {
-                $tags[$tag] = ($tags[$tag] ?? 0) + 1;
-            }
-        }
-        return $tags;
+        $start = $date->copy()->startOfMonth();
+        $end = $date->copy()->endOfMonth();
+        return Mcq::where('user_id', $userId)->whereBetween('created_at', [$start, $end])->count()
+            + TrueFalseQuestion::where('user_id', $userId)->whereBetween('created_at', [$start, $end])->count()
+            + ShortAnswer::where('user_id', $userId)->whereBetween('created_at', [$start, $end])->count()
+            + FillBlank::where('user_id', $userId)->whereBetween('created_at', [$start, $end])->count()
+            + MatchingQuestion::where('user_id', $userId)->whereBetween('created_at', [$start, $end])->count()
+            + Flashcard::where('user_id', $userId)->whereBetween('created_at', [$start, $end])->count();
     }
 
-    private function extractTagsFromString($text)
+    private function getTrend($current, $previous)
     {
-        preg_match_all('/#([a-zA-Z0-9_]+)/', $text, $matches);
-        return $matches[1];
-    }
-
-    private function getMoodIncrease($userId, $mood)
-    {
-        $current = Emotion::whereHas('activity', fn($q) => $q->where('user_id', $userId))
-            ->where('emotion', $mood)
-            ->whereMonth('created_at', now()->month)
-            ->count();
-        $previous = Emotion::whereHas('activity', fn($q) => $q->where('user_id', $userId))
-            ->where('emotion', $mood)
-            ->whereMonth('created_at', now()->subMonth()->month)
-            ->count();
-        if ($previous == 0) return '+100%';
-        $change = round((($current - $previous) / $previous) * 100);
-        return ($change >= 0 ? '+' : '') . $change . '%';
-    }
-
-    private function getTotalIncrease($userId)
-    {
-        $current = Activity::where('user_id', $userId)->whereMonth('created_at', now()->month)->count();
-        $previous = Activity::where('user_id', $userId)->whereMonth('created_at', now()->subMonth()->month)->count();
-        if ($previous == 0) return '+100%';
+        if ($previous == 0) return $current > 0 ? '+100%' : '0%';
         $change = round((($current - $previous) / $previous) * 100);
         return ($change >= 0 ? '+' : '') . $change . '%';
     }

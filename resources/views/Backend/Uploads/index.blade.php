@@ -18,12 +18,12 @@
                 </div>
                 <h5 style="color:#1e1b4b;font-weight:700;">Drag & drop your files here</h5>
                 <p style="color:#6b7280;">or click to browse</p>
-                <input type="file" id="fileInput" multiple accept=".pdf,.docx,.pptx,.txt,.jpg,.png" class="d-none">
+                <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.bmp,.webp,.csv,.rtf,.odt" class="d-none">
                 <button class="dark-btn" id="browseBtn">
                     <i class="bi bi-folder2-open"></i> Choose Files
                 </button>
                 <div class="mt-3" style="color:#9ca3af;font-size:0.75rem;">
-                    Supported: PDF, DOCX, PPTX, TXT, JPG, PNG (max 20MB each)
+                    Supported: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, JPG, PNG, GIF, BMP, WEBP, CSV, RTF, ODT (max 50MB each)
                 </div>
             </div>
 
@@ -111,10 +111,19 @@
             window.removeFile = (i) => { pendingFiles.splice(i,1); renderPending(); };
         }
 
+        function getExt(name) { const p = name.split('.'); return p.length>1 ? p.pop().toLowerCase() : ''; }
+
         function addFiles(files) {
-            const allowed = ['pdf','docx','pptx','txt','jpg','png'];
-            const valid = Array.from(files).filter(f => allowed.includes(f.name.split('.').pop().toLowerCase()) && f.size<=20*1024*1024);
-            if (valid.length!==files.length) alert('Some files were skipped (unsupported format or >20MB)');
+            const allowedExt = ['pdf','doc','docx','ppt','pptx','xls','xlsx','txt','jpg','jpeg','png','gif','bmp','webp','csv','rtf','odt'];
+            const allowedMime = ['text/plain','text/csv','text/rtf','application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-powerpoint','application/vnd.openxmlformats-officedocument.presentationml.presentation','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','image/jpeg','image/png','image/gif','image/bmp','image/webp'];
+            const maxSize = 50 * 1024 * 1024;
+            const valid = Array.from(files).filter(f => {
+                const ext = getExt(f.name);
+                const extOk = allowedExt.includes(ext);
+                const mimeOk = allowedMime.includes(f.type) || f.type.startsWith('text/');
+                return (extOk || mimeOk || (!ext && !f.type)) && f.size <= maxSize;
+            });
+            if (valid.length!==files.length) alert('Some files were skipped (unsupported format or >50MB)');
             pendingFiles.push(...valid);
             renderPending();
         }
@@ -177,22 +186,73 @@
                     list.innerHTML = `<div class="text-center py-4"><i class="bi bi-inbox" style="font-size:2.5rem;color:#c7d2fe;"></i><p class="mt-2" style="color:#9ca3af;">No documents yet.</p></div>`;
                     return;
                 }
-                list.innerHTML = documents.map(d=>`
-                    <div class="d-flex justify-content-between align-items-start py-3" style="border-bottom:1px solid #f1f5f9;">
-                        <div>
-                            <div style="color:#1e1b4b;font-size:0.85rem;font-weight:500;"><i class="bi bi-file-earmark-text me-2" style="color:#6366f1;"></i>${esc(d.original_name)}</div>
-                            <div style="color:#9ca3af;font-size:0.75rem;margin-top:0.2rem;">
-                                ${d.subject?esc(d.subject.name):'Uncategorized'} &bull; ${fmtDate(d.created_at)} &bull;
-                                <span style="color:${d.status==='completed'?'#059669':d.status==='failed'?'#dc2626':'#d97706'};">${d.status}</span>
+                list.innerHTML = documents.map(d=>{
+                    const summaryBtn = d.status==='completed'
+                        ? `<button class="btn-soft py-1 px-2 summary-btn" style="font-size:0.75rem;color:#6366f1;" onclick="summarizeDoc(${d.id}, this)" title="Generate Summary"><i class="bi bi-file-text"></i></button>`
+                        : '';
+                    return `
+                    <div class="py-3" style="border-bottom:1px solid #f1f5f9;">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div style="color:#1e1b4b;font-size:0.85rem;font-weight:500;"><i class="bi bi-file-earmark-text me-2" style="color:#6366f1;"></i>${esc(d.original_name)}</div>
+                                <div style="color:#9ca3af;font-size:0.75rem;margin-top:0.2rem;">
+                                    ${d.subject?esc(d.subject.name):'Uncategorized'} &bull; ${fmtDate(d.created_at)} &bull;
+                                    <span style="color:${d.status==='completed'?'#059669':d.status==='failed'?'#dc2626':'#d97706'};">${d.status}</span>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-1">
+                                ${summaryBtn}
+                                <a href="/documents/${d.id}/preview" class="btn-soft py-1 px-2" style="font-size:0.75rem;" target="_blank"><i class="bi bi-eye"></i></a>
+                                <button class="btn-soft danger py-1 px-2" style="font-size:0.75rem;" onclick="deleteDoc(${d.id}, '${esc(d.original_name)}')"><i class="bi bi-trash"></i></button>
                             </div>
                         </div>
-                        <a href="/documents/${d.id}/preview" class="btn-soft py-1 px-2" style="font-size:0.75rem;" target="_blank"><i class="bi bi-eye"></i></a>
-                    </div>
-                `).join('');
+                        <div id="summary-${d.id}" class="mt-2" style="display:none;"></div>
+                    </div>`;
+                }).join('');
             } catch (err) {
                 list.innerHTML = `<div class="text-center py-4"><i class="bi bi-exclamation-triangle" style="font-size:2.5rem;color:#dc2626;"></i><p class="mt-2" style="color:#6b7280;">Failed to load documents.</p><button class="btn-soft mt-2" onclick="fetchDocs()">Retry</button></div>`;
             }
         }
+
+        window.deleteDoc = async function(id, name) {
+            if (!confirm(`Delete "${name}"? This will also remove all related chunks and questions.`)) return;
+            try {
+                await axios.delete(`/documents/${id}`);
+                await fetchDocs();
+            } catch (err) {
+                alert('Failed to delete document');
+            }
+        };
+
+        window.summarizeDoc = async function(id, btn) {
+            if (btn.disabled) return;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-arrow-repeat"></i>';
+            try {
+                const formData = new FormData();
+                formData.append('_token', '{{ csrf_token() }}');
+                const res = await axios.post('/documents/' + id + '/summarize', formData);
+                const summaryDiv = document.getElementById('summary-' + id);
+                if (summaryDiv) {
+                    summaryDiv.style.display = 'block';
+                    summaryDiv.innerHTML = '<div class="glass-card p-3 mt-2" style="border-left:4px solid #6366f1;"><h6 style="color:#1e1b4b;font-weight:700;font-size:0.85rem;margin-bottom:0.5rem;"><i class="bi bi-file-text me-2" style="color:#6366f1;"></i>AI Summary</h6><div style="color:#374151;font-size:0.85rem;line-height:1.6;">' + esc(res.data?.summary || 'Summary generated') + '</div></div>';
+                    if (res.data?.summary) {
+                        summaryDiv.querySelector('div').innerHTML = '<h6 style="color:#1e1b4b;font-weight:700;font-size:0.85rem;margin-bottom:0.5rem;"><i class="bi bi-file-text me-2" style="color:#6366f1;"></i>AI Summary</h6><div style="color:#374151;font-size:0.85rem;line-height:1.6;">' + res.data.summary + '</div>';
+                    }
+                }
+                btn.innerHTML = '<i class="bi bi-file-text"></i>';
+                btn.style.borderColor = '#10b981';
+                btn.style.color = '#10b981';
+            } catch (err) {
+                btn.innerHTML = '<i class="bi bi-exclamation-triangle"></i>';
+                const summaryDiv = document.getElementById('summary-' + id);
+                if (summaryDiv) {
+                    summaryDiv.style.display = 'block';
+                    summaryDiv.innerHTML = '<div class="p-3 mt-2" style="border-left:4px solid #dc2626;background:#fef2f2;border-radius:0.75rem;font-size:0.85rem;color:#dc2626;">Summarization failed: ' + (err.response?.data?.message || err.message) + '</div>';
+                }
+                setTimeout(() => { btn.innerHTML = '<i class="bi bi-file-text"></i>'; btn.disabled = false; }, 3000);
+            }
+        };
 
         const dz = $('dropzone'), bb = $('browseBtn'), fi = $('fileInput'), ub = $('uploadBtn'), rf = $('refreshDocsBtn');
         if (dz) {

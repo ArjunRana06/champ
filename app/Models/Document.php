@@ -12,7 +12,8 @@ class Document extends Model
 
     protected $fillable = [
         'user_id', 'subject_id', 'original_name', 'file_path',
-        'mime_type', 'status', 'total_chunks', 'extracted_text'
+        'mime_type', 'status', 'total_chunks', 'extracted_text',
+        'processing_progress', 'processing_message',
     ];
 
     protected $casts = [

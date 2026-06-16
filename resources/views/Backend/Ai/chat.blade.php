@@ -11,6 +11,15 @@
                 <h4 class="mb-0" style="font-weight:800;color:#1e1b4b;">AI Study Assistant</h4>
                 <small style="color:#6b7280;">Chat with your personal AI tutor — powered by your study materials</small>
             </div>
+            <div class="ms-auto">
+                <select id="personaSelect" class="form-select" style="width:auto;display:inline-block;border-radius:40px;font-size:0.8rem;padding:0.3rem 1rem;background:white;border:1.5px solid #e5e7eb;">
+                    <option value="default">🎓 Professor (Default)</option>
+                    <option value="strict">📚 Strict Professor</option>
+                    <option value="friendly">🤗 Friendly Tutor</option>
+                    <option value="socratic">❓ Socratic Tutor</option>
+                    <option value="simplifier">💡 Simplifier</option>
+                </select>
+            </div>
         </div>
     </div>
 
@@ -160,11 +169,12 @@
         appendMessage('user', message);
         chatInput.value = '';
         showTypingIndicator();
+        const persona = document.getElementById('personaSelect')?.value || 'default';
         try {
             const response = await fetch('{{ route('chat.send') }}', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                body: JSON.stringify({ message })
+                body: JSON.stringify({ message, persona })
             });
             const data = await response.json();
             removeTypingIndicator();
