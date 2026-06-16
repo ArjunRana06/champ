@@ -4,20 +4,20 @@
 <div class="container-fluid px-0">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 style="color:#1e1b4b;font-weight:800;font-size:1.3rem;">
-                <i class="bi bi-play-circle me-2" style="color:#6366f1;"></i>
+            <h2 style="color:var(--text-primary);font-weight:800;font-size:1.3rem;">
+                <i class="bi bi-play-circle me-2" style="color:var(--card-accent);"></i>
                 {{ $quizAttempt->is_exam_mode ? '📝 Exam Mode' : '📝 Practice Quiz' }}
             </h2>
-            <p style="color:#6b7280;font-size:0.85rem;">{{ count($questions) }} questions</p>
+            <p style="color:var(--text-secondary);font-size:0.85rem;">{{ count($questions) }} questions</p>
         </div>
         <div class="d-flex align-items-center gap-3">
             @if($timeLimit > 0)
                 <div class="glass-card py-2 px-3 d-flex align-items-center gap-2">
                     <i class="bi bi-clock" style="color:#ef4444;"></i>
-                    <span id="timer" style="font-weight:700;color:#1e1b4b;font-size:1.1rem;">{{ $timeLimit }}:00</span>
+                    <span id="timer" style="font-weight:700;color:var(--text-primary);font-size:1.1rem;">{{ $timeLimit }}:00</span>
                 </div>
             @endif
-            <span id="progress-text" style="color:#6b7280;font-weight:500;">0/{{ count($questions) }}</span>
+            <span id="progress-text" style="color:var(--text-secondary);font-weight:500;">0/{{ count($questions) }}</span>
         </div>
     </div>
 
@@ -28,7 +28,7 @@
         @foreach($questions as $index => $q)
             <div class="glass-card mb-3 question-card" id="q-{{ $index }}">
                 <div class="d-flex justify-content-between align-items-start mb-2">
-                    <span style="font-size:0.7rem;padding:0.2rem 0.7rem;border-radius:20px;background:#eef2ff;color:#6366f1;font-weight:600;">
+                    <span style="font-size:0.7rem;padding:0.2rem 0.7rem;border-radius:20px;background:#eef2ff;color:var(--card-accent);font-weight:600;">
                         Question {{ $index + 1 }} of {{ count($questions) }}
                     </span>
                     <span style="font-size:0.7rem;padding:0.2rem 0.7rem;border-radius:20px;
@@ -40,17 +40,17 @@
                 </div>
 
                 @if($q['type'] === 'mcq')
-                    <p style="color:#1e1b4b;font-weight:600;font-size:0.95rem;margin-bottom:1rem;">{{ $q['question'] }}</p>
+                    <p style="color:var(--text-primary);font-weight:600;font-size:0.95rem;margin-bottom:1rem;">{{ $q['question'] }}</p>
                     <div class="options-group">
                         @foreach($q['options'] as $optIndex => $option)
                             <label class="d-flex align-items-center gap-2 py-2 px-3 rounded-3 mb-1 option-label" style="background:#f8fafc;border:1px solid #f1f5f9;cursor:pointer;transition:all 0.2s;">
-                                <input type="radio" name="answers[{{ $index }}]" value="{{ $optIndex }}" class="form-check-input" style="accent-color:#6366f1;">
-                                <span style="color:#374151;font-size:0.85rem;">{{ $option }}</span>
+                                <input type="radio" name="answers[{{ $index }}]" value="{{ $optIndex }}" class="form-check-input" style="accent-color:var(--card-accent);">
+                                <span style="color:var(--text-primary);font-size:0.85rem;">{{ $option }}</span>
                             </label>
                         @endforeach
                     </div>
                 @elseif($q['type'] === 'true-false')
-                    <p style="color:#1e1b4b;font-weight:600;font-size:0.95rem;margin-bottom:1rem;">{{ $q['statement'] }}</p>
+                    <p style="color:var(--text-primary);font-weight:600;font-size:0.95rem;margin-bottom:1rem;">{{ $q['statement'] }}</p>
                     <div class="d-flex gap-3">
                         <label class="flex-fill text-center py-3 px-4 rounded-3 tf-label" style="background:#f8fafc;border:2px solid #e5e7eb;cursor:pointer;transition:all 0.2s;">
                             <input type="radio" name="answers[{{ $index }}]" value="true" class="d-none">
@@ -69,7 +69,7 @@
             <button type="submit" class="dark-btn" id="submitQuizBtn" style="padding:0.8rem 3rem;font-size:1rem;">
                 <i class="bi bi-check-circle"></i> Submit Quiz
             </button>
-            <p class="mt-2" style="color:#9ca3af;font-size:0.8rem;">Answered: <span id="answeredCount">0</span>/{{ count($questions) }}</p>
+            <p class="mt-2" style="color:var(--text-muted);font-size:0.8rem;">Answered: <span id="answeredCount">0</span>/{{ count($questions) }}</p>
         </div>
     </form>
 </div>

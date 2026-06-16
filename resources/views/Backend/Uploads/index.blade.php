@@ -7,35 +7,35 @@
             <h2>Upload Study Materials</h2>
             <p>Upload PDFs, slides, handwritten notes — AI will index them for you</p>
         </div>
-        <span style="color:#6366f1;font-size:0.85rem;font-weight:500;" id="uploadCountBadge">0 documents uploaded</span>
+        <span style="color:var(--card-accent);font-size:0.85rem;font-weight:500;" id="uploadCountBadge">0 documents uploaded</span>
     </div>
 
     <div class="row g-4">
         <div class="col-lg-7">
             <div class="glass-card text-center p-5" id="dropzone" style="cursor:pointer;border:2px dashed #c7d2fe;transition:all 0.2s;">
                 <div class="mb-3">
-                    <i class="bi bi-cloud-upload" style="font-size:3.5rem;color:#6366f1;"></i>
+                    <i class="bi bi-cloud-upload" style="font-size:3.5rem;color:var(--card-accent);"></i>
                 </div>
-                <h5 style="color:#1e1b4b;font-weight:700;">Drag & drop your files here</h5>
-                <p style="color:#6b7280;">or click to browse</p>
+                <h5 style="color:var(--text-primary);font-weight:700;">Drag & drop your files here</h5>
+                <p style="color:var(--text-secondary);">or click to browse</p>
                 <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.bmp,.webp,.csv,.rtf,.odt" class="d-none">
                 <button class="dark-btn" id="browseBtn">
                     <i class="bi bi-folder2-open"></i> Choose Files
                 </button>
-                <div class="mt-3" style="color:#9ca3af;font-size:0.75rem;">
+                <div class="mt-3" style="color:var(--text-muted);font-size:0.75rem;">
                     Supported: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, JPG, PNG, GIF, BMP, WEBP, CSV, RTF, ODT (max 50MB each)
                 </div>
             </div>
 
             <div class="glass-card mt-4" id="pendingQueue" style="display:none;">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h6 style="color:#1e1b4b;font-weight:700;margin:0;">
-                        <i class="bi bi-file-earmark me-2" style="color:#6366f1;"></i> Ready to upload (<span id="pendingCount">0</span>)
+                    <h6 style="color:var(--text-primary);font-weight:700;margin:0;">
+                        <i class="bi bi-file-earmark me-2" style="color:var(--card-accent);"></i> Ready to upload (<span id="pendingCount">0</span>)
                     </h6>
                 </div>
                 <div id="pendingList"></div>
                 <div class="mt-3">
-                    <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6366f1;margin-bottom:0.4rem;display:block;">Assign to subject</label>
+                    <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--card-accent);margin-bottom:0.4rem;display:block;">Assign to subject</label>
                     <select id="subjectSelect" style="width:100%;background:white;border:1.5px solid #e5e7eb;border-radius:1rem;padding:0.7rem 1.1rem;color:#111827;font-family:'Inter',sans-serif;margin-bottom:0.8rem;">
                         <option value="">-- General / Uncategorized --</option>
                         @forelse($subjects as $subject)
@@ -53,23 +53,23 @@
 
         <div class="col-lg-5">
             <div class="glass-card mb-4" id="activeUploadsCard" style="display:none;">
-                <h6 style="color:#1e1b4b;font-weight:700;margin-bottom:1rem;">
-                    <i class="bi bi-hourglass-split me-2" style="color:#6366f1;"></i> Uploading (<span id="activeCount">0</span>)
+                <h6 style="color:var(--text-primary);font-weight:700;margin-bottom:1rem;">
+                    <i class="bi bi-hourglass-split me-2" style="color:var(--card-accent);"></i> Uploading (<span id="activeCount">0</span>)
                 </h6>
                 <div id="activeUploadsList"></div>
             </div>
 
             <div class="glass-card">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h6 style="color:#1e1b4b;font-weight:700;margin:0;">
-                        <i class="bi bi-folder-fill me-2" style="color:#6366f1;"></i> Your uploaded materials
+                    <h6 style="color:var(--text-primary);font-weight:700;margin:0;">
+                        <i class="bi bi-folder-fill me-2" style="color:var(--card-accent);"></i> Your uploaded materials
                     </h6>
                     <button class="btn-soft py-1 px-3" style="font-size:0.75rem;" id="refreshDocsBtn"><i class="bi bi-arrow-clockwise"></i></button>
                 </div>
                 <div id="documentsList">
                     <div class="text-center py-4">
                         <i class="bi bi-inbox" style="font-size:2.5rem;color:#c7d2fe;"></i>
-                        <p class="mt-2" style="color:#9ca3af;">No documents yet. Upload your first file above.</p>
+                        <p class="mt-2" style="color:var(--text-muted);">No documents yet. Upload your first file above.</p>
                     </div>
                 </div>
             </div>
@@ -99,10 +99,10 @@
             l.innerHTML = pendingFiles.map((f,i)=>`
                 <div class="d-flex justify-content-between align-items-center py-2" style="border-bottom:1px solid #f1f5f9;">
                     <div class="d-flex align-items-center gap-3">
-                        <i class="bi bi-file-earmark-text" style="font-size:1.2rem;color:#6366f1;"></i>
+                        <i class="bi bi-file-earmark-text" style="font-size:1.2rem;color:var(--card-accent);"></i>
                         <div>
-                            <div style="color:#1e1b4b;font-size:0.85rem;">${esc(f.name)}</div>
-                            <div style="color:#9ca3af;font-size:0.7rem;">${fmtBytes(f.size)}</div>
+                            <div style="color:var(--text-primary);font-size:0.85rem;">${esc(f.name)}</div>
+                            <div style="color:var(--text-muted);font-size:0.7rem;">${fmtBytes(f.size)}</div>
                         </div>
                     </div>
                     <button class="btn-soft py-1 px-2" style="font-size:0.75rem;" onclick="removeFile(${i})"><i class="bi bi-x"></i></button>
@@ -136,8 +136,8 @@
             l.innerHTML = activeUploads.map(t=>`
                 <div class="mb-2">
                     <div class="d-flex justify-content-between" style="font-size:0.8rem;">
-                        <span style="color:#374151;">${esc(t.name)}</span>
-                        <span style="color:#6366f1;">${t.progress}%</span>
+                        <span style="color:var(--text-primary);">${esc(t.name)}</span>
+                        <span style="color:var(--card-accent);">${t.progress}%</span>
                     </div>
                     <div class="progress" style="height:4px;background:#f1f5f9;border-radius:4px;">
                         <div class="progress-bar" style="width:${t.progress}%;background:#6366f1;border-radius:4px;"></div>
@@ -183,19 +183,19 @@
                 documents = (res.data && Array.isArray(res.data.documents)) ? res.data.documents : [];
                 if (badge) badge.innerText = documents.length+' document'+(documents.length!==1?'s':'')+' uploaded';
                 if (!documents.length) {
-                    list.innerHTML = `<div class="text-center py-4"><i class="bi bi-inbox" style="font-size:2.5rem;color:#c7d2fe;"></i><p class="mt-2" style="color:#9ca3af;">No documents yet.</p></div>`;
+                    list.innerHTML = `<div class="text-center py-4"><i class="bi bi-inbox" style="font-size:2.5rem;color:#c7d2fe;"></i><p class="mt-2" style="color:var(--text-muted);">No documents yet.</p></div>`;
                     return;
                 }
                 list.innerHTML = documents.map(d=>{
                     const summaryBtn = d.status==='completed'
-                        ? `<button class="btn-soft py-1 px-2 summary-btn" style="font-size:0.75rem;color:#6366f1;" onclick="summarizeDoc(${d.id}, this)" title="Generate Summary"><i class="bi bi-file-text"></i></button>`
+                        ? `<button class="btn-soft py-1 px-2 summary-btn" style="font-size:0.75rem;color:var(--card-accent);" onclick="summarizeDoc(${d.id}, this)" title="Generate Summary"><i class="bi bi-file-text"></i></button>`
                         : '';
                     return `
                     <div class="py-3" style="border-bottom:1px solid #f1f5f9;">
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
-                                <div style="color:#1e1b4b;font-size:0.85rem;font-weight:500;"><i class="bi bi-file-earmark-text me-2" style="color:#6366f1;"></i>${esc(d.original_name)}</div>
-                                <div style="color:#9ca3af;font-size:0.75rem;margin-top:0.2rem;">
+                                <div style="color:var(--text-primary);font-size:0.85rem;font-weight:500;"><i class="bi bi-file-earmark-text me-2" style="color:var(--card-accent);"></i>${esc(d.original_name)}</div>
+                                <div style="color:var(--text-muted);font-size:0.75rem;margin-top:0.2rem;">
                                     ${d.subject?esc(d.subject.name):'Uncategorized'} &bull; ${fmtDate(d.created_at)} &bull;
                                     <span style="color:${d.status==='completed'?'#059669':d.status==='failed'?'#dc2626':'#d97706'};">${d.status}</span>
                                 </div>
@@ -210,7 +210,7 @@
                     </div>`;
                 }).join('');
             } catch (err) {
-                list.innerHTML = `<div class="text-center py-4"><i class="bi bi-exclamation-triangle" style="font-size:2.5rem;color:#dc2626;"></i><p class="mt-2" style="color:#6b7280;">Failed to load documents.</p><button class="btn-soft mt-2" onclick="fetchDocs()">Retry</button></div>`;
+                list.innerHTML = `<div class="text-center py-4"><i class="bi bi-exclamation-triangle" style="font-size:2.5rem;color:#dc2626;"></i><p class="mt-2" style="color:var(--text-secondary);">Failed to load documents.</p><button class="btn-soft mt-2" onclick="fetchDocs()">Retry</button></div>`;
             }
         }
 
@@ -235,9 +235,9 @@
                 const summaryDiv = document.getElementById('summary-' + id);
                 if (summaryDiv) {
                     summaryDiv.style.display = 'block';
-                    summaryDiv.innerHTML = '<div class="glass-card p-3 mt-2" style="border-left:4px solid #6366f1;"><h6 style="color:#1e1b4b;font-weight:700;font-size:0.85rem;margin-bottom:0.5rem;"><i class="bi bi-file-text me-2" style="color:#6366f1;"></i>AI Summary</h6><div style="color:#374151;font-size:0.85rem;line-height:1.6;">' + esc(res.data?.summary || 'Summary generated') + '</div></div>';
+                    summaryDiv.innerHTML = '<div class="glass-card p-3 mt-2" style="border-left:4px solid #6366f1;"><h6 style="color:var(--text-primary);font-weight:700;font-size:0.85rem;margin-bottom:0.5rem;"><i class="bi bi-file-text me-2" style="color:var(--card-accent);"></i>AI Summary</h6><div style="color:var(--text-primary);font-size:0.85rem;line-height:1.6;">' + esc(res.data?.summary || 'Summary generated') + '</div></div>';
                     if (res.data?.summary) {
-                        summaryDiv.querySelector('div').innerHTML = '<h6 style="color:#1e1b4b;font-weight:700;font-size:0.85rem;margin-bottom:0.5rem;"><i class="bi bi-file-text me-2" style="color:#6366f1;"></i>AI Summary</h6><div style="color:#374151;font-size:0.85rem;line-height:1.6;">' + res.data.summary + '</div>';
+                        summaryDiv.querySelector('div').innerHTML = '<h6 style="color:var(--text-primary);font-weight:700;font-size:0.85rem;margin-bottom:0.5rem;"><i class="bi bi-file-text me-2" style="color:var(--card-accent);"></i>AI Summary</h6><div style="color:var(--text-primary);font-size:0.85rem;line-height:1.6;">' + res.data.summary + '</div>';
                     }
                 }
                 btn.innerHTML = '<i class="bi bi-file-text"></i>';

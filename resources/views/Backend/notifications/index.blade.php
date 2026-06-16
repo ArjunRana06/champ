@@ -16,7 +16,7 @@
     @if(session('success'))
         <div class="glass-card mb-4 d-flex align-items-center gap-3 py-3" style="border-left:4px solid #059669;">
             <i class="bi bi-check-circle-fill" style="color:#059669;font-size:1.2rem;"></i>
-            <span style="color:#1e1b4b;font-size:0.9rem;">{{ session('success') }}</span>
+            <span style="color:var(--text-primary);font-size:0.9rem;">{{ session('success') }}</span>
         </div>
     @endif
 
@@ -30,10 +30,10 @@
                        style="color:{{ $notification->type === 'doc_ready' ? '#059669' : ($notification->type === 'shared' ? '#6366f1' : ($notification->type === 'quiz_reminder' ? '#d97706' : '#6b7280')) }};"></i>
                 </div>
                 <div class="flex-grow-1" style="min-width:0;">
-                    <div style="color:#1e1b4b;font-size:0.88rem;">{{ $notification->title }}</div>
-                    <small style="color:#6b7280;">{{ $notification->body }}</small>
+                    <div style="color:var(--text-primary);font-size:0.88rem;">{{ $notification->title }}</div>
+                    <small style="color:var(--text-secondary);">{{ $notification->body }}</small>
                     <br>
-                    <small style="color:#9ca3af;font-size:0.7rem;">{{ $notification->created_at->diffForHumans() }}</small>
+                    <small style="color:var(--text-muted);font-size:0.7rem;">{{ $notification->created_at->diffForHumans() }}</small>
                 </div>
                 <div>
                     @if($notification->link)
@@ -42,7 +42,7 @@
                     @if(!$notification->is_read)
                         <form action="{{ route('notifications.read', $notification->id) }}" method="POST" style="display:inline;">
                             @csrf
-                            <button type="submit" class="btn-soft py-1 px-2" style="font-size:0.75rem;color:#6366f1;"><i class="bi bi-check"></i></button>
+                            <button type="submit" class="btn-soft py-1 px-2" style="font-size:0.75rem;color:var(--card-accent);"><i class="bi bi-check"></i></button>
                         </form>
                     @endif
                 </div>
@@ -50,7 +50,7 @@
         @empty
             <div class="text-center py-5">
                 <i class="bi bi-bell" style="font-size:3rem;color:#c7d2fe;"></i>
-                <p class="mt-3" style="color:#6b7280;">No notifications yet.</p>
+                <p class="mt-3" style="color:var(--text-secondary);">No notifications yet.</p>
             </div>
         @endforelse
     </div>

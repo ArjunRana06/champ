@@ -15,21 +15,21 @@
     @if(session('success'))
         <div class="glass-card mb-4 d-flex align-items-center gap-3 py-3" style="border-left:4px solid #059669;">
             <i class="bi bi-check-circle-fill" style="color:#059669;font-size:1.2rem;"></i>
-            <span style="color:#1e1b4b;font-size:0.9rem;">{{ session('success') }}</span>
+            <span style="color:var(--text-primary);font-size:0.9rem;">{{ session('success') }}</span>
         </div>
     @endif
 
     <div class="glass-card mb-4 d-flex align-items-center justify-content-between py-2 px-3" style="border-left:4px solid #6366f1;">
         <div>
-            <span style="color:#1e1b4b;font-weight:600;font-size:0.9rem;">Progress: </span>
-            <span id="known-count" style="color:#6366f1;font-weight:700;font-size:1rem;">0</span>
-            <span style="color:#6b7280;font-size:0.85rem;"> known / {{ $flashcards instanceof \Illuminate\Pagination\LengthAwarePaginator ? $flashcards->total() : $flashcards->count() }}</span>
+            <span style="color:var(--text-primary);font-weight:600;font-size:0.9rem;">Progress: </span>
+            <span id="known-count" style="color:var(--card-accent);font-weight:700;font-size:1rem;">0</span>
+            <span style="color:var(--text-secondary);font-size:0.85rem;"> known / {{ $flashcards instanceof \Illuminate\Pagination\LengthAwarePaginator ? $flashcards->total() : $flashcards->count() }}</span>
         </div>
         <div class="d-flex align-items-center gap-2" style="flex:1;max-width:300px;">
             <div style="flex:1;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;">
                 <div id="progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#6366f1,#22c55e);border-radius:4px;transition:width 0.5s ease;"></div>
             </div>
-            <span id="progress-text" style="font-size:0.8rem;color:#6b7280;font-weight:500;min-width:60px;">0%</span>
+            <span id="progress-text" style="font-size:0.8rem;color:var(--text-secondary);font-weight:500;min-width:60px;">0%</span>
         </div>
         <button class="btn-soft py-1 px-2" style="font-size:0.75rem;" onclick="resetAll()">
             <i class="bi bi-arrow-counterclockwise"></i> Reset
@@ -48,7 +48,7 @@
                             {{ ucfirst($flashcard->difficulty) }}
                         </span>
                         <div class="d-flex gap-1">
-                            <a href="{{ route('flashcards.edit', $flashcard) }}" class="btn-soft py-1 px-2" style="font-size:0.75rem;color:#6366f1;">
+                            <a href="{{ route('flashcards.edit', $flashcard) }}" class="btn-soft py-1 px-2" style="font-size:0.75rem;color:var(--card-accent);">
                                 <i class="bi bi-pencil"></i>
                             </a>
                             <button class="btn-soft py-1 px-2" style="font-size:0.75rem;color:#f59e0b;" onclick="toggleBookmark('App\\Models\\Flashcard', {{ $flashcard->id }}, this)">
@@ -62,10 +62,10 @@
 
                     <div class="flashcard-inner" id="fc-{{ $flashcard->id }}" style="transition:transform 0.6s;transform-style:preserve-3d;position:relative;min-height:160px;cursor:pointer;">
                         <div class="flashcard-face flashcard-front" style="backface-visibility:hidden;position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                            <p style="color:#1e1b4b;font-weight:600;font-size:1rem;text-align:center;padding:1.5rem 0.5rem;margin:0;">
+                            <p style="color:var(--text-primary);font-weight:600;font-size:1rem;text-align:center;padding:1.5rem 0.5rem;margin:0;">
                                 {{ $flashcard->front }}
                             </p>
-                            <p class="click-hint" style="text-align:center;font-size:0.75rem;color:#9ca3af;margin-top:0.5rem;">
+                            <p class="click-hint" style="text-align:center;font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem;">
                                 <i class="bi bi-arrow-repeat"></i> Click to reveal
                             </p>
                         </div>
@@ -90,7 +90,7 @@
             <div class="col-12">
                 <div class="glass-card text-center py-5">
                     <i class="bi bi-card-text" style="font-size:3rem;color:#c7d2fe;"></i>
-                    <p class="mt-3" style="color:#6b7280;">No flashcards generated yet. Click "Generate New" to create some from your notes.</p>
+                    <p class="mt-3" style="color:var(--text-secondary);">No flashcards generated yet. Click "Generate New" to create some from your notes.</p>
                     <a href="{{ route('flashcards.create') }}" class="dark-btn"><i class="bi bi-plus-circle"></i> Generate Flashcards</a>
                 </div>
             </div>

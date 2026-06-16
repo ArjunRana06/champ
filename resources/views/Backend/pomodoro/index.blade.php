@@ -14,7 +14,7 @@
             <div class="glass-card text-center py-5">
                 <div id="pomodoroTimer" style="font-size:4rem;font-weight:800;color:#ef4444;font-family:monospace;letter-spacing:0.1em;">25:00</div>
                 <div class="mt-3">
-                    <span id="pomodoroStatus" style="color:#6b7280;font-size:0.9rem;font-weight:500;">Focus Time</span>
+                    <span id="pomodoroStatus" style="color:var(--text-secondary);font-size:0.9rem;font-weight:500;">Focus Time</span>
                 </div>
                 <div class="mt-4 d-flex gap-2 justify-content-center">
                     <button id="pomodoroStartBtn" class="dark-btn"><i class="bi bi-play-fill"></i> Start</button>
@@ -22,7 +22,7 @@
                     <button id="pomodoroResetBtn" class="btn-soft"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
                 </div>
                 <div class="mt-3">
-                    <small style="color:#9ca3af;">Focus: <span id="focusMinutes">25</span> min &bull; Break: <span id="breakMinutes">5</span> min</small>
+                    <small style="color:var(--text-muted);">Focus: <span id="focusMinutes">25</span> min &bull; Break: <span id="breakMinutes">5</span> min</small>
                     <br>
                     <select id="pomodoroSubject" class="form-select" style="display:inline-block;width:auto;font-size:0.75rem;margin-top:0.3rem;">
                         <option value="">General</option>
@@ -37,7 +37,7 @@
 
     @if($sessions->count())
     <div class="glass-card">
-        <h5 style="color:#1e1b4b;font-weight:700;margin-bottom:1rem;">Session History</h5>
+        <h5 style="color:var(--text-primary);font-weight:700;margin-bottom:1rem;">Session History</h5>
         <div class="table-responsive">
             <table class="glass-table">
                 <thead><tr><th>Date</th><th>Duration</th><th>Subject</th></tr></thead>

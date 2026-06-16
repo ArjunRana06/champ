@@ -3,20 +3,20 @@
 @section('content')
 <div class="container" style="max-width:650px;">
     <div class="glass-card p-4" data-aos="fade-up">
-        <h2 style="color:#1e1b4b;font-weight:800;font-size:1.3rem;margin-bottom:0.25rem;">
-            <i class="bi bi-play-circle me-2" style="color:#6366f1;"></i> Start a Quiz
+        <h2 style="color:var(--text-primary);font-weight:800;font-size:1.3rem;margin-bottom:0.25rem;">
+            <i class="bi bi-play-circle me-2" style="color:var(--card-accent);"></i> Start a Quiz
         </h2>
-        <p style="color:#6b7280;font-size:0.88rem;margin-bottom:1.5rem;">Practice with questions generated from your study materials.</p>
+        <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:1.5rem;">Practice with questions generated from your study materials.</p>
 
         <div class="row g-3 mb-4">
             <div class="col-4 text-center">
-                <div class="glass-card py-2"><strong style="color:#6366f1;font-size:1.3rem;">{{ $stats['mcqs'] }}</strong><br><small style="color:#6b7280;">MCQs</small></div>
+                <div class="glass-card py-2"><strong style="color:var(--card-accent);font-size:1.3rem;">{{ $stats['mcqs'] }}</strong><br><small style="color:var(--text-secondary);">MCQs</small></div>
             </div>
             <div class="col-4 text-center">
-                <div class="glass-card py-2"><strong style="color:#a855f7;font-size:1.3rem;">{{ $stats['true_false'] }}</strong><br><small style="color:#6b7280;">T/F</small></div>
+                <div class="glass-card py-2"><strong style="color:#a855f7;font-size:1.3rem;">{{ $stats['true_false'] }}</strong><br><small style="color:var(--text-secondary);">T/F</small></div>
             </div>
             <div class="col-4 text-center">
-                <div class="glass-card py-2"><strong style="color:#f59e0b;font-size:1.3rem;">{{ $stats['mcqs'] + $stats['true_false'] }}</strong><br><small style="color:#6b7280;">Total Available</small></div>
+                <div class="glass-card py-2"><strong style="color:#f59e0b;font-size:1.3rem;">{{ $stats['mcqs'] + $stats['true_false'] }}</strong><br><small style="color:var(--text-secondary);">Total Available</small></div>
             </div>
         </div>
 

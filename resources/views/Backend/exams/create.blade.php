@@ -3,10 +3,10 @@
 @section('content')
 <div class="container" style="max-width:600px;">
     <div class="glass-card p-4" data-aos="fade-up">
-        <h2 style="color:#1e1b4b;font-weight:800;font-size:1.3rem;margin-bottom:0.25rem;">
-            <i class="bi bi-plus-circle me-2" style="color:#6366f1;"></i> Add Exam
+        <h2 style="color:var(--text-primary);font-weight:800;font-size:1.3rem;margin-bottom:0.25rem;">
+            <i class="bi bi-plus-circle me-2" style="color:var(--card-accent);"></i> Add Exam
         </h2>
-        <p style="color:#6b7280;font-size:0.88rem;margin-bottom:1.5rem;">Track an upcoming exam or deadline.</p>
+        <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:1.5rem;">Track an upcoming exam or deadline.</p>
 
         <form action="{{ route('exams.store') }}" method="POST" class="form-glass">
             @csrf

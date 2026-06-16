@@ -3,10 +3,10 @@
 @section('content')
 <div class="container" style="max-width:650px;">
     <div class="glass-card p-4" data-aos="fade-up">
-        <h2 style="color:#1e1b4b;font-weight:800;font-size:1.3rem;margin-bottom:0.25rem;">
-            <i class="bi bi-pencil-square me-2" style="color:#6366f1;"></i> Edit Fill-in-the-Blank
+        <h2 style="color:var(--text-primary);font-weight:800;font-size:1.3rem;margin-bottom:0.25rem;">
+            <i class="bi bi-pencil-square me-2" style="color:var(--card-accent);"></i> Edit Fill-in-the-Blank
         </h2>
-        <p style="color:#6b7280;font-size:0.88rem;margin-bottom:1.5rem;">Edit the sentence with blanks and correct answers.</p>
+        <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:1.5rem;">Edit the sentence with blanks and correct answers.</p>
 
         <form action="{{ route('fill-blanks.update', $fillBlank) }}" method="POST" class="form-glass">
             @csrf @method('PUT')
@@ -24,7 +24,7 @@
             <div class="mb-3">
                 <label class="form-label">Sentence with Blanks (use <code>[blank]</code> for each blank)</label>
                 <textarea name="sentence_with_blanks" class="form-control" rows="3" required>{{ old('sentence_with_blanks', $fillBlank->sentence_with_blanks) }}</textarea>
-                <small style="color:#9ca3af;font-size:0.75rem;">Example: "The capital of France is [blank]."</small>
+                <small style="color:var(--text-muted);font-size:0.75rem;">Example: "The capital of France is [blank]."</small>
             </div>
 
             <div class="mb-3">

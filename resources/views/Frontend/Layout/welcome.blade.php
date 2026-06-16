@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>AI Study Assistant · Next‑Gen Learning</title>
-    <meta name="description" content="Upload your notes and study smarter with AI. Chat with your materials, generate quizzes, and master subjects faster.">
+    <meta name="description" content="Upload your notes and study smarter with AI. Chat with your materials, generate quizzes, flashcards, study plans, track time with Pomodoro, and master subjects faster.">
     <meta property="og:title" content="AI Study Assistant · Next‑Gen Learning">
-    <meta property="og:description" content="Upload your notes and study smarter with AI. Chat with your materials, generate quizzes, and master subjects faster.">
+    <meta property="og:description" content="Upload your notes and study smarter with AI. Chat, generate quizzes, flashcards, study plans, Pomodoro timer, and more.">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -453,7 +453,7 @@
                         <span class="block text-gray-800">with AI</span>
                     </h1>
                     <p class="mt-6 text-lg sm:text-xl text-gray-500 max-w-lg leading-relaxed">
-                        Upload PDFs, slides, handwritten notes — then chat, summarise, generate quizzes, and master your subjects faster.
+                        Upload PDFs, slides, handwritten notes — then chat, generate quizzes, flashcards, study plans, track time, and master your subjects faster.
                     </p>
                     <div class="mt-8 flex flex-col sm:flex-row gap-4">
                         <a href="/register" class="group inline-flex items-center justify-center gap-2 px-7 py-3.5 text-base font-bold rounded-full text-white bg-gray-900 hover:bg-gray-800 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-0.5">
@@ -591,28 +591,49 @@
                         <i class="fas fa-question-circle"></i>
                     </div>
                     <h3 class="text-lg font-bold text-gray-900 mt-5">Quiz generator</h3>
-                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Auto‑generate MCQs, true/false from your materials. Answer keys & explanations included.</p>
-                </div>
-                <div class="feature-card reveal" style="transition-delay: 0.07s;">
-                    <div class="feature-icon bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg shadow-emerald-200">
-                        <i class="fas fa-folder-tree"></i>
-                    </div>
-                    <h3 class="text-lg font-bold text-gray-900 mt-5">Subject organization</h3>
-                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Organize documents by subject, semester, and course code. Everything in one place.</p>
-                </div>
-                <div class="feature-card reveal" style="transition-delay: 0.14s;">
-                    <div class="feature-icon bg-gradient-to-br from-orange-500 to-red-500 shadow-lg shadow-orange-200">
-                        <i class="fas fa-eye"></i>
-                    </div>
-                    <h3 class="text-lg font-bold text-gray-900 mt-5">OCR support</h3>
-                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Handwritten notes and scanned documents processed with OCR. Nothing gets left behind.</p>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Auto‑generate MCQs, true/false, short answer, fill‑blank, matching & flashcards from your materials.</p>
                 </div>
                 <div class="feature-card reveal" style="transition-delay: 0.21s;">
+                    <div class="feature-icon bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg shadow-emerald-200">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mt-5">Study plans & exams</h3>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Plan your studies with milestones, track exam dates on a calendar, and take timed quiz attempts.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 0.28s;">
+                    <div class="feature-icon bg-gradient-to-br from-orange-500 to-red-500 shadow-lg shadow-orange-200">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mt-5">Pomodoro & time tracking</h3>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Stay focused with the Pomodoro timer and log study hours per subject to see where your time goes.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 0.35s;">
                     <div class="feature-icon bg-gradient-to-br from-teal-500 to-cyan-600 shadow-lg shadow-teal-200">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mt-5">Flashcards & spaced repetition</h3>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Review flashcards with spaced repetition scheduling. Optimise retention with smart review intervals.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 0.07s;">
+                    <div class="feature-icon bg-gradient-to-br from-pink-500 to-rose-600 shadow-lg shadow-pink-200">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mt-5">Study groups & peer review</h3>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Collaborate with classmates, share question banks, and review each other's content in study groups.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 0.14s;">
+                    <div class="feature-icon bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-200">
+                        <i class="fas fa-bookmark"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mt-5">Bookmarks & export</h3>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Bookmark important questions and export your study materials to PDF, CSV, or Anki flashcards.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 0.21s;">
+                    <div class="feature-icon bg-gradient-to-br from-sky-500 to-blue-600 shadow-lg shadow-sky-200">
                         <i class="fas fa-shield-alt"></i>
                     </div>
                     <h3 class="text-lg font-bold text-gray-900 mt-5">Privacy first</h3>
-                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Your data stays yours. AI only accesses materials you upload. No training on your content.</p>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Your data stays yours. AI only accesses materials you upload. No training on your content. Ever.</p>
                 </div>
             </div>
         </div>
@@ -638,7 +659,7 @@
                         <div class="step-number bg-indigo-100 text-indigo-700">1</div>
                     </div>
                     <h3 class="text-lg font-bold text-gray-900">Upload</h3>
-                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Drag & drop your PDFs, slides, or handwritten notes. We support all formats.</p>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Drag & drop your PDFs, slides, or handwritten notes. OCR extracts every word automatically.</p>
                 </div>
                 <div class="step-card reveal" style="transition-delay: 0.1s;">
                     <div class="flex items-center gap-4 mb-4">
@@ -648,7 +669,7 @@
                         <div class="step-number bg-purple-100 text-purple-700">2</div>
                     </div>
                     <h3 class="text-lg font-bold text-gray-900">Process</h3>
-                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">AI extracts text, splits into chunks, and creates embeddings automatically.</p>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">AI analyses your materials, creates searchable chunks, and builds embeddings for smart retrieval.</p>
                 </div>
                 <div class="step-card reveal" style="transition-delay: 0.2s;">
                     <div class="flex items-center gap-4 mb-4">
@@ -657,8 +678,8 @@
                         </div>
                         <div class="step-number bg-blue-100 text-blue-700">3</div>
                     </div>
-                    <h3 class="text-lg font-bold text-gray-900">Chat & Quiz</h3>
-                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Ask questions, get answers cited from your notes. Generate MCQs instantly.</p>
+                    <h3 class="text-lg font-bold text-gray-900">Chat, Quiz & Study</h3>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Chat with your notes, generate 6 types of quizzes, create flashcards, and plan your studies.</p>
                 </div>
                 <div class="step-card reveal" style="transition-delay: 0.3s;">
                     <div class="flex items-center gap-4 mb-4">
@@ -668,7 +689,7 @@
                         <div class="step-number bg-emerald-100 text-emerald-700">4</div>
                     </div>
                     <h3 class="text-lg font-bold text-gray-900">Master</h3>
-                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Review, practice, and track your progress. Ace your exams with confidence.</p>
+                    <p class="text-gray-500 text-sm mt-2 leading-relaxed">Take timed quizzes, track time, review with spaced repetition — ace your exams with confidence.</p>
                 </div>
             </div>
         </div>
@@ -750,7 +771,9 @@
                         ['q' => 'What file formats are supported?', 'a' => 'We support PDF, DOCX, PPTX, TXT, and image files (JPG, PNG) with OCR. Most common academic formats are covered.'],
                         ['q' => 'Is my data private and secure?', 'a' => 'Absolutely. Your uploaded documents are stored securely and are only accessible to you. We never train AI models on your content. Your data stays yours.'],
                         ['q' => 'How does the AI chat work?', 'a' => 'When you ask a question, the AI searches through your uploaded materials to find relevant information. It answers based only on your notes, with citations to the source documents.'],
-                        ['q' => 'Can I generate quizzes from my notes?', 'a' => 'Yes! You can generate multiple-choice questions from any subject or document. The AI analyzes your materials and creates questions with answer keys and explanations.'],
+                        ['q' => 'What quiz types can I generate?', 'a' => 'Six types: multiple-choice, true/false, short answer, fill-in-the-blank, matching, and flashcards. Each can be auto-generated from your notes with answer keys.'],
+                        ['q' => 'Can I study with others?', 'a' => 'Yes! Create study groups, share question banks with classmates, and peer-review each other\'s content. Collaborative learning made easy.'],
+                        ['q' => 'How does the Pomodoro timer help?', 'a' => 'Stay focused with timed study sessions, track your hours per subject, and see your productivity trends over time. Perfect for exam prep.'],
                         ['q' => 'Is there a limit on how many documents I can upload?', 'a' => 'Free tier includes generous limits for students. We believe in making learning accessible — no hidden caps or surprise billing.'],
                         ['q' => 'Do I need a credit card to sign up?', 'a' => 'Not at all. Our student plan is completely free with no credit card required. Just sign up and start uploading your notes.'],
                     ];

@@ -13,7 +13,7 @@
     @if(session('success'))
         <div class="glass-card mb-4 d-flex align-items-center gap-3 py-3" style="border-left:4px solid #059669;">
             <i class="bi bi-check-circle-fill" style="color:#059669;font-size:1.2rem;"></i>
-            <span style="color:#1e1b4b;font-size:0.9rem;">{{ session('success') }}</span>
+            <span style="color:var(--text-primary);font-size:0.9rem;">{{ session('success') }}</span>
         </div>
     @endif
 
@@ -21,16 +21,16 @@
 
     @forelse($grouped as $month => $monthExams)
         <div class="glass-card mb-4">
-            <h5 style="color:#1e1b4b;font-weight:700;margin-bottom:1rem;"><i class="bi bi-calendar-month me-2" style="color:#6366f1;"></i> {{ $month }}</h5>
+            <h5 style="color:var(--text-primary);font-weight:700;margin-bottom:1rem;"><i class="bi bi-calendar-month me-2" style="color:var(--card-accent);"></i> {{ $month }}</h5>
             @foreach($monthExams as $exam)
                 <div class="d-flex align-items-center gap-3 py-2 {{ !$loop->last ? 'border-bottom border-light' : '' }}" style="opacity:{{ $exam->is_completed ? 0.5 : 1 }};">
                     <div style="min-width:50px;text-align:center;">
-                        <div style="font-size:1.3rem;font-weight:800;color:#6366f1;">{{ $exam->exam_date->format('d') }}</div>
-                        <div style="font-size:0.65rem;color:#9ca3af;text-transform:uppercase;">{{ $exam->exam_date->format('D') }}</div>
+                        <div style="font-size:1.3rem;font-weight:800;color:var(--card-accent);">{{ $exam->exam_date->format('d') }}</div>
+                        <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;">{{ $exam->exam_date->format('D') }}</div>
                     </div>
                     <div class="flex-grow-1">
-                        <div style="color:#1e1b4b;font-weight:600;font-size:0.9rem;">{{ $exam->title }}</div>
-                        <div style="color:#6b7280;font-size:0.8rem;">
+                        <div style="color:var(--text-primary);font-weight:600;font-size:0.9rem;">{{ $exam->title }}</div>
+                        <div style="color:var(--text-secondary);font-size:0.8rem;">
                             {{ $exam->subject?->name ?? 'General' }}
                             @if($exam->time) &bull; {{ $exam->time }} @endif
                             @if($exam->location) &bull; {{ $exam->location }} @endif
@@ -55,7 +55,7 @@
     @empty
         <div class="glass-card text-center py-5">
             <i class="bi bi-calendar" style="font-size:3rem;color:#c7d2fe;"></i>
-            <p class="mt-3" style="color:#6b7280;">No exams added yet. Start tracking your exam schedule.</p>
+            <p class="mt-3" style="color:var(--text-secondary);">No exams added yet. Start tracking your exam schedule.</p>
             <a href="{{ route('exams.create') }}" class="dark-btn"><i class="bi bi-plus-circle"></i> Add Exam</a>
         </div>
     @endforelse

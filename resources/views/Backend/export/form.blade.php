@@ -3,16 +3,16 @@
 @section('content')
 <div class="container" style="max-width:700px;">
     <div class="glass-card p-4">
-        <h2 style="color:#1e1b4b;font-weight:800;font-size:1.3rem;margin-bottom:0.25rem;">
-            <i class="bi bi-download me-2" style="color:#6366f1;"></i> Export Questions
+        <h2 style="color:var(--text-primary);font-weight:800;font-size:1.3rem;margin-bottom:0.25rem;">
+            <i class="bi bi-download me-2" style="color:var(--card-accent);"></i> Export Questions
         </h2>
-        <p style="color:#6b7280;font-size:0.88rem;margin-bottom:1.5rem;">Download your questions in various formats.</p>
+        <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:1.5rem;">Download your questions in various formats.</p>
 
         <div class="row g-3 mb-4">
             @foreach($counts as $key => $count)
             <div class="col-4 col-md-2 text-center">
-                <div style="font-size:1.5rem;font-weight:700;color:#6366f1;">{{ $count }}</div>
-                <small style="color:#6b7280;font-size:0.7rem;">{{ str_replace('_', ' ', ucfirst($key)) }}</small>
+                <div style="font-size:1.5rem;font-weight:700;color:var(--card-accent);">{{ $count }}</div>
+                <small style="color:var(--text-secondary);font-size:0.7rem;">{{ str_replace('_', ' ', ucfirst($key)) }}</small>
             </div>
             @endforeach
         </div>

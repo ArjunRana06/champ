@@ -17,14 +17,14 @@
     @if(session('success'))
         <div class="glass-card mb-4 d-flex align-items-center gap-3 py-3" style="border-left:4px solid #059669;">
             <i class="bi bi-check-circle-fill" style="color:#059669;font-size:1.2rem;"></i>
-            <span style="color:#1e1b4b;font-size:0.9rem;">{{ session('success') }}</span>
+            <span style="color:var(--text-primary);font-size:0.9rem;">{{ session('success') }}</span>
         </div>
     @endif
 
     @if(session('error'))
         <div class="glass-card mb-4 d-flex align-items-center gap-3 py-3" style="border-left:4px solid #dc2626;">
             <i class="bi bi-exclamation-triangle-fill" style="color:#dc2626;font-size:1.2rem;"></i>
-            <span style="color:#1e1b4b;font-size:0.9rem;">{{ session('error') }}</span>
+            <span style="color:var(--text-primary);font-size:0.9rem;">{{ session('error') }}</span>
         </div>
     @endif
 
@@ -36,8 +36,8 @@
                     <i class="bi bi-people-fill"></i>
                 </div>
                 <div>
-                    <h6 style="color:#6366f1;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin:0;">Total Users</h6>
-                    <h3 class="fw-bold mb-0" style="color:#1e1b4b;font-size:1.7rem;">{{ $totalUsers }}</h3>
+                    <h6 style="color:var(--card-accent);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin:0;">Total Users</h6>
+                    <h3 class="fw-bold mb-0" style="color:var(--text-primary);font-size:1.7rem;">{{ $totalUsers }}</h3>
                 </div>
             </div>
         </div>
@@ -46,11 +46,11 @@
     <!-- Users Table -->
     <div class="glass-card p-0 overflow-hidden">
         <div class="d-flex justify-content-between align-items-center px-4 py-3" style="border-bottom:1.5px solid #e5e7eb;">
-            <div style="color:#1e1b4b;font-weight:700;font-size:0.9rem;">
-                <i class="bi bi-table me-2" style="color:#6366f1;"></i> Users List
+            <div style="color:var(--text-primary);font-weight:700;font-size:0.9rem;">
+                <i class="bi bi-table me-2" style="color:var(--card-accent);"></i> Users List
             </div>
             <div class="d-flex align-items-center gap-2">
-                <i class="bi bi-search" style="color:#9ca3af;"></i>
+                <i class="bi bi-search" style="color:var(--text-muted);"></i>
                 <input type="text" id="searchInput" placeholder="Search user..." style="border:1.5px solid #e5e7eb;border-radius:40px;padding:0.4rem 0.8rem;font-size:0.8rem;width:200px;outline:none;font-family:'Inter',sans-serif;">
             </div>
         </div>
@@ -62,7 +62,7 @@
                 <tbody>
                     @forelse($users as $user)
                         <tr>
-                            <td style="color:#6366f1;font-weight:700;">{{ $user->id }}</td>
+                            <td style="color:var(--card-accent);font-weight:700;">{{ $user->id }}</td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
                                     <span style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:0.75rem;flex-shrink:0;">
@@ -71,15 +71,15 @@
                                     {{ $user->name }}
                                 </div>
                             </td>
-                            <td style="color:#6b7280;">{{ $user->email }}</td>
+                            <td style="color:var(--text-secondary);">{{ $user->email }}</td>
                             <td>
                                 @foreach ($user->roles as $role)
-                                    <span style="font-size:0.7rem;padding:0.15rem 0.6rem;border-radius:20px;background:#eef2ff;color:#6366f1;display:inline-block;margin-right:0.25rem;">
+                                    <span style="font-size:0.7rem;padding:0.15rem 0.6rem;border-radius:20px;background:#eef2ff;color:var(--card-accent);display:inline-block;margin-right:0.25rem;">
                                         <i class="bi bi-tag me-1"></i> {{ $role->name }}
                                     </span>
                                 @endforeach
                             </td>
-                            <td style="color:#6b7280;font-size:0.8rem;">{{ $user->created_at->format('d M Y, h:i A') }}</td>
+                            <td style="color:var(--text-secondary);font-size:0.8rem;">{{ $user->created_at->format('d M Y, h:i A') }}</td>
                             <td class="text-center">
                                 <div class="d-flex gap-1 justify-content-center">
                                     @can('view users')
@@ -90,7 +90,7 @@
                                     @endcan
                                     @php $isAdmin = $user->roles->contains('name', 'admin'); @endphp
                                     @if ($isAdmin)
-                                        <span style="color:#9ca3af;font-size:0.75rem;padding:0.25rem 0.5rem;" title="Admin cannot be deleted"><i class="bi bi-shield-check"></i></span>
+                                        <span style="color:var(--text-muted);font-size:0.75rem;padding:0.25rem 0.5rem;" title="Admin cannot be deleted"><i class="bi bi-shield-check"></i></span>
                                     @else
                                         @can('delete users')
                                             <form action="{{ route('users.destroy', $user->id) }}" method="POST" style="display:inline-block;">
@@ -106,7 +106,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-5" style="color:#9ca3af;">
+                            <td colspan="6" class="text-center py-5" style="color:var(--text-muted);">
                                 <i class="bi bi-database" style="font-size:2.5rem;color:#c7d2fe;display:block;margin-bottom:0.5rem;"></i>
                                 No users found. Click "Add User" to create one.
                             </td>
@@ -125,30 +125,30 @@
             <form action="{{ route('users.store') }}" method="POST">
                 @csrf
                 <div class="modal-header border-0" style="padding:1.5rem 1.5rem 0;">
-                    <h5 class="modal-title" style="color:#1e1b4b;font-weight:800;">
-                        <i class="bi bi-person-plus me-2" style="color:#6366f1;"></i> Add New User
+                    <h5 class="modal-title" style="color:var(--text-primary);font-weight:800;">
+                        <i class="bi bi-person-plus me-2" style="color:var(--card-accent);"></i> Add New User
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" style="padding:1.5rem;">
                     <div class="mb-3">
-                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6366f1;margin-bottom:0.4rem;display:block;">Full Name *</label>
+                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--card-accent);margin-bottom:0.4rem;display:block;">Full Name *</label>
                         <input type="text" class="form-control" name="name" required placeholder="John Doe" style="background:white;border:1.5px solid #e5e7eb;border-radius:1rem;padding:0.7rem 1.1rem;font-size:0.9rem;width:100%;font-family:'Inter',sans-serif;">
                     </div>
                     <div class="mb-3">
-                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6366f1;margin-bottom:0.4rem;display:block;">Email *</label>
+                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--card-accent);margin-bottom:0.4rem;display:block;">Email *</label>
                         <input type="email" class="form-control" name="email" required placeholder="user@example.com" style="background:white;border:1.5px solid #e5e7eb;border-radius:1rem;padding:0.7rem 1.1rem;font-size:0.9rem;width:100%;font-family:'Inter',sans-serif;">
                     </div>
                     <div class="mb-3">
-                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6366f1;margin-bottom:0.4rem;display:block;">Password *</label>
+                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--card-accent);margin-bottom:0.4rem;display:block;">Password *</label>
                         <input type="password" class="form-control" name="password" required style="background:white;border:1.5px solid #e5e7eb;border-radius:1rem;padding:0.7rem 1.1rem;font-size:0.9rem;width:100%;font-family:'Inter',sans-serif;">
                     </div>
                     <div class="mb-3">
-                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6366f1;margin-bottom:0.4rem;display:block;">Confirm Password</label>
+                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--card-accent);margin-bottom:0.4rem;display:block;">Confirm Password</label>
                         <input type="password" class="form-control" name="password_confirmation" required style="background:white;border:1.5px solid #e5e7eb;border-radius:1rem;padding:0.7rem 1.1rem;font-size:0.9rem;width:100%;font-family:'Inter',sans-serif;">
                     </div>
                     <div class="mb-3">
-                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6366f1;margin-bottom:0.4rem;display:block;">Assign Role</label>
+                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--card-accent);margin-bottom:0.4rem;display:block;">Assign Role</label>
                         <select name="role" class="form-select" required style="background:white;border:1.5px solid #e5e7eb;border-radius:1rem;padding:0.7rem 1.1rem;font-size:0.9rem;width:100%;font-family:'Inter',sans-serif;">
                             <option value="">-- Select Role --</option>
                             @foreach ($roles as $role)

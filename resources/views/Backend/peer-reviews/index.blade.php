@@ -29,13 +29,13 @@
 
     @if($available->count())
     <div class="glass-card mb-4">
-        <h5 style="color:#1e1b4b;font-weight:700;margin-bottom:1rem;">Questions Needing Review</h5>
+        <h5 style="color:var(--text-primary);font-weight:700;margin-bottom:1rem;">Questions Needing Review</h5>
         <div class="d-flex flex-column gap-2">
             @foreach($available as $item)
             <div class="d-flex align-items-center gap-2 py-2 px-3" style="background:rgba(255,255,255,0.3);border-radius:1rem;">
-                <span class="stat-badge" style="background:#eef2ff;color:#6366f1;font-size:0.65rem;">{{ str_replace('_', ' ', $item['type']) }}</span>
-                <div style="flex:1;font-size:0.85rem;color:#1e1b4b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ Str::limit(strip_tags(questionText($item['item'])), 60) }}</div>
-                <small style="color:#9ca3af;">{{ $item['item']->user?->name ?? 'Unknown' }}</small>
+                <span class="stat-badge" style="background:#eef2ff;color:var(--card-accent);font-size:0.65rem;">{{ str_replace('_', ' ', $item['type']) }}</span>
+                <div style="flex:1;font-size:0.85rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ Str::limit(strip_tags(questionText($item['item'])), 60) }}</div>
+                <small style="color:var(--text-muted);">{{ $item['item']->user?->name ?? 'Unknown' }}</small>
                 <button class="btn-soft py-1 px-2" style="font-size:0.7rem;" onclick="openReview('{{ $item['type'] }}', {{ $item['item']->id }}, '{{ addslashes(Str::limit(strip_tags(questionText($item['item'])), 100)) }}')">Review</button>
             </div>
             @endforeach
@@ -44,7 +44,7 @@
     @endif
 
     <div class="glass-card">
-        <h5 style="color:#1e1b4b;font-weight:700;margin-bottom:1rem;">Past Reviews</h5>
+        <h5 style="color:var(--text-primary);font-weight:700;margin-bottom:1rem;">Past Reviews</h5>
         @if($reviews->count())
         <div class="table-responsive">
             <table class="glass-table">
@@ -56,7 +56,7 @@
                             @if($review->reviewable)
                                 {{ Str::limit(strip_tags(questionText($review->reviewable)), 60) }}
                             @else
-                                <span style="color:#9ca3af;">[Deleted]</span>
+                                <span style="color:var(--text-muted);">[Deleted]</span>
                             @endif
                         </td>
                         <td>
@@ -64,7 +64,7 @@
                                 <i class="bi bi-star{{ $i <= $review->rating ? '-fill' : '' }}" style="color:{{ $i <= $review->rating ? '#f59e0b' : '#d1d5db' }};font-size:0.7rem;"></i>
                             @endfor
                         </td>
-                        <td style="color:#6b7280;font-size:0.85rem;">{{ $review->comment ?? '—' }}</td>
+                        <td style="color:var(--text-secondary);font-size:0.85rem;">{{ $review->comment ?? '—' }}</td>
                         <td style="font-size:0.85rem;">{{ $review->created_at->format('M d, Y') }}</td>
                     </tr>
                     @endforeach
@@ -72,38 +72,38 @@
             </table>
         </div>
         @else
-        <p style="color:#9ca3af;text-align:center;padding:2rem;">No reviews yet.</p>
+        <p style="color:var(--text-muted);text-align:center;padding:2rem;">No reviews yet.</p>
         @endif
     </div>
 </div>
 
 @if($receivedReviews->count())
 <div class="glass-card mt-4">
-    <h5 style="color:#1e1b4b;font-weight:700;margin-bottom:1rem;"><i class="bi bi-inbox me-2" style="color:#6366f1;"></i> Reviews on Your Questions</h5>
+    <h5 style="color:var(--text-primary);font-weight:700;margin-bottom:1rem;"><i class="bi bi-inbox me-2" style="color:var(--card-accent);"></i> Reviews on Your Questions</h5>
     <div class="d-flex flex-column gap-2">
         @foreach($receivedReviews as $review)
         <div class="d-flex align-items-start gap-3 py-2 px-3" style="background:rgba(255,255,255,0.3);border-radius:1rem;">
             <div style="flex:1;min-width:0;">
-                <div style="font-size:0.85rem;color:#1e1b4b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <div style="font-size:0.85rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                     @if($review->reviewable)
                         {{ Str::limit(strip_tags(questionText($review->reviewable)), 60) }}
                     @else
-                        <span style="color:#9ca3af;">[Deleted]</span>
+                        <span style="color:var(--text-muted);">[Deleted]</span>
                     @endif
                 </div>
                 <div class="d-flex gap-2 mt-1">
-                    <small style="color:#6366f1;">
+                    <small style="color:var(--card-accent);">
                         @for($i = 1; $i <= 5; $i++)
                             <i class="bi bi-star{{ $i <= $review->rating ? '-fill' : '' }}" style="color:{{ $i <= $review->rating ? '#f59e0b' : '#d1d5db' }};font-size:0.65rem;"></i>
                         @endfor
                     </small>
-                    <small style="color:#9ca3af;">by {{ $review->reviewer?->name ?? 'Unknown' }}</small>
+                    <small style="color:var(--text-muted);">by {{ $review->reviewer?->name ?? 'Unknown' }}</small>
                 </div>
                 @if($review->comment)
-                <p style="color:#6b7280;font-size:0.8rem;margin:0.2rem 0 0;font-style:italic;">"{{ $review->comment }}"</p>
+                <p style="color:var(--text-secondary);font-size:0.8rem;margin:0.2rem 0 0;font-style:italic;">"{{ $review->comment }}"</p>
                 @endif
             </div>
-            <small style="color:#9ca3af;font-size:0.7rem;white-space:nowrap;">{{ $review->created_at->format('M d, Y') }}</small>
+            <small style="color:var(--text-muted);font-size:0.7rem;white-space:nowrap;">{{ $review->created_at->format('M d, Y') }}</small>
         </div>
         @endforeach
     </div>
@@ -118,15 +118,15 @@
                 <input type="hidden" name="reviewable_type" id="reviewType">
                 <input type="hidden" name="reviewable_id" id="reviewId">
                 <div class="modal-header border-0" style="padding:1.5rem 1.5rem 0;">
-                    <h5 class="modal-title" style="color:#1e1b4b;font-weight:800;">
-                        <i class="bi bi-star me-2" style="color:#6366f1;"></i> Review Question
+                    <h5 class="modal-title" style="color:var(--text-primary);font-weight:800;">
+                        <i class="bi bi-star me-2" style="color:var(--card-accent);"></i> Review Question
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" style="padding:1.5rem;">
-                    <p id="reviewQuestionPreview" style="color:#374151;font-size:0.9rem;padding:0.75rem;background:#f8fafc;border-radius:0.75rem;"></p>
+                    <p id="reviewQuestionPreview" style="color:var(--text-primary);font-size:0.9rem;padding:0.75rem;background:#f8fafc;border-radius:0.75rem;"></p>
                     <div class="mb-4">
-                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6366f1;margin-bottom:0.4rem;display:block;">Rating</label>
+                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--card-accent);margin-bottom:0.4rem;display:block;">Rating</label>
                         <div class="d-flex gap-2" id="starRating">
                             @for($i = 1; $i <= 5; $i++)
                             <label style="cursor:pointer;">
@@ -137,7 +137,7 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6366f1;margin-bottom:0.4rem;display:block;">Comment (optional)</label>
+                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--card-accent);margin-bottom:0.4rem;display:block;">Comment (optional)</label>
                         <textarea name="comment" class="form-control" rows="3" placeholder="What do you think about this question?"
                                   style="background:white;border:1.5px solid #e5e7eb;border-radius:1rem;padding:0.7rem 1.1rem;font-size:0.9rem;width:100%;font-family:'Inter',sans-serif;resize:vertical;min-height:100px;"></textarea>
                     </div>

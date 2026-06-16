@@ -15,10 +15,10 @@
     @endif
 
     <div class="glass-card p-4" data-aos="fade-up">
-        <h2 style="color:#1e1b4b;font-weight:800;font-size:1.3rem;margin-bottom:0.25rem;">
-            <i class="bi bi-calendar-week me-2" style="color:#6366f1;"></i> Generate Study Plan
+        <h2 style="color:var(--text-primary);font-weight:800;font-size:1.3rem;margin-bottom:0.25rem;">
+            <i class="bi bi-calendar-week me-2" style="color:var(--card-accent);"></i> Generate Study Plan
         </h2>
-        <p style="color:#6b7280;font-size:0.88rem;margin-bottom:1.5rem;">AI will create a personalized weekly study schedule based on your subjects and exam dates.</p>
+        <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:1.5rem;">AI will create a personalized weekly study schedule based on your subjects and exam dates.</p>
 
         <form action="{{ route('study-plans.generate') }}" method="POST" class="form-glass">
             @csrf
@@ -32,7 +32,7 @@
                             <span style="font-size:0.85rem;">{{ $subject->name }}</span>
                         </label>
                     @empty
-                        <p style="color:#9ca3af;font-size:0.85rem;">No subjects yet.</p>
+                        <p style="color:var(--text-muted);font-size:0.85rem;">No subjects yet.</p>
                     @endforelse
                 </div>
                 <div class="input-group">
@@ -51,7 +51,7 @@
                     @empty
                     @endforelse
                 </div>
-                <small style="color:#9ca3af;font-size:0.75rem;">Set exam dates to prioritize subjects with upcoming exams.</small>
+                <small style="color:var(--text-muted);font-size:0.75rem;">Set exam dates to prioritize subjects with upcoming exams.</small>
             </div>
 
             <div class="row g-3 mb-3">

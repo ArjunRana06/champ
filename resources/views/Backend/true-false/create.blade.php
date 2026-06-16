@@ -3,10 +3,10 @@
 @section('content')
 <div class="container" style="max-width:650px;">
     <div class="glass-card p-4" data-aos="fade-up">
-        <h2 style="color:#1e1b4b;font-weight:800;font-size:1.3rem;margin-bottom:0.25rem;">
-            <i class="bi bi-check2-circle me-2" style="color:#6366f1;"></i> Generate True/False Questions
+        <h2 style="color:var(--text-primary);font-weight:800;font-size:1.3rem;margin-bottom:0.25rem;">
+            <i class="bi bi-check2-circle me-2" style="color:var(--card-accent);"></i> Generate True/False Questions
         </h2>
-        <p style="color:#6b7280;font-size:0.88rem;margin-bottom:1.5rem;">Create true/false practice questions from your study materials using AI.</p>
+        <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:1.5rem;">Create true/false practice questions from your study materials using AI.</p>
 
         <form action="{{ route('true-false.generate') }}" method="POST" class="form-glass">
             @csrf
@@ -24,7 +24,7 @@
             <div class="mb-3">
                 <label class="form-label">Specific Topic</label>
                 <input type="text" name="topic" class="form-control" placeholder="e.g., Photosynthesis, Algebra, World War II">
-                <small style="color:#9ca3af;font-size:0.75rem;">Leave empty to use general content from the selected subject.</small>
+                <small style="color:var(--text-muted);font-size:0.75rem;">Leave empty to use general content from the selected subject.</small>
             </div>
 
             <div class="row g-3 mb-3">

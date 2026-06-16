@@ -13,23 +13,23 @@
     @if(session('success'))
         <div class="glass-card mb-4 d-flex align-items-center gap-3 py-3" style="border-left:4px solid #059669;">
             <i class="bi bi-check-circle-fill" style="color:#059669;font-size:1.2rem;"></i>
-            <span style="color:#1e1b4b;font-size:0.9rem;">{{ session('success') }}</span>
+            <span style="color:var(--text-primary);font-size:0.9rem;">{{ session('success') }}</span>
         </div>
     @endif
 
     @if($myGroups->count())
-    <h5 class="mb-3" style="color:#6366f1;font-weight:700;font-size:0.9rem;">My Groups</h5>
+    <h5 class="mb-3" style="color:var(--card-accent);font-weight:700;font-size:0.9rem;">My Groups</h5>
     <div class="row g-4 mb-5">
         @foreach($myGroups as $group)
         <div class="col-md-4">
             <div class="glass-card h-100">
-                <div style="color:#6366f1;font-weight:700;font-size:1.1rem;">{{ $group->name }}</div>
-                <p style="color:#6b7280;font-size:0.82rem;margin:0.3rem 0 0.5rem;">{{ $group->description ?? 'No description' }}</p>
+                <div style="color:var(--card-accent);font-weight:700;font-size:1.1rem;">{{ $group->name }}</div>
+                <p style="color:var(--text-secondary);font-size:0.82rem;margin:0.3rem 0 0.5rem;">{{ $group->description ?? 'No description' }}</p>
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <small style="color:#9ca3af;">{{ $group->members_count }} member(s)</small>
+                        <small style="color:var(--text-muted);">{{ $group->members_count }} member(s)</small>
                         @if($group->resources_count)
-                        <small style="color:#6366f1;margin-left:0.5rem;"><i class="bi bi-share"></i> {{ $group->resources_count }} shared</small>
+                        <small style="color:var(--card-accent);margin-left:0.5rem;"><i class="bi bi-share"></i> {{ $group->resources_count }} shared</small>
                         @endif
                     </div>
                     <div class="d-flex gap-1">
@@ -49,21 +49,21 @@
     @else
     <div class="glass-card text-center py-5">
         <i class="bi bi-people" style="font-size:3rem;color:#c7d2fe;"></i>
-        <p class="mt-3" style="color:#6b7280;">You haven't joined any study groups yet.</p>
+        <p class="mt-3" style="color:var(--text-secondary);">You haven't joined any study groups yet.</p>
         <button class="dark-btn" id="createGroupBtnEmpty"><i class="bi bi-plus-circle"></i> Create Group</button>
     </div>
     @endif
 
     @if($otherGroups->count())
-    <h5 class="mb-3" style="color:#6366f1;font-weight:700;font-size:0.9rem;">Discover Groups</h5>
+    <h5 class="mb-3" style="color:var(--card-accent);font-weight:700;font-size:0.9rem;">Discover Groups</h5>
     <div class="row g-4">
         @foreach($otherGroups as $group)
         <div class="col-md-4">
             <div class="glass-card h-100">
-                <div style="color:#1e1b4b;font-weight:700;font-size:1.1rem;">{{ $group->name }}</div>
-                <p style="color:#6b7280;font-size:0.82rem;margin:0.3rem 0 0.5rem;">{{ $group->description ?? 'No description' }}</p>
+                <div style="color:var(--text-primary);font-weight:700;font-size:1.1rem;">{{ $group->name }}</div>
+                <p style="color:var(--text-secondary);font-size:0.82rem;margin:0.3rem 0 0.5rem;">{{ $group->description ?? 'No description' }}</p>
                 <div class="d-flex justify-content-between align-items-center">
-                    <small style="color:#9ca3af;">{{ $group->members_count }} member(s)</small>
+                    <small style="color:var(--text-muted);">{{ $group->members_count }} member(s)</small>
                     <form action="{{ route('study-groups.join', $group) }}" method="POST">
                         @csrf
                         <button class="dark-btn py-1 px-2" style="font-size:0.7rem;"><i class="bi bi-plus-circle"></i> Join</button>
@@ -75,7 +75,7 @@
     </div>
     @elseif($myGroups->count())
     <div class="glass-card text-center py-4">
-        <p style="color:#6b7280;font-size:0.85rem;margin:0;">No other groups available. Create one!</p>
+        <p style="color:var(--text-secondary);font-size:0.85rem;margin:0;">No other groups available. Create one!</p>
     </div>
     @endif
 </div>
@@ -87,19 +87,19 @@
             <form action="{{ route('study-groups.store') }}" method="POST">
                 @csrf
                 <div class="modal-header border-0" style="padding:1.5rem 1.5rem 0;">
-                    <h5 class="modal-title" style="color:#1e1b4b;font-weight:800;">
-                        <i class="bi bi-people-fill me-2" style="color:#6366f1;"></i> Create Study Group
+                    <h5 class="modal-title" style="color:var(--text-primary);font-weight:800;">
+                        <i class="bi bi-people-fill me-2" style="color:var(--card-accent);"></i> Create Study Group
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" style="padding:1.5rem;">
                     <div class="mb-4">
-                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6366f1;margin-bottom:0.4rem;display:block;">Group Name <span style="color:#dc2626;">*</span></label>
+                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--card-accent);margin-bottom:0.4rem;display:block;">Group Name <span style="color:#dc2626;">*</span></label>
                         <input type="text" name="name" class="form-control" required placeholder="e.g., Biology Study Group"
                                style="background:white;border:1.5px solid #e5e7eb;border-radius:1rem;padding:0.7rem 1.1rem;font-size:0.9rem;width:100%;font-family:'Inter',sans-serif;">
                     </div>
                     <div class="mb-3">
-                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6366f1;margin-bottom:0.4rem;display:block;">Description</label>
+                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--card-accent);margin-bottom:0.4rem;display:block;">Description</label>
                         <textarea name="description" class="form-control" rows="3" placeholder="What will you study?"
                                   style="background:white;border:1.5px solid #e5e7eb;border-radius:1rem;padding:0.7rem 1.1rem;font-size:0.9rem;width:100%;font-family:'Inter',sans-serif;resize:vertical;min-height:100px;"></textarea>
                     </div>

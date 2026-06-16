@@ -12,14 +12,14 @@
     <div class="row g-4 mb-4">
         <div class="col-md-4">
             <div class="glass-card text-center py-4">
-                <div style="font-size:2rem;font-weight:800;color:#6366f1;" id="todayMinutes">{{ $todayMinutes }}</div>
-                <small style="color:#6b7280;">Minutes Today</small>
+                <div style="font-size:2rem;font-weight:800;color:var(--card-accent);" id="todayMinutes">{{ $todayMinutes }}</div>
+                <small style="color:var(--text-secondary);">Minutes Today</small>
             </div>
         </div>
         <div class="col-md-4">
             <div class="glass-card text-center py-4">
                 <div style="font-size:2rem;font-weight:800;color:#a855f7;" id="weekMinutes">{{ $weekMinutes }}</div>
-                <small style="color:#6b7280;">Minutes This Week</small>
+                <small style="color:var(--text-secondary);">Minutes This Week</small>
             </div>
         </div>
         <div class="col-md-4">
@@ -29,7 +29,7 @@
                     <button id="startTimerBtn" class="dark-btn" style="padding:0.4rem 1.2rem;font-size:0.8rem;"><i class="bi bi-play-fill"></i> Start</button>
                     <button id="stopTimerBtn" class="btn-soft" style="display:none;padding:0.4rem 1.2rem;font-size:0.8rem;"><i class="bi bi-stop-fill"></i> Stop</button>
                 </div>
-                <small style="color:#6b7280;display:block;margin-top:0.3rem;">
+                <small style="color:var(--text-secondary);display:block;margin-top:0.3rem;">
                     <select id="timerSubject" class="form-select" style="display:inline-block;width:auto;font-size:0.75rem;padding:0.2rem 0.5rem;">
                         <option value="">General</option>
                         @foreach($subjects as $s)
@@ -69,7 +69,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:2rem;">No time entries yet. Start the timer above!</td></tr>
+                    <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem;">No time entries yet. Start the timer above!</td></tr>
                     @endforelse
                 </tbody>
             </table>

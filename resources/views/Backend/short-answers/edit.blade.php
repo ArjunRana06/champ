@@ -3,10 +3,10 @@
 @section('content')
 <div class="container" style="max-width:650px;">
     <div class="glass-card p-4" data-aos="fade-up">
-        <h2 style="color:#1e1b4b;font-weight:800;font-size:1.3rem;margin-bottom:0.25rem;">
-            <i class="bi bi-pencil-square me-2" style="color:#6366f1;"></i> Edit Short Answer Question
+        <h2 style="color:var(--text-primary);font-weight:800;font-size:1.3rem;margin-bottom:0.25rem;">
+            <i class="bi bi-pencil-square me-2" style="color:var(--card-accent);"></i> Edit Short Answer Question
         </h2>
-        <p style="color:#6b7280;font-size:0.88rem;margin-bottom:1.5rem;">Edit the question and expected answer.</p>
+        <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:1.5rem;">Edit the question and expected answer.</p>
 
         <form action="{{ route('short-answers.update', $shortAnswer) }}" method="POST" class="form-glass">
             @csrf @method('PUT')

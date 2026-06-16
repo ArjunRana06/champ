@@ -18,11 +18,11 @@
             </a>
             <div class="dropdown-menu dropdown-menu-end p-2" style="min-width: 320px;" id="notificationDropdown">
                 <div class="d-flex justify-content-between align-items-center px-2 py-1">
-                    <strong style="font-size:0.85rem;color:#1e1b4b;">Notifications</strong>
+                    <strong style="font-size:0.85rem;color:var(--text-primary);">Notifications</strong>
                     <button class="btn-soft py-1 px-2" style="font-size:0.7rem;" onclick="markAllNotifRead()">Mark all read</button>
                 </div>
                 <div id="notificationList" style="max-height:300px;overflow-y:auto;">
-                    <div class="text-center py-3" style="color:#9ca3af;font-size:0.85rem;">Loading...</div>
+                    <div class="text-center py-3" style="color:var(--text-muted);font-size:0.85rem;">Loading...</div>
                 </div>
                 <hr class="my-1">
                 <a href="{{ route('notifications.index') }}" class="dropdown-item rounded-3 text-center" style="font-size:0.8rem;">View all</a>
@@ -48,7 +48,7 @@
                     {{ substr(auth()->user()->name, 0, 1) }}
                 </div>
                 <span class="user-name">{{ auth()->user()->name }}</span>
-                <i class="bi bi-chevron-down" style="font-size:0.7rem;color:#9ca3af;"></i>
+                <i class="bi bi-chevron-down" style="font-size:0.7rem;color:var(--text-muted);"></i>
             </a>
             <ul class="dropdown-menu dropdown-menu-end p-2">
                 <li><a class="dropdown-item rounded-3" href="{{ route('users.show', auth()->user()->id) }}"><i class="bi bi-person"></i> Profile</a></li>
@@ -84,13 +84,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             if (list) {
                 if (!data.notifications || data.notifications.length === 0) {
-                    list.innerHTML = '<div class="text-center py-3" style="color:#9ca3af;font-size:0.85rem;">No notifications yet</div>';
+                    list.innerHTML = '<div class="text-center py-3" style="color:var(--text-muted);font-size:0.85rem;">No notifications yet</div>';
                     return;
                 }
                 list.innerHTML = data.notifications.map(n => `
-                    <a href="${n.link || '#'}" class="dropdown-item rounded-3 ${n.is_read ? '' : 'fw-bold'}" style="font-size:0.82rem;white-space:normal;border-bottom:1px solid #f1f5f9;padding:0.5rem 0.7rem;" onclick="if(!${n.is_read}) markNotifRead(${n.id})">
-                        <div style="color:#1e1b4b;">${n.title}</div>
-                        <small style="color:#6b7280;">${n.body || ''}</small>
+                    <a href="${n.link || '#'}" class="dropdown-item rounded-3 ${n.is_read ? '' : 'fw-bold'}" style="font-size:0.82rem;white-space:normal;border-bottom:1px solid var(--divider-color);padding:0.5rem 0.7rem;" onclick="if(!${n.is_read}) markNotifRead(${n.id})">
+                        <div style="color:var(--text-primary);">${n.title}</div>
+                        <small style="color:var(--text-secondary);">${n.body || ''}</small>
                     </a>
                 `).join('');
             }

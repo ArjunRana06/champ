@@ -15,21 +15,21 @@
     @if(session('success'))
         <div class="glass-card mb-4 d-flex align-items-center gap-3 py-3" style="border-left:4px solid #059669;">
             <i class="bi bi-check-circle-fill" style="color:#059669;font-size:1.2rem;"></i>
-            <span style="color:#1e1b4b;font-size:0.9rem;">{{ session('success') }}</span>
+            <span style="color:var(--text-primary);font-size:0.9rem;">{{ session('success') }}</span>
         </div>
     @endif
 
     <div class="glass-card mb-4 d-flex align-items-center justify-content-between py-2 px-3" id="score-bar" style="display:none;border-left:4px solid #6366f1;">
         <div>
-            <span style="color:#1e1b4b;font-weight:600;font-size:0.9rem;">Score: </span>
-            <span id="score-display" style="color:#6366f1;font-weight:700;font-size:1rem;">0</span>
-            <span style="color:#6b7280;font-size:0.85rem;"> / {{ $questions instanceof \Illuminate\Pagination\LengthAwarePaginator ? $questions->total() : $questions->count() }}</span>
+            <span style="color:var(--text-primary);font-weight:600;font-size:0.9rem;">Score: </span>
+            <span id="score-display" style="color:var(--card-accent);font-weight:700;font-size:1rem;">0</span>
+            <span style="color:var(--text-secondary);font-size:0.85rem;"> / {{ $questions instanceof \Illuminate\Pagination\LengthAwarePaginator ? $questions->total() : $questions->count() }}</span>
         </div>
         <div class="d-flex align-items-center gap-2" style="flex:1;max-width:300px;">
             <div style="flex:1;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;">
                 <div id="progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#6366f1,#22c55e);border-radius:4px;transition:width 0.5s ease;"></div>
             </div>
-            <span id="progress-text" style="font-size:0.8rem;color:#6b7280;font-weight:500;min-width:60px;">0%</span>
+            <span id="progress-text" style="font-size:0.8rem;color:var(--text-secondary);font-weight:500;min-width:60px;">0%</span>
         </div>
         <button class="btn-soft py-1 px-2" style="font-size:0.75rem;" onclick="resetAll()">
             <i class="bi bi-arrow-counterclockwise"></i> Reset
@@ -48,7 +48,7 @@
                             {{ ucfirst($question->difficulty) }}
                         </span>
                         <div class="d-flex gap-1">
-                            <a href="{{ route('fill-blanks.edit', $question) }}" class="btn-soft py-1 px-2" style="font-size:0.75rem;color:#6366f1;">
+                            <a href="{{ route('fill-blanks.edit', $question) }}" class="btn-soft py-1 px-2" style="font-size:0.75rem;color:var(--card-accent);">
                                 <i class="bi bi-pencil"></i>
                             </a>
                             <button class="btn-soft py-1 px-2" style="font-size:0.75rem;color:#f59e0b;" onclick="toggleBookmark('App\\Models\\FillBlank', {{ $question->id }}, this)">
@@ -60,7 +60,7 @@
                         </div>
                     </div>
 
-                    <div class="mb-3 sentence-display" style="color:#1e1b4b;font-weight:500;font-size:0.95rem;line-height:2.2;">
+                    <div class="mb-3 sentence-display" style="color:var(--text-primary);font-weight:500;font-size:0.95rem;line-height:2.2;">
                         {{ $question->sentence_with_blanks }}
                     </div>
 
@@ -81,7 +81,7 @@
             <div class="col-12">
                 <div class="glass-card text-center py-5">
                     <i class="bi bi-input-cursor-text" style="font-size:3rem;color:#c7d2fe;"></i>
-                    <p class="mt-3" style="color:#6b7280;">No fill-in-the-blank questions generated yet. Click "Generate New" to create some from your notes.</p>
+                    <p class="mt-3" style="color:var(--text-secondary);">No fill-in-the-blank questions generated yet. Click "Generate New" to create some from your notes.</p>
                     <a href="{{ route('fill-blanks.create') }}" class="dark-btn"><i class="bi bi-plus-circle"></i> Generate Questions</a>
                 </div>
             </div>

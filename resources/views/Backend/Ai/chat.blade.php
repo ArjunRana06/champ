@@ -8,8 +8,8 @@
                 <i class="bi bi-robot"></i>
             </div>
             <div>
-                <h4 class="mb-0" style="font-weight:800;color:#1e1b4b;">AI Study Assistant</h4>
-                <small style="color:#6b7280;">Chat with your personal AI tutor — powered by your study materials</small>
+                <h4 class="mb-0" style="font-weight:800;color:var(--text-primary);">AI Study Assistant</h4>
+                <small style="color:var(--text-secondary);">Chat with your personal AI tutor — powered by your study materials</small>
             </div>
             <div class="ms-auto">
                 <select id="personaSelect" class="form-select" style="width:auto;display:inline-block;border-radius:40px;font-size:0.8rem;padding:0.3rem 1rem;background:white;border:1.5px solid #e5e7eb;">

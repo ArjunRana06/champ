@@ -5,7 +5,7 @@
     @if(session('success'))
         <div class="glass-card mb-4 d-flex align-items-center gap-3 py-3" style="border-left:4px solid #059669;">
             <i class="bi bi-check-circle-fill" style="color:#059669;font-size:1.2rem;"></i>
-            <span style="color:#1e1b4b;font-size:0.9rem;">{{ session('success') }}</span>
+            <span style="color:var(--text-primary);font-size:0.9rem;">{{ session('success') }}</span>
         </div>
     @endif
 
@@ -13,9 +13,9 @@
         <a href="{{ route('study-groups.index') }}" class="btn-soft mb-3" style="font-size:0.8rem;"><i class="bi bi-arrow-left"></i> Back</a>
         <div class="d-flex justify-content-between align-items-start">
             <div>
-                <h2 style="color:#1e1b4b;font-weight:800;font-size:1.3rem;">{{ $studyGroup->name }}</h2>
-                <p style="color:#6b7280;">{{ $studyGroup->description ?? 'No description' }}</p>
-                <small style="color:#9ca3af;">Created by {{ $studyGroup->creator?->name ?? 'Unknown' }}</small>
+                <h2 style="color:var(--text-primary);font-weight:800;font-size:1.3rem;">{{ $studyGroup->name }}</h2>
+                <p style="color:var(--text-secondary);">{{ $studyGroup->description ?? 'No description' }}</p>
+                <small style="color:var(--text-muted);">Created by {{ $studyGroup->creator?->name ?? 'Unknown' }}</small>
             </div>
             <form action="{{ route('study-groups.leave', $studyGroup) }}" method="POST">
                 @csrf
@@ -23,7 +23,7 @@
             </form>
         </div>
 
-        <h5 style="color:#6366f1;font-weight:700;font-size:0.9rem;margin-top:1.5rem;">Members ({{ $studyGroup->members->count() }})</h5>
+        <h5 style="color:var(--card-accent);font-weight:700;font-size:0.9rem;margin-top:1.5rem;">Members ({{ $studyGroup->members->count() }})</h5>
         <div class="d-flex flex-column gap-2 mt-2">
             @foreach($studyGroup->members as $member)
             <div class="d-flex align-items-center gap-3 py-2 px-3" style="background:rgba(255,255,255,0.4);border-radius:1rem;">
@@ -31,8 +31,8 @@
                     {{ substr($member->user->name, 0, 1) }}
                 </div>
                 <div>
-                    <div style="font-weight:600;font-size:0.88rem;color:#1e1b4b;">{{ $member->user->name }}</div>
-                    <small style="color:#6b7280;">{{ $member->role }}</small>
+                    <div style="font-weight:600;font-size:0.88rem;color:var(--text-primary);">{{ $member->user->name }}</div>
+                    <small style="color:var(--text-secondary);">{{ $member->role }}</small>
                 </div>
             </div>
             @endforeach
@@ -58,7 +58,7 @@
         @endphp
 
         <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
-            <h5 style="color:#6366f1;font-weight:700;font-size:0.9rem;margin:0;">Shared Resources ({{ $studyGroup->resources->count() }})</h5>
+            <h5 style="color:var(--card-accent);font-weight:700;font-size:0.9rem;margin:0;">Shared Resources ({{ $studyGroup->resources->count() }})</h5>
             <button class="dark-btn py-1 px-2" style="font-size:0.7rem;" id="shareQuestionBtn"><i class="bi bi-share"></i> Share Question</button>
         </div>
 
@@ -70,12 +70,12 @@
                     <i class="bi {{ $typeIcons[$resource->resourceable_type] ?? 'bi-question-circle' }}"></i>
                 </div>
                 <div class="flex-grow-1" style="min-width:0;">
-                    <div style="font-weight:600;font-size:0.88rem;color:#1e1b4b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    <div style="font-weight:600;font-size:0.88rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                         {{ $resource->resourceable?->question ?? $resource->resourceable?->statement ?? $resource->resourceable?->front ?? $resource->resourceable?->sentence_with_blanks ?? 'Resource' }}
                     </div>
                     <div class="d-flex gap-2">
-                        <small style="color:#6366f1;">{{ $typeLabels[$resource->resourceable_type] ?? 'Question' }}</small>
-                        <small style="color:#9ca3af;">by {{ $resource->user->name }}</small>
+                        <small style="color:var(--card-accent);">{{ $typeLabels[$resource->resourceable_type] ?? 'Question' }}</small>
+                        <small style="color:var(--text-muted);">by {{ $resource->user->name }}</small>
                     </div>
                 </div>
                 @php
@@ -91,7 +91,7 @@
             @endforeach
         </div>
         @else
-        <div class="text-center py-4" style="color:#9ca3af;font-size:0.85rem;">
+        <div class="text-center py-4" style="color:var(--text-muted);font-size:0.85rem;">
             <i class="bi bi-inbox" style="font-size:1.5rem;display:block;margin-bottom:0.3rem;"></i>
             No resources shared yet. Share your questions with the group!
         </div>
@@ -105,14 +105,14 @@
             <form action="{{ route('study-groups.share', $studyGroup) }}" method="POST">
                 @csrf
                 <div class="modal-header border-0" style="padding:1.5rem 1.5rem 0;">
-                    <h5 class="modal-title" style="color:#1e1b4b;font-weight:800;">
-                        <i class="bi bi-share-fill me-2" style="color:#6366f1;"></i> Share a Question
+                    <h5 class="modal-title" style="color:var(--text-primary);font-weight:800;">
+                        <i class="bi bi-share-fill me-2" style="color:var(--card-accent);"></i> Share a Question
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" style="padding:1.5rem;">
                     <div class="mb-4">
-                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6366f1;margin-bottom:0.4rem;display:block;">Question Type</label>
+                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--card-accent);margin-bottom:0.4rem;display:block;">Question Type</label>
                         <select name="type" id="questionType" class="form-control" required
                                 style="background:white;border:1.5px solid #e5e7eb;border-radius:1rem;padding:0.7rem 1.1rem;font-size:0.9rem;width:100%;font-family:'Inter',sans-serif;">
                             <option value="">Select type...</option>
@@ -125,7 +125,7 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#6366f1;margin-bottom:0.4rem;display:block;">Question</label>
+                        <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--card-accent);margin-bottom:0.4rem;display:block;">Question</label>
                         <select name="id" id="questionId" class="form-control" required
                                 style="background:white;border:1.5px solid #e5e7eb;border-radius:1rem;padding:0.7rem 1.1rem;font-size:0.9rem;width:100%;font-family:'Inter',sans-serif;">
                             <option value="">Select type first...</option>

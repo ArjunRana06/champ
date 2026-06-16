@@ -19,19 +19,19 @@
                 <div style="font-size:2.5rem;font-weight:800;color:{{ $quizAttempt->score_percentage >= 80 ? '#059669' : ($quizAttempt->score_percentage >= 50 ? '#d97706' : '#dc2626') }};">
                     {{ $quizAttempt->score_percentage }}%
                 </div>
-                <small style="color:#6b7280;">Score</small>
+                <small style="color:var(--text-secondary);">Score</small>
             </div>
         </div>
         <div class="col-md-3">
             <div class="glass-card text-center py-4">
-                <div style="font-size:2rem;font-weight:700;color:#6366f1;">{{ $quizAttempt->correct_answers }}/{{ $quizAttempt->total_questions }}</div>
-                <small style="color:#6b7280;">Correct</small>
+                <div style="font-size:2rem;font-weight:700;color:var(--card-accent);">{{ $quizAttempt->correct_answers }}/{{ $quizAttempt->total_questions }}</div>
+                <small style="color:var(--text-secondary);">Correct</small>
             </div>
         </div>
         <div class="col-md-3">
             <div class="glass-card text-center py-4">
                 <div style="font-size:2rem;font-weight:700;color:#a855f7;">{{ $quizAttempt->total_questions - $quizAttempt->correct_answers }}</div>
-                <small style="color:#6b7280;">Incorrect</small>
+                <small style="color:var(--text-secondary);">Incorrect</small>
             </div>
         </div>
         <div class="col-md-3">
@@ -43,7 +43,7 @@
                         —
                     @endif
                 </div>
-                <small style="color:#6b7280;">Time Taken</small>
+                <small style="color:var(--text-secondary);">Time Taken</small>
             </div>
         </div>
     </div>
@@ -51,21 +51,21 @@
     @if($quizAttempt->score_percentage >= 80)
         <div class="glass-card mb-4 d-flex align-items-center gap-3 py-3" style="border-left:4px solid #059669;">
             <i class="bi bi-trophy-fill" style="color:#059669;font-size:1.5rem;"></i>
-            <span style="color:#1e1b4b;font-weight:600;">Great job! You're doing excellent. Keep it up!</span>
+            <span style="color:var(--text-primary);font-weight:600;">Great job! You're doing excellent. Keep it up!</span>
         </div>
     @elseif($quizAttempt->score_percentage >= 50)
         <div class="glass-card mb-4 d-flex align-items-center gap-3 py-3" style="border-left:4px solid #f59e0b;">
             <i class="bi bi-graph-up" style="color:#d97706;font-size:1.5rem;"></i>
-            <span style="color:#1e1b4b;font-weight:600;">Good effort! Review the questions you missed and try again.</span>
+            <span style="color:var(--text-primary);font-weight:600;">Good effort! Review the questions you missed and try again.</span>
         </div>
     @else
         <div class="glass-card mb-4 d-flex align-items-center gap-3 py-3" style="border-left:4px solid #ef4444;">
             <i class="bi bi-book" style="color:#dc2626;font-size:1.5rem;"></i>
-            <span style="color:#1e1b4b;font-weight:600;">Keep studying! Review your notes and try again to improve.</span>
+            <span style="color:var(--text-primary);font-weight:600;">Keep studying! Review your notes and try again to improve.</span>
         </div>
     @endif
 
-    <h5 style="color:#1e1b4b;font-weight:700;margin-bottom:1rem;">Detailed Review</h5>
+    <h5 style="color:var(--text-primary);font-weight:700;margin-bottom:1rem;">Detailed Review</h5>
 
     @foreach($results as $result)
         @php $q = $result['question']; @endphp
@@ -80,16 +80,16 @@
                 </div>
                 <div class="flex-grow-1">
                     @if($q['type'] === 'mcq')
-                        <p style="color:#1e1b4b;font-weight:600;margin-bottom:0.5rem;">{{ $q['question'] }}</p>
-                        <small style="color:#6b7280;">
+                        <p style="color:var(--text-primary);font-weight:600;margin-bottom:0.5rem;">{{ $q['question'] }}</p>
+                        <small style="color:var(--text-secondary);">
                             Your answer: <strong>{{ isset($result['user_answer']) ? $q['options'][$result['user_answer']] ?? 'No answer' : 'No answer' }}</strong>
                             @if(!$result['is_correct'])
                                 &nbsp;|&nbsp; Correct answer: <strong style="color:#059669;">{{ $q['correct_answer'] }}</strong>
                             @endif
                         </small>
                     @elseif($q['type'] === 'true-false')
-                        <p style="color:#1e1b4b;font-weight:600;margin-bottom:0.5rem;">{{ $q['statement'] }}</p>
-                        <small style="color:#6b7280;">
+                        <p style="color:var(--text-primary);font-weight:600;margin-bottom:0.5rem;">{{ $q['statement'] }}</p>
+                        <small style="color:var(--text-secondary);">
                             Your answer: <strong>{{ ucfirst($result['user_answer'] ?? 'No answer') }}</strong>
                             @if(!$result['is_correct'])
                                 &nbsp;|&nbsp; Correct answer: <strong style="color:#059669;">{{ ucfirst($q['correct_answer']) }}</strong>
