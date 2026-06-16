@@ -13,7 +13,7 @@ return new class extends Migration
             $table->integer('level')->default(1);
             $table->integer('streak')->default(0);
             $table->date('last_active_date')->nullable();
-            $table->string('badges')->nullable();
+            $table->json('badges')->nullable();
         });
     }
 

@@ -29,7 +29,7 @@ class SubjectController extends Controller
             'code' => 'nullable|string|max:50',
         ]);
 
-        Auth::user()->subjects()->create($request->all());
+        Auth::user()->subjects()->create($request->only(['name', 'semester', 'code']));
 
         return redirect()->route('subjects.index')
             ->with('success', 'Subject created successfully.');
@@ -56,7 +56,7 @@ class SubjectController extends Controller
             'code' => 'nullable|string|max:50',
         ]);
 
-        $subject->update($request->all());
+        $subject->update($request->only(['name', 'semester', 'code']));
 
         return redirect()->route('subjects.index')
             ->with('success', 'Subject updated successfully.');

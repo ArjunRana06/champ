@@ -17,7 +17,7 @@ use App\Models\Exam;
 use App\Models\PomodoroSession;
 use App\Models\TimeEntry;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
+
 
 class DashboardController extends Controller
 {

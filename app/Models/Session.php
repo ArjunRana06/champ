@@ -9,6 +9,8 @@ class Session extends Model
 {
     use HasFactory;
 
+    protected $table = 'replay_sessions';
+
     protected $fillable = [
         'user_id',
         'started_at',

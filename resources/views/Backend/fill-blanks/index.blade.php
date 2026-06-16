@@ -61,7 +61,7 @@
                     </div>
 
                     <div class="mb-3 sentence-display" style="color:#1e1b4b;font-weight:500;font-size:0.95rem;line-height:2.2;">
-                        {!! $question->sentence_with_blanks !!}
+                        {{ $question->sentence_with_blanks }}
                     </div>
 
                     <div class="fb-container" data-qid="{{ $question->id }}">

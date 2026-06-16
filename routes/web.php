@@ -5,7 +5,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\EventController;
+
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;

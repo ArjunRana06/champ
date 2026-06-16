@@ -20,7 +20,7 @@ class BookmarkController extends Controller
     public function toggle(Request $request)
     {
         $request->validate([
-            'bookmarkable_type' => 'required|string',
+            'bookmarkable_type' => 'required|string|in:App\Models\Mcq,App\Models\TrueFalseQuestion,App\Models\ShortAnswer,App\Models\FillBlank,App\Models\MatchingQuestion,App\Models\Flashcard,App\Models\Document,App\Models\Note,App\Models\StudyPlan',
             'bookmarkable_id' => 'required|integer',
             'label' => 'nullable|string|max:100',
         ]);

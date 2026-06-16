@@ -76,14 +76,4 @@ class NotificationService
         );
     }
 
-    public function notifyShareReceived(int $userId, string $sharedByName, string $resourceType): void
-    {
-        $this->create(
-            $userId,
-            'shared',
-            'New content shared',
-            "{$sharedByName} shared {$resourceType} with you.",
-            null
-        );
-    }
 }
