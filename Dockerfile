@@ -1,21 +1,27 @@
-FROM php:8.3-cli
+FROM php:8.3-apache
 
 RUN apt-get update && apt-get install -y \
-    unzip zip curl git libpq-dev
+    unzip zip curl git libpng-dev libonig-dev libxml2-dev libzip-dev libpq-dev nodejs npm
 
-# Install PHP extensions for PostgreSQL
-RUN docker-php-ext-install pdo pdo_pgsql pgsql
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+
+RUN a2enmod rewrite
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-WORKDIR /app
+WORKDIR /var/www/html
 
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader
+RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf && \
+    sed -i 's!/var/www/!/var/www/html/public!g' /etc/apache2/apache2.conf
 
-RUN chmod -R 775 storage bootstrap/cache
+RUN composer install --no-dev --optimize-autoloader && \
+    npm install && npm run build
 
-EXPOSE 10000
+RUN chown -R www-data:www-data storage bootstrap/cache && \
+    chmod -R 775 storage bootstrap/cache
 
-CMD php artisan serve --host=0.0.0.0 --port=10000
+EXPOSE 80
+
+CMD ["apache2-foreground"]
