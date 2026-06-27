@@ -3,7 +3,7 @@ FROM php:8.3-apache
 RUN apt-get update && apt-get install -y \
     unzip zip curl git libpng-dev libonig-dev libxml2-dev libzip-dev libpq-dev nodejs npm
 
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+RUN docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip
 
 RUN a2enmod rewrite
 
