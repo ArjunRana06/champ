@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    'openrouter' => [
+        'api_key' => env('OPENROUTER_API_KEY'),
+        'model' => env('OPENROUTER_MODEL', 'meta-llama/llama-3.3-70b-instruct:free'),
+        'fallback_models' => [
+            'google/gemma-4-31b-it:free',
+            'qwen/qwen3-next-80b-a3b-instruct:free',
+            'microsoft/phi-3-mini-128k-instruct:free',
+        ],
+        'embedding_model' => env('OPENROUTER_EMBEDDING_MODEL', 'openai/text-embedding-3-small'),
+        'timeout' => 60,
+        'max_retries' => 2,
+        'rate_limit_per_minute' => 60,
+    ],
+
 ];

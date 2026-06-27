@@ -104,6 +104,8 @@ Route::post('/flashcards/generate', [FlashcardController::class, 'generate'])->n
     Route::delete('/bookmarks/{id}', [BookmarkController::class, 'destroy'])->name('bookmarks.destroy');
 
     Route::post('/chat', [ChatController::class, 'sendMessage'])->name('chat.send');
+    Route::post('/chat/stream', [ChatController::class, 'sendMessageStream'])->name('chat.stream');
+    Route::post('/chat/clear', [ChatController::class, 'clearChat'])->name('chat.clear');
     Route::get('/ai-chat', [ChatController::class, 'showChatPage'])->name('ai.chat');
     Route::post('/chat/explain', [ChatController::class, 'explainAnswer'])->name('chat.explain');
 

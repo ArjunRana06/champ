@@ -65,26 +65,50 @@ class ProcessDocumentJob implements ShouldQueue
 
             $this->updateProgress(70, 'Storing chunks and embeddings...');
 
-            $insertBatch = [];
-            $chunkModels = [];
+            $chunkRecords = [];
+            $embeddingRecords = [];
+            $now = now();
+
             foreach ($chunks as $index => $chunkText) {
-                $chunk = DocumentChunk::create([
+                $chunkRecords[] = [
                     'document_id' => $this->document->id,
                     'chunk_index' => $index,
                     'content' => $chunkText,
                     'vector_id' => null,
-                ]);
-                $chunkModels[] = $chunk;
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
 
-                Embedding::create([
-                    'document_chunk_id' => $chunk->id,
-                    'embedding' => json_encode($embeddings[$index]),
-                ]);
+            // Batch insert chunks
+            foreach (array_chunk($chunkRecords, 50) as $batch) {
+                DocumentChunk::insert($batch);
+            }
 
-                if ($index % 10 === 0 || $index === $totalChunks - 1) {
-                    $pct = 70 + round((($index + 1) / $totalChunks) * 25);
-                    $this->updateProgress($pct, "Stored chunk $index of $totalChunks");
+            // Retrieve the inserted chunks to get their IDs
+            $insertedChunks = DocumentChunk::where('document_id', $this->document->id)
+                ->orderBy('chunk_index')
+                ->get();
+
+            foreach ($insertedChunks as $index => $chunkModel) {
+                $embeddingRecords[] = [
+                    'document_chunk_id' => $chunkModel->id,
+                    'embedding' => json_encode($embeddings[$index] ?? []),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+
+                if (count($embeddingRecords) >= 50) {
+                    Embedding::insert($embeddingRecords);
+                    $embeddingRecords = [];
                 }
+
+                $pct = 70 + round((($index + 1) / $totalChunks) * 25);
+                $this->updateProgress($pct, "Stored chunk $index of $totalChunks");
+            }
+
+            if (!empty($embeddingRecords)) {
+                Embedding::insert($embeddingRecords);
             }
 
             $this->document->update([
@@ -133,12 +157,10 @@ class ProcessDocumentJob implements ShouldQueue
         $mime = $this->document->mime_type;
 
         try {
-            // PDF
             if ($mime === 'application/pdf') {
                 return $this->extractPdfText($path);
             }
 
-            // Word documents
             if (in_array($mime, [
                 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 'application/msword',
@@ -146,7 +168,6 @@ class ProcessDocumentJob implements ShouldQueue
                 return $this->extractWordText($path, $mime);
             }
 
-            // Presentations
             if (in_array($mime, [
                 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
                 'application/vnd.ms-powerpoint',
@@ -154,7 +175,6 @@ class ProcessDocumentJob implements ShouldQueue
                 return $this->extractPptText($path);
             }
 
-            // Spreadsheets
             if (in_array($mime, [
                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'application/vnd.ms-excel',
@@ -162,19 +182,16 @@ class ProcessDocumentJob implements ShouldQueue
                 return $this->extractSpreadsheetText($path);
             }
 
-            // Images (OCR)
             if (in_array($mime, [
                 'image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp',
             ])) {
                 return $this->extractImageText($path);
             }
 
-            // Plain text
             if ($mime === 'text/plain' || $mime === 'text/csv' || $mime === 'text/rtf') {
                 return file_get_contents($path);
             }
 
-            // Fallback: try by extension
             $ext = strtolower(pathinfo($this->document->original_name, PATHINFO_EXTENSION));
             if (in_array($ext, ['txt', 'csv'])) {
                 return file_get_contents($path);
@@ -314,62 +331,143 @@ class ProcessDocumentJob implements ShouldQueue
 
     private function splitIntoChunks(string $text, int $chunkSize = 2000, int $overlap = 300): array
     {
+        // Split into paragraphs first
         $paragraphs = preg_split('/\n\s*\n/', $text);
+        $paragraphs = array_map('trim', $paragraphs);
+        $paragraphs = array_filter($paragraphs, fn($p) => !empty($p));
+        $paragraphs = array_values($paragraphs);
+
         $chunks = [];
         $currentChunk = '';
 
         foreach ($paragraphs as $para) {
-            $para = trim($para);
-            if (empty($para)) continue;
-
-            if (mb_strlen($currentChunk) + mb_strlen($para) <= $chunkSize) {
-                $currentChunk .= $para . "\n\n";
-            } else {
+            // If a single paragraph exceeds chunkSize, split it by sentences
+            if (mb_strlen($para) > $chunkSize) {
                 if (!empty($currentChunk)) {
                     $chunks[] = trim($currentChunk);
                 }
-                $overlapText = mb_substr($currentChunk, -$overlap);
+                $sentences = preg_split('/(?<=[.!?])\s+/', $para);
+                $currentChunk = '';
+                foreach ($sentences as $sentence) {
+                    $sentence = trim($sentence);
+                    if (empty($sentence)) continue;
+                    if (mb_strlen($currentChunk) + mb_strlen($sentence) > $chunkSize) {
+                        if (!empty($currentChunk)) {
+                            $chunks[] = trim($currentChunk);
+                        }
+                        $currentChunk = $sentence . ' ';
+                    } else {
+                        $currentChunk .= $sentence . ' ';
+                    }
+                }
+                continue;
+            }
+
+            // Normal case: add paragraph to current chunk
+            if (empty($currentChunk)) {
+                $currentChunk = $para . "\n\n";
+            } elseif (mb_strlen($currentChunk) + mb_strlen($para) <= $chunkSize) {
+                $currentChunk .= $para . "\n\n";
+            } else {
+                $chunks[] = trim($currentChunk);
+                // Overlap: take last N characters up to the last sentence boundary
+                $overlapText = $this->getSentenceOverlap($currentChunk, $overlap);
                 $currentChunk = $overlapText . "\n\n" . $para . "\n\n";
             }
         }
-        if (!empty($currentChunk)) {
+
+        if (!empty(trim($currentChunk ?? ''))) {
             $chunks[] = trim($currentChunk);
         }
+
+        // Fallback: if no chunks were created, split by characters
+        if (empty($chunks)) {
+            $chunks = [trim($text)];
+        }
+
         return $chunks;
+    }
+
+    private function getSentenceOverlap(string $text, int $maxChars): string
+    {
+        if (mb_strlen($text) <= $maxChars) {
+            return $text;
+        }
+
+        $tail = mb_substr($text, -$maxChars);
+        // Try to find a sentence boundary in the tail
+        $boundary = mb_strpos($tail, '. ');
+        if ($boundary !== false) {
+            return mb_substr($tail, $boundary + 2);
+        }
+        $boundary = mb_strpos($tail, "?\n");
+        if ($boundary !== false) {
+            return mb_substr($tail, $boundary + 2);
+        }
+        $boundary = mb_strpos($tail, "!\n");
+        if ($boundary !== false) {
+            return mb_substr($tail, $boundary + 2);
+        }
+        // Fallback: use newline
+        $boundary = mb_strpos($tail, "\n");
+        if ($boundary !== false) {
+            return mb_substr($tail, $boundary + 1);
+        }
+
+        return $tail;
     }
 
     private function generateEmbeddingsBatch(array $texts): array
     {
-        $apiKey = env('OPENROUTER_API_KEY');
-        $model = env('OPENROUTER_EMBEDDING_MODEL', 'openai/text-embedding-3-small');
+        $apiKey = config('services.openrouter.api_key');
+        $model = config('services.openrouter.embedding_model');
 
         $batches = array_chunk($texts, 50);
         $allEmbeddings = [];
 
         foreach ($batches as $batchIndex => $batch) {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
-                'Content-Type' => 'application/json',
-            ])->timeout(120)->post('https://openrouter.ai/api/v1/embeddings', [
-                'model' => $model,
-                'input' => $batch,
-            ]);
+            $maxRetries = 2;
+            $retryDelay = 1;
 
-            if ($response->failed()) {
-                throw new \Exception('Embedding batch API error: ' . $response->body());
-            }
+            for ($attempt = 0; $attempt <= $maxRetries; $attempt++) {
+                try {
+                    $response = Http::withHeaders([
+                        'Authorization' => 'Bearer ' . $apiKey,
+                        'Content-Type' => 'application/json',
+                    ])->timeout(120)->post('https://openrouter.ai/api/v1/embeddings', [
+                        'model' => $model,
+                        'input' => $batch,
+                    ]);
 
-            $data = $response->json();
-            if (!isset($data['data']) || count($data['data']) !== count($batch)) {
-                throw new \Exception('Invalid embedding batch response');
-            }
+                    if ($response->failed()) {
+                        if (in_array($response->status(), [429, 502, 503, 504]) && $attempt < $maxRetries) {
+                            sleep($retryDelay * pow(2, $attempt));
+                            continue;
+                        }
+                        throw new \Exception('Embedding batch API error: ' . $response->body());
+                    }
 
-            $sorted = [];
-            foreach ($data['data'] as $item) {
-                $sorted[$item['index']] = $item['embedding'];
-            }
-            for ($i = 0; $i < count($batch); $i++) {
-                $allEmbeddings[] = $sorted[$i];
+                    $data = $response->json();
+                    if (!isset($data['data']) || count($data['data']) !== count($batch)) {
+                        throw new \Exception('Invalid embedding batch response');
+                    }
+
+                    $sorted = [];
+                    foreach ($data['data'] as $item) {
+                        $sorted[$item['index']] = $item['embedding'];
+                    }
+                    for ($i = 0; $i < count($batch); $i++) {
+                        $allEmbeddings[] = $sorted[$i];
+                    }
+                    break;
+
+                } catch (\Illuminate\Http\Client\ConnectionException $e) {
+                    if ($attempt < $maxRetries) {
+                        sleep($retryDelay * pow(2, $attempt));
+                        continue;
+                    }
+                    throw new \Exception('Embedding API connection timeout: ' . $e->getMessage());
+                }
             }
 
             $pct = 40 + round((($batchIndex + 1) / count($batches)) * 30);

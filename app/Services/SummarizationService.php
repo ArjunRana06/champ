@@ -30,7 +30,7 @@ class SummarizationService
             $fullText .= $chunk->content . "\n\n";
         }
 
-        $maxChars = 12000;
+        $maxChars = 24000;
         if (strlen($fullText) > $maxChars) {
             $fullText = substr($fullText, 0, $maxChars) . "\n\n[... content truncated ...]";
         }
@@ -52,7 +52,7 @@ Use clear formatting with markdown bullet points and short paragraphs. Be concis
             ]
         ];
 
-        $summary = $this->ai->chat($messages, env('OPENROUTER_MODEL', 'openai/gpt-3.5-turbo'), 0.3, 2000);
+        $summary = $this->ai->chat($messages, null, 0.3, 4096);
 
         return DocumentSummary::updateOrCreate(
             [
@@ -61,7 +61,7 @@ Use clear formatting with markdown bullet points and short paragraphs. Be concis
             ],
             [
                 'summary' => $summary,
-                'model_used' => env('OPENROUTER_MODEL', 'openai/gpt-3.5-turbo'),
+                'model_used' => config('services.openrouter.model'),
             ]
         );
     }
