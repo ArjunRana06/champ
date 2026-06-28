@@ -47,7 +47,7 @@ services:
         value: meta-llama/llama-3.3-70b-instruct:free
       - key: OPENROUTER_EMBEDDING_MODEL
         value: openai/text-embedding-3-small
-    healthCheckPath: /
+    healthCheckPath: /health.txt
 
 databases:
   - name: ai-study-db
