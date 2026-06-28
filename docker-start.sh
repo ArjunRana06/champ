@@ -32,7 +32,8 @@ chmod -R 775 storage bootstrap/cache
 php artisan storage:link --force 2>/dev/null || true
 
 # Run database migrations (safe for production with --force)
-php artisan migrate --force
+# Use || true so a migration failure doesn't prevent the server from starting
+php artisan migrate --force || echo "Warning: some migrations failed, continuing..."
 
 # Clear stale compiled views and config cache
 php artisan view:clear
