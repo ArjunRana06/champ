@@ -2,8 +2,8 @@ node_modules
 vendor
 .git
 .env
-.env.*
-*.md
+.env.backup
+.env.production
 .gitignore
 .gitattributes
 .DS_Store
