@@ -23,49 +23,50 @@ class SearchController extends Controller
         }
 
         $userId = auth()->id();
+        $escapedQuery = '%' . addcslashes($query, '%_') . '%';
 
         $subjects = Subject::where('user_id', $userId)
-            ->where(function ($q) use ($query) {
-                $q->where('name', 'LIKE', "%{$query}%")
-                  ->orWhere('code', 'LIKE', "%{$query}%")
-                  ->orWhere('semester', 'LIKE', "%{$query}%");
+            ->where(function ($q) use ($escapedQuery) {
+                $q->where('name', 'LIKE', $escapedQuery)
+                  ->orWhere('code', 'LIKE', $escapedQuery)
+                  ->orWhere('semester', 'LIKE', $escapedQuery);
             })->get();
 
         $documents = Document::where('user_id', $userId)
-            ->where('original_name', 'LIKE', "%{$query}%")
+            ->where('original_name', 'LIKE', $escapedQuery)
             ->get();
 
         $chunks = DocumentChunk::whereHas('document', function ($q) use ($userId) {
             $q->where('user_id', $userId);
-        })->where('content', 'LIKE', "%{$query}%")
+        })->where('content', 'LIKE', $escapedQuery)
           ->with('document')
           ->limit(20)
           ->get();
 
         $mcqs = Mcq::where('user_id', $userId)
-            ->where('question', 'LIKE', "%{$query}%")
+            ->where('question', 'LIKE', $escapedQuery)
             ->get();
 
         $trueFalse = TrueFalseQuestion::where('user_id', $userId)
-            ->where('statement', 'LIKE', "%{$query}%")
+            ->where('statement', 'LIKE', $escapedQuery)
             ->get();
 
         $shortAnswers = ShortAnswer::where('user_id', $userId)
-            ->where('question', 'LIKE', "%{$query}%")
+            ->where('question', 'LIKE', $escapedQuery)
             ->get();
 
         $fillBlanks = FillBlank::where('user_id', $userId)
-            ->where('sentence_with_blanks', 'LIKE', "%{$query}%")
+            ->where('sentence_with_blanks', 'LIKE', $escapedQuery)
             ->get();
 
         $matching = MatchingQuestion::where('user_id', $userId)
-            ->where('left_items', 'LIKE', "%{$query}%")
+            ->where('left_items', 'LIKE', $escapedQuery)
             ->get();
 
         $flashcards = Flashcard::where('user_id', $userId)
-            ->where(function ($q) use ($query) {
-                $q->where('front', 'LIKE', "%{$query}%")
-                  ->orWhere('back', 'LIKE', "%{$query}%");
+            ->where(function ($q) use ($escapedQuery) {
+                $q->where('front', 'LIKE', $escapedQuery)
+                  ->orWhere('back', 'LIKE', $escapedQuery);
             })->get();
 
         return view('Backend.search-results', compact(

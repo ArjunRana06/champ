@@ -9,10 +9,18 @@ use App\Models\ShortAnswer;
 use App\Models\FillBlank;
 use App\Models\MatchingQuestion;
 use App\Models\Flashcard;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class QuizAttemptController extends Controller
 {
+    protected NotificationService $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     public function index()
     {
         $attempts = QuizAttempt::where('user_id', auth()->id())->latest()->paginate(20);
@@ -53,12 +61,24 @@ class QuizAttemptController extends Controller
                 ->limit($request->type === 'mixed' ? ceil($request->count / 2) : $request->count)
                 ->get();
             foreach ($mcqs as $mcq) {
+                $correctIndex = null;
+                foreach ($mcq->options as $idx => $opt) {
+                    if ($opt === $mcq->correct_answer) {
+                        $correctIndex = $idx;
+                        break;
+                    }
+                    $letter = chr(65 + $idx);
+                    if ($mcq->correct_answer === $letter) {
+                        $correctIndex = $idx;
+                        break;
+                    }
+                }
                 $questions[] = [
                     'id' => $mcq->id,
                     'type' => 'mcq',
                     'question' => $mcq->question,
                     'options' => $mcq->options,
-                    'correct_answer' => $mcq->correct_answer,
+                    'correct_answer' => $correctIndex ?? 0,
                     'difficulty' => $mcq->difficulty,
                 ];
             }
@@ -99,6 +119,8 @@ class QuizAttemptController extends Controller
             'answers_data' => ['questions' => $questions],
         ]);
 
+        $this->notificationService->notifyQuizStarted($userId, $attempt->title);
+
         session(['current_attempt' => $attempt->id, 'time_limit' => $request->time_limit ?? 0]);
 
         return redirect()->route('quiz-attempts.take', $attempt);
@@ -115,7 +137,7 @@ class QuizAttemptController extends Controller
     public function submit(Request $request, QuizAttempt $quizAttempt)
     {
         if ($quizAttempt->user_id !== auth()->id()) abort(403);
-        if ($quizAttempt->score_percentage > 0) {
+        if (isset($quizAttempt->answers_data['results'])) {
             return redirect()->route('quiz-attempts.results', $quizAttempt)
                 ->with('error', 'This quiz has already been submitted.');
         }
@@ -130,7 +152,7 @@ class QuizAttemptController extends Controller
             $isCorrect = false;
 
             if ($q['type'] === 'mcq') {
-                $isCorrect = isset($q['options'][$userAnswer]) && $q['options'][$userAnswer] === $q['correct_answer'];
+                $isCorrect = isset($userAnswer) && (int)$userAnswer === (int)$q['correct_answer'];
             } elseif ($q['type'] === 'true-false') {
                 $isCorrect = strtolower($userAnswer ?? '') === strtolower($q['correct_answer']);
             }
@@ -156,6 +178,8 @@ class QuizAttemptController extends Controller
             'answers_data' => array_merge($quizAttempt->answers_data ?? [], ['results' => $results]),
         ]);
 
+        $this->notificationService->notifyQuizSubmitted(auth()->id(), $quizAttempt->title, $scorePercentage);
+
         session()->forget(['current_attempt', 'time_limit']);
 
         return redirect()->route('quiz-attempts.results', $quizAttempt);
@@ -173,6 +197,9 @@ class QuizAttemptController extends Controller
     {
         if ($quizAttempt->user_id !== auth()->id()) abort(403);
         $quizAttempt->delete();
+
+        $this->notificationService->notifyQuizDeleted(auth()->id());
+
         return back()->with('success', 'Quiz attempt deleted.');
     }
 }

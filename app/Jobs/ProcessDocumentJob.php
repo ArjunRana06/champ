@@ -22,8 +22,10 @@ class ProcessDocumentJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, SerializesModels;
 
-    public $timeout = 1800;
-    public $maxExceptions = 1;
+    public $timeout = 36000;
+    public $tries = 3;
+    public $maxExceptions = 3;
+    public $backoff = 60;
 
     protected $document;
 
@@ -49,8 +51,8 @@ class ProcessDocumentJob implements ShouldQueue
             $this->updateProgress(30, 'Text extracted, splitting into chunks...');
 
             $textLength = strlen($fullText);
-            $chunkSize = $textLength > 500000 ? 3000 : 2000;
-            $overlap = $textLength > 500000 ? 200 : 300;
+            $chunkSize = $textLength > 500000 ? 1500 : 1000;
+            $overlap = $textLength > 500000 ? 150 : 200;
 
             $chunks = $this->splitIntoChunks($fullText, $chunkSize, $overlap);
             $totalChunks = count($chunks);
@@ -85,27 +87,27 @@ class ProcessDocumentJob implements ShouldQueue
                 DocumentChunk::insert($batch);
             }
 
-            // Retrieve the inserted chunks to get their IDs
-            $insertedChunks = DocumentChunk::where('document_id', $this->document->id)
+            // Retrieve the inserted chunks to get their IDs using cursor for memory efficiency
+            $embeddingIndex = 0;
+            DocumentChunk::where('document_id', $this->document->id)
                 ->orderBy('chunk_index')
-                ->get();
+                ->chunk(100, function ($insertedChunks) use (&$embeddingRecords, &$embeddingIndex, $embeddings, $totalChunks, $now) {
+                    foreach ($insertedChunks as $chunkModel) {
+                        $embeddingRecords[] = [
+                            'document_chunk_id' => $chunkModel->id,
+                            'embedding' => json_encode($embeddings[$embeddingIndex] ?? []),
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
 
-            foreach ($insertedChunks as $index => $chunkModel) {
-                $embeddingRecords[] = [
-                    'document_chunk_id' => $chunkModel->id,
-                    'embedding' => json_encode($embeddings[$index] ?? []),
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ];
+                        if (count($embeddingRecords) >= 50) {
+                            Embedding::insert($embeddingRecords);
+                            $embeddingRecords = [];
+                        }
 
-                if (count($embeddingRecords) >= 50) {
-                    Embedding::insert($embeddingRecords);
-                    $embeddingRecords = [];
-                }
-
-                $pct = 70 + round((($index + 1) / $totalChunks) * 25);
-                $this->updateProgress($pct, "Stored chunk $index of $totalChunks");
-            }
+                        $embeddingIndex++;
+                    }
+                });
 
             if (!empty($embeddingRecords)) {
                 Embedding::insert($embeddingRecords);
@@ -129,8 +131,12 @@ class ProcessDocumentJob implements ShouldQueue
             Log::error('Document processing failed: ' . $e->getMessage());
             $this->document->update([
                 'status' => 'failed',
-                'processing_message' => 'Error: ' . $e->getMessage(),
+                'processing_message' => 'Processing failed. Please try uploading the document again.',
             ]);
+            app(NotificationService::class)->notifyDocumentFailed(
+                $this->document->user_id,
+                $this->document->original_name
+            );
             throw $e;
         }
     }
@@ -151,7 +157,7 @@ class ProcessDocumentJob implements ShouldQueue
     {
         $path = Storage::disk('public')->path($this->document->file_path);
         if (!file_exists($path)) {
-            throw new \Exception('File not found: ' . $path);
+            throw new \Exception('File not found for document: ' . $this->document->id);
         }
 
         $mime = $this->document->mime_type;
@@ -192,15 +198,13 @@ class ProcessDocumentJob implements ShouldQueue
                 return file_get_contents($path);
             }
 
-            $ext = strtolower(pathinfo($this->document->original_name, PATHINFO_EXTENSION));
-            if (in_array($ext, ['txt', 'csv'])) {
-                return file_get_contents($path);
-            }
-            if ($ext === 'rtf') {
-                return file_get_contents($path);
+            $text = @file_get_contents($path);
+            if ($text !== false && !empty(trim($text))) {
+                return $text;
             }
 
-            throw new \Exception('Unsupported file type: ' . $mime);
+            Log::warning('Could not extract text from file type: ' . $mime . ' — returning empty text');
+            return '';
 
         } catch (\Exception $e) {
             Log::error('Extraction error: ' . $e->getMessage());
@@ -421,13 +425,18 @@ class ProcessDocumentJob implements ShouldQueue
     {
         $apiKey = config('services.openrouter.api_key');
         $model = config('services.openrouter.embedding_model');
+        $maxRetries = 3;
 
-        $batches = array_chunk($texts, 50);
+        $batchSize = 50;
         $allEmbeddings = [];
+        $retryDelay = 2;
+        $totalChunks = count($texts);
+        $processedChunks = 0;
 
-        foreach ($batches as $batchIndex => $batch) {
-            $maxRetries = 2;
-            $retryDelay = 1;
+        $chunksToProcess = $texts;
+
+        while (!empty($chunksToProcess)) {
+            $batch = array_splice($chunksToProcess, 0, $batchSize);
 
             for ($attempt = 0; $attempt <= $maxRetries; $attempt++) {
                 try {
@@ -440,11 +449,19 @@ class ProcessDocumentJob implements ShouldQueue
                     ]);
 
                     if ($response->failed()) {
-                        if (in_array($response->status(), [429, 502, 503, 504]) && $attempt < $maxRetries) {
+                        $status = $response->status();
+                        if ($status === 402) {
+                            $batchSize = max(1, intval($batchSize / 2));
+                            $chunksToProcess = array_merge($batch, $chunksToProcess);
+                            Log::warning("Embedding token limit exceeded, reducing batch size to {$batchSize}", ['attempt' => $attempt]);
+                            break;
+                        }
+                        if (in_array($status, [429, 502, 503, 504]) && $attempt < $maxRetries) {
+                            Log::warning("Embedding batch got {$status}, retrying in {$retryDelay}s...", ['attempt' => $attempt]);
                             sleep($retryDelay * pow(2, $attempt));
                             continue;
                         }
-                        throw new \Exception('Embedding batch API error: ' . $response->body());
+                        throw new \Exception("Embedding API error (HTTP {$status}): " . mb_substr($response->body(), 0, 300));
                     }
 
                     $data = $response->json();
@@ -459,19 +476,20 @@ class ProcessDocumentJob implements ShouldQueue
                     for ($i = 0; $i < count($batch); $i++) {
                         $allEmbeddings[] = $sorted[$i];
                     }
+                    $processedChunks += count($batch);
+                    $pct = 40 + round(($processedChunks / $totalChunks) * 30);
+                    $this->updateProgress($pct, "Embeddings: {$processedChunks} of {$totalChunks} chunks");
                     break;
 
                 } catch (\Illuminate\Http\Client\ConnectionException $e) {
                     if ($attempt < $maxRetries) {
+                        Log::warning("Embedding batch timeout, retrying...", ['attempt' => $attempt]);
                         sleep($retryDelay * pow(2, $attempt));
                         continue;
                     }
                     throw new \Exception('Embedding API connection timeout: ' . $e->getMessage());
                 }
             }
-
-            $pct = 40 + round((($batchIndex + 1) / count($batches)) * 30);
-            $this->updateProgress($pct, "Embeddings batch $batchIndex of " . count($batches));
         }
 
         return $allEmbeddings;

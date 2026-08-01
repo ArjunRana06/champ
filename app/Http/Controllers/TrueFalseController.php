@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\TrueFalseQuestion;
-use App\Models\Subject;
 use App\Services\QuestionGeneratorService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
@@ -100,6 +99,8 @@ class TrueFalseController extends Controller
             'subject_id' => $request->subject_id,
         ]);
 
+        $this->notificationService->notifyQuestionUpdated(auth()->id(), 'True/False');
+
         return redirect()->route('true-false.index')->with('success', 'True/False question updated successfully.');
     }
 
@@ -107,6 +108,9 @@ class TrueFalseController extends Controller
     {
         if ($trueFalse->user_id !== auth()->id()) abort(403);
         $trueFalse->delete();
+
+        $this->notificationService->notifyQuestionDeleted(auth()->id(), 'True/False');
+
         return back()->with('success', 'Question deleted.');
     }
 }

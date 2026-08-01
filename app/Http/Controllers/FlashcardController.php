@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Flashcard;
-use App\Models\Subject;
 use App\Services\QuestionGeneratorService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
@@ -97,6 +96,8 @@ class FlashcardController extends Controller
             'subject_id' => $request->subject_id,
         ]);
 
+        $this->notificationService->notifyQuestionUpdated(auth()->id(), 'Flashcard');
+
         return redirect()->route('flashcards.index')->with('success', 'Flashcard updated successfully.');
     }
 
@@ -104,6 +105,9 @@ class FlashcardController extends Controller
     {
         if ($flashcard->user_id !== auth()->id()) abort(403);
         $flashcard->delete();
+
+        $this->notificationService->notifyQuestionDeleted(auth()->id(), 'Flashcard');
+
         return back()->with('success', 'Flashcard deleted.');
     }
 }

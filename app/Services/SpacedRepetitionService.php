@@ -8,6 +8,8 @@ class SpacedRepetitionService
 {
     public function review(int $userId, string $type, int $id, int $quality): void
     {
+        $quality = max(0, min(5, $quality));
+
         $rep = SpacedRepetition::firstOrCreate(
             [
                 'user_id' => $userId,

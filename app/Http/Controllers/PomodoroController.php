@@ -4,11 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\PomodoroSession;
 use App\Models\Subject;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use App\Services\GamificationService;
 
 class PomodoroController extends Controller
 {
+    protected NotificationService $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     public function index()
     {
         $sessions = PomodoroSession::where('user_id', auth()->id())->latest()->paginate(20);
@@ -35,6 +43,8 @@ class PomodoroController extends Controller
         ]);
 
         app(GamificationService::class)->awardXp(auth()->user(), 10);
+
+        $this->notificationService->notifyPomodoroCompleted(auth()->id(), $request->duration_minutes, 10);
 
         return response()->json(['success' => true]);
     }

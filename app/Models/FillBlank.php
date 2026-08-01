@@ -16,6 +16,7 @@ class FillBlank extends Model
 
     protected $casts = [
         'answers' => 'array',
+        'is_public' => 'boolean',
     ];
 
     public function user()

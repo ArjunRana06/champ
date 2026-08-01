@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\FillBlank;
-use App\Models\Subject;
 use App\Services\QuestionGeneratorService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
@@ -97,6 +96,8 @@ class FillBlankController extends Controller
             'subject_id' => $request->subject_id,
         ]);
 
+        $this->notificationService->notifyQuestionUpdated(auth()->id(), 'Fill-in-the-Blank');
+
         return redirect()->route('fill-blanks.index')->with('success', 'Fill-in-the-blank question updated successfully.');
     }
 
@@ -104,6 +105,9 @@ class FillBlankController extends Controller
     {
         if ($fillBlank->user_id !== auth()->id()) abort(403);
         $fillBlank->delete();
+
+        $this->notificationService->notifyQuestionDeleted(auth()->id(), 'Fill-in-the-Blank');
+
         return back()->with('success', 'Question deleted.');
     }
 }

@@ -75,16 +75,16 @@
         <div class="col-md-3" data-aos="fade-up" data-aos-delay="400">
             <div class="glass-card">
                 <div class="d-flex align-items-center gap-3 mb-2">
-                    <div style="width:50px;height:50px;border-radius:16px;background:linear-gradient(135deg,#0ea5e9,#38bdf8);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:white;box-shadow:0 8px 16px rgba(14,165,233,0.2);">
-                        <i class="bi bi-activity"></i>
+                    <div style="width:50px;height:50px;border-radius:16px;background:linear-gradient(135deg,#ec4899,#f472b6);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:white;box-shadow:0 8px 16px rgba(236,72,153,0.2);">
+                        <i class="bi bi-bell-fill"></i>
                     </div>
                     <div>
-                        <h6 style="color:var(--card-accent);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin:0;">Activities</h6>
-                        <h3 class="fw-bold mb-0" style="color:#1e1b4b;font-size:1.7rem;">{{ number_format($activitiesCount) }}</h3>
+                        <h6 style="color:var(--card-accent);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.05em;font-weight:700;margin:0;">Notifications</h6>
+                        <h3 class="fw-bold mb-0" style="color:#1e1b4b;font-size:1.7rem;">{{ number_format($unreadNotificationsCount) }}</h3>
                     </div>
                 </div>
-                <span class="stat-badge up"><i class="bi bi-arrow-up"></i> {{ $activitiesTrend }}</span>
-                <small style="color:var(--text-muted);font-size:0.7rem;"> vs last month</small>
+                <span style="color:var(--text-muted);font-size:0.7rem;">unread notifications</span>
+                <a href="{{ route('notifications.index') }}" class="float-end" style="font-size:0.7rem;color:var(--card-accent);text-decoration:none;">View all</a>
             </div>
         </div>
     </div>
@@ -229,6 +229,40 @@
                 </ul>
             </div>
         </div>
+    </div>
+
+    <!-- Recent Notifications -->
+    <div class="glass-card mb-4" data-aos="fade-up">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 style="color:var(--text-primary);font-weight:700;font-size:1rem;margin:0;">
+                <i class="bi bi-bell me-2" style="color:var(--card-accent);"></i> Recent Notifications
+            </h5>
+            <a href="{{ route('notifications.index') }}" class="btn-soft py-1 px-3" style="font-size:0.75rem;">View all</a>
+        </div>
+        @if($recentNotifications->count() > 0)
+            <div style="max-height:280px;overflow-y:auto;">
+                @foreach($recentNotifications as $notif)
+                    @php $meta = \App\Services\NotificationService::getTypeMeta($notif->type); @endphp
+                    <a href="{{ $notif->link ?: '#' }}" class="d-flex align-items-start gap-2 px-2 py-2 text-decoration-none" style="border-bottom:1px solid var(--divider-color);transition:background 0.15s;border-radius:0.5rem;{{ !$notif->is_read ? 'background:rgba(99,102,241,0.03);' : '' }}"
+                       onmouseover="this.style.background='var(--table-row-hover)'" onmouseout="this.style.background='{{ !$notif->is_read ? 'rgba(99,102,241,0.03)' : 'transparent' }}'">
+                        <div style="width:32px;height:32px;border-radius:50%;background:{{ $meta['bg'] }};color:{{ $meta['color'] }};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.8rem;">
+                            <i class="bi {{ $meta['icon'] }}"></i>
+                        </div>
+                        <div class="flex-grow-1 min-w-0">
+                            <div style="font-size:0.82rem;color:var(--text-primary);{{ !$notif->is_read ? 'font-weight:600;' : '' }}white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $notif->title }}</div>
+                            <div style="font-size:0.7rem;color:var(--text-muted);">{{ $notif->created_at->diffForHumans() }}</div>
+                        </div>
+                        @if(!$notif->is_read)
+                            <div style="width:6px;height:6px;border-radius:50%;background:#6366f1;flex-shrink:0;margin-top:12px;"></div>
+                        @endif
+                    </a>
+                @endforeach
+            </div>
+        @else
+            <div class="text-center py-3" style="color:var(--text-muted);font-size:0.85rem;">
+                <i class="bi bi-bell-slash me-1"></i> No notifications yet.
+            </div>
+        @endif
     </div>
 
     <!-- Recent Documents -->

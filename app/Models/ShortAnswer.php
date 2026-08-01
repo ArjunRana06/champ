@@ -14,6 +14,10 @@ class ShortAnswer extends Model
         'question', 'expected_answer', 'difficulty', 'is_public'
     ];
 
+    protected $casts = [
+        'is_public' => 'boolean',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

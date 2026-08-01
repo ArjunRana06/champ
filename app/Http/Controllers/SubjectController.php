@@ -1,14 +1,20 @@
 <?php
-// app/Http/Controllers/SubjectController.php
 
 namespace App\Http\Controllers;
 
 use App\Models\Subject;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class SubjectController extends Controller
 {
+    protected NotificationService $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
 
     public function index()
     {
@@ -29,15 +35,22 @@ class SubjectController extends Controller
             'code' => 'nullable|string|max:50',
         ]);
 
-        Auth::user()->subjects()->create($request->only(['name', 'semester', 'code']));
+        $subject = Auth::user()->subjects()->create($request->only(['name', 'semester', 'code']));
+
+        $this->notificationService->notifySubjectCreated(Auth::id(), $subject->name);
 
         return redirect()->route('subjects.index')
             ->with('success', 'Subject created successfully.');
     }
 
+    public function show(Subject $subject)
+    {
+        if ($subject->user_id !== Auth::id()) abort(403);
+        return view('Backend.Subjects.edit', compact('subject'));
+    }
+
     public function edit(Subject $subject)
     {
-        // Ensure the subject belongs to the authenticated user
         if ($subject->user_id !== Auth::id()) {
             abort(403);
         }
@@ -56,7 +69,10 @@ class SubjectController extends Controller
             'code' => 'nullable|string|max:50',
         ]);
 
+        $oldName = $subject->name;
         $subject->update($request->only(['name', 'semester', 'code']));
+
+        $this->notificationService->notifySubjectUpdated(Auth::id(), $oldName);
 
         return redirect()->route('subjects.index')
             ->with('success', 'Subject updated successfully.');
@@ -68,7 +84,10 @@ class SubjectController extends Controller
             abort(403);
         }
 
+        $name = $subject->name;
         $subject->delete();
+
+        $this->notificationService->notifySubjectDeleted(Auth::id(), $name);
 
         return redirect()->route('subjects.index')
             ->with('success', 'Subject deleted successfully.');

@@ -35,17 +35,40 @@ return [
         ],
     ],
 
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-3.1-flash-lite'),
+        'fallback_models' => [
+            'gemini-3.6-flash',
+            'gemini-flash-latest',
+            'gemini-2.0-flash',
+        ],
+    ],
+
+    'groq' => [
+        'api_key' => env('GROQ_API_KEY'),
+        'model' => env('GROQ_MODEL', 'llama-3.3-70b-versatile'),
+        'fallback_models' => [
+            'qwen-qwq-32b',
+            'gemma2-9b-it',
+        ],
+    ],
+
     'openrouter' => [
         'api_key' => env('OPENROUTER_API_KEY'),
-        'model' => env('OPENROUTER_MODEL', 'meta-llama/llama-3.3-70b-instruct:free'),
+        'model' => env('OPENROUTER_MODEL', 'google/gemma-4-26b-a4b-it:free'),
         'fallback_models' => [
+            'nvidia/nemotron-3-super-120b-a12b:free',
+            'nvidia/nemotron-3-ultra-550b-a55b:free',
             'google/gemma-4-31b-it:free',
-            'qwen/qwen3-next-80b-a3b-instruct:free',
-            'microsoft/phi-3-mini-128k-instruct:free',
+            'nvidia/nemotron-nano-9b-v2:free',
+            'openai/gpt-oss-20b:free',
+            'nvidia/nemotron-nano-12b-v2-vl:free',
+            'inclusionai/ling-3.0-flash:free',
         ],
         'embedding_model' => env('OPENROUTER_EMBEDDING_MODEL', 'openai/text-embedding-3-small'),
-        'timeout' => 60,
-        'max_retries' => 2,
+        'timeout' => 15,
+        'max_retries' => 3,
         'rate_limit_per_minute' => 60,
     ],
 

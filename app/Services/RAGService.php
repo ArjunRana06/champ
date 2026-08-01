@@ -26,19 +26,17 @@ class RAGService
                 $response = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $apiKey,
                     'Content-Type' => 'application/json',
-                ])->timeout(30)->post('https://openrouter.ai/api/v1/embeddings', [
+                ])->timeout(8)->post('https://openrouter.ai/api/v1/embeddings', [
                     'model' => $model,
                     'input' => $query,
                 ]);
 
                 if ($response->failed()) {
-                    Log::error('Embedding API error', ['body' => $response->body()]);
                     return [];
                 }
 
                 return $response->json()['data'][0]['embedding'] ?? [];
             } catch (\Exception $e) {
-                Log::warning('Embedding API exception', ['error' => $e->getMessage()]);
                 return [];
             }
         });
@@ -49,7 +47,8 @@ class RAGService
         $dot = 0;
         $normA = 0;
         $normB = 0;
-        $count = count($a);
+        $count = min(count($a), count($b));
+        if ($count === 0) return 0;
         for ($i = 0; $i < $count; $i++) {
             $dot += $a[$i] * $b[$i];
             $normA += $a[$i] * $a[$i];
@@ -64,21 +63,16 @@ class RAGService
         $userId = Auth::id();
         if (!$userId) return [];
 
-        // Strategy: keyword-first, vector-enhanced
-        // 1. Quick keyword search (DB-level, fast)
         $keywordChunks = $this->keywordSearch($query, $topK * 2);
 
-        // 2. If keyword results are sufficient, return them
         if (count($keywordChunks) >= $topK) {
             return array_slice($keywordChunks, 0, $topK);
         }
 
-        // 3. Otherwise, try vector search to supplement
         $queryEmbedding = $this->getQueryEmbedding($query);
         if (!empty($queryEmbedding)) {
             $vectorChunks = $this->vectorSearch($queryEmbedding, $topK, $minScore);
 
-            // Merge: take vector results first, fill remaining with keyword
             $seenIds = [];
             $merged = [];
             foreach ($vectorChunks as $c) {
@@ -101,11 +95,10 @@ class RAGService
         $userId = Auth::id();
         if (!$userId) return [];
 
-        // Try full query as a phrase first
         $chunks = DocumentChunk::whereHas('document', function ($q) use ($userId) {
             $q->where('user_id', $userId)->where('status', 'completed');
         })
-        ->where('content', 'LIKE', '%' . addcslashes($query, '%_') . '%')
+        ->where('content', 'LIKE', '%' . addcslashes($query, '%_\\') . '%')
         ->limit($topK)
         ->get()
         ->all();
@@ -114,7 +107,6 @@ class RAGService
             return $chunks;
         }
 
-        // Fall back to individual keywords
         $keywords = preg_split('/[\s,;:.!?()]+/u', $query);
         $keywords = array_filter($keywords, fn($w) => mb_strlen(trim($w)) > 2);
         $keywords = array_values($keywords);
@@ -127,9 +119,11 @@ class RAGService
             $q->where('user_id', $userId)->where('status', 'completed');
         });
 
-        foreach ($keywords as $keyword) {
-            $queryBuilder->where('content', 'LIKE', '%' . addcslashes(trim($keyword), '%_') . '%');
-        }
+        $queryBuilder->where(function ($q) use ($keywords) {
+            foreach ($keywords as $keyword) {
+                $q->orWhere('content', 'LIKE', '%' . addcslashes(trim($keyword), '%_\\') . '%');
+            }
+        });
 
         return $queryBuilder->limit($topK)->get()->all();
     }
@@ -139,27 +133,29 @@ class RAGService
         $userId = Auth::id();
         if (!$userId) return [];
 
-        // Pre-filter to a reasonable candidate pool using keyword search
-        // Then score only those candidates
-        $candidates = Embedding::with('chunk.document')
+        $candidates = Embedding::select('id', 'document_chunk_id', 'embedding')
             ->whereHas('chunk.document', function ($q) use ($userId) {
                 $q->where('user_id', $userId)->where('status', 'completed');
             })
-            ->limit(200)
+            ->limit(50)
             ->get();
 
         $scored = [];
         foreach ($candidates as $item) {
-            $emb = json_decode($item->embedding, true);
+            $emb = is_array($item->embedding) ? $item->embedding : json_decode($item->embedding, true);
             if (!is_array($emb)) continue;
             $score = $this->cosineSimilarity($queryEmbedding, $emb);
             if ($score >= $minScore) {
-                $scored[] = ['chunk' => $item->chunk, 'score' => $score];
+                $scored[] = ['chunk_id' => $item->document_chunk_id, 'score' => $score];
             }
         }
 
         usort($scored, fn($a, $b) => $b['score'] <=> $a['score']);
-        return array_column(array_slice($scored, 0, $topK), 'chunk');
+        $topIds = array_column(array_slice($scored, 0, $topK), 'chunk_id');
+
+        if (empty($topIds)) return [];
+
+        return DocumentChunk::whereIn('id', $topIds)->get()->all();
     }
 
     public function getContextString(string $query): string
@@ -169,11 +165,11 @@ class RAGService
             return "__NO_RELEVANT_CONTENT__No relevant content found in your uploaded materials.";
         }
 
-        $context = "Here are the most relevant excerpts from your uploaded study materials (ranked by relevance):\n\n";
+        $context = "Here are the most relevant excerpts from your uploaded study materials:\n\n";
         foreach ($chunks as $index => $chunk) {
             $docName = $chunk->document->original_name ?? 'Unknown document';
             $context .= "--- Excerpt " . ($index + 1) . " (from: $docName) ---\n";
-            $context .= $chunk->content . "\n\n";
+            $context .= mb_substr($chunk->content, 0, 1500) . "\n\n";
         }
         return $context;
     }

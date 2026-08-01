@@ -11,9 +11,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('document_chunks', function (Blueprint $table) {
-            $table->fullText('content');
-        });
+        $driver = Schema::getConnection()->getDriverName();
+        if ($driver !== 'sqlite') {
+            Schema::table('document_chunks', function (Blueprint $table) {
+                $table->fullText('content');
+            });
+        }
     }
 
     /**
@@ -21,8 +24,11 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('document_chunks', function (Blueprint $table) {
-            $table->dropFullText('content');
-        });
+        $driver = Schema::getConnection()->getDriverName();
+        if ($driver !== 'sqlite') {
+            Schema::table('document_chunks', function (Blueprint $table) {
+                $table->dropFullText('content');
+            });
+        }
     }
 };

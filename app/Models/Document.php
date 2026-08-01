@@ -17,7 +17,8 @@ class Document extends Model
     ];
 
     protected $casts = [
-        'status' => 'string',
+        'total_chunks' => 'integer',
+        'processing_progress' => 'integer',
     ];
 
     public function user()
@@ -33,5 +34,10 @@ class Document extends Model
     public function chunks()
     {
         return $this->hasMany(DocumentChunk::class);
+    }
+
+    public function summary()
+    {
+        return $this->hasOne(DocumentSummary::class);
     }
 }

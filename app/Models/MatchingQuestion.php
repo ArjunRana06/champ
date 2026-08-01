@@ -18,6 +18,7 @@ class MatchingQuestion extends Model
         'left_items' => 'array',
         'right_items' => 'array',
         'correct_pairs' => 'array',
+        'is_public' => 'boolean',
     ];
 
     public function user()

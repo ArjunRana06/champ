@@ -31,8 +31,8 @@ class SummarizationService
         }
 
         $maxChars = 24000;
-        if (strlen($fullText) > $maxChars) {
-            $fullText = substr($fullText, 0, $maxChars) . "\n\n[... content truncated ...]";
+        if (mb_strlen($fullText) > $maxChars) {
+            $fullText = mb_substr($fullText, 0, $maxChars) . "\n\n[... content truncated ...]";
         }
 
         $messages = [

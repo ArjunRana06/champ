@@ -27,12 +27,12 @@
                     </div>
                     <h5 class="card-title">Drag & drop your files here</h5>
                     <p class="text-muted">or click to browse</p>
-                    <input type="file" id="fileInput" multiple accept=".pdf,.docx,.pptx,.txt,.jpg,.png" class="d-none">
+                    <input type="file" id="fileInput" multiple accept="*/*" class="d-none">
                     <button class="btn btn-outline-primary rounded-pill px-4" id="browseBtn">
                         <i class="bi bi-folder2-open"></i> Choose Files
                     </button>
                     <div class="mt-3 small text-muted">
-                        Supported: PDF, DOCX, PPTX, TXT, JPG, PNG (max 20MB each)
+                        Any file type supported — no size limit
                     </div>
                 </div>
             </div>
@@ -179,19 +179,7 @@
         function getExt(name) { const p = name.split('.'); return p.length>1 ? p.pop().toLowerCase() : ''; }
 
         function addFiles(files) {
-            const allowedExt = ['pdf','doc','docx','ppt','pptx','xls','xlsx','txt','jpg','jpeg','png','gif','bmp','webp','csv','rtf','odt'];
-            const allowedMime = ['text/plain','text/csv','text/rtf','application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-powerpoint','application/vnd.openxmlformats-officedocument.presentationml.presentation','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','image/jpeg','image/png','image/gif','image/bmp','image/webp'];
-            const maxSize = 50 * 1024 * 1024;
-            const validFiles = Array.from(files).filter(f => {
-                const ext = getExt(f.name);
-                const extOk = allowedExt.includes(ext);
-                const mimeOk = allowedMime.includes(f.type) || f.type.startsWith('text/');
-                return (extOk || mimeOk || (!ext && !f.type)) && f.size <= maxSize;
-            });
-            if (validFiles.length !== files.length) {
-                alert('Some files were skipped (unsupported format or >50MB)');
-            }
-            pendingFiles.push(...validFiles);
+            pendingFiles.push(...Array.from(files));
             renderPendingQueue();
         }
 

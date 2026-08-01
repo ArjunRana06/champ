@@ -104,6 +104,15 @@
             </a>
         </div>
 
+        @role('Admin')
+        <div class="nav-item">
+            <a href="{{ route('ai.settings') }}" class="nav-link {{ request()->routeIs('ai.settings') ? 'active' : '' }}">
+                <i class="bi bi-gear"></i>
+                <span>AI Settings</span>
+            </a>
+        </div>
+        @endrole
+
         <div class="nav-section-label">Practice</div>
 
         <div class="nav-item">
@@ -151,9 +160,10 @@
         </div>
 
         <div class="nav-item">
-            <a href="{{ route('notifications.index') }}" class="nav-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}">
+            <a href="{{ route('notifications.index') }}" class="nav-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}" id="sidebarNotifLink">
                 <i class="bi bi-bell"></i>
                 <span>Notifications</span>
+                <span class="sidebar-badge" id="sidebarNotifBadge" style="display:none;margin-left:auto;background:#ef4444;color:white;font-size:0.6rem;padding:0.1rem 0.45rem;border-radius:20px;font-weight:700;">0</span>
             </a>
         </div>
 
@@ -196,9 +206,9 @@
             <div class="name">{{ auth()->user()->name }}</div>
             <div class="role">{{ auth()->user()->roles->first()?->name ?? 'Student' }}</div>
         </div>
-        <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form-sidebar').submit();" title="Logout">
-            <i class="bi bi-box-arrow-right"></i>
-        </a>
         <form id="logout-form-sidebar" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
+        <button type="button" onclick="event.preventDefault(); document.getElementById('logout-form-sidebar').submit();" title="Logout" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:1rem;cursor:pointer;padding:0;">
+            <i class="bi bi-box-arrow-right"></i>
+        </button>
     </div>
 </aside>

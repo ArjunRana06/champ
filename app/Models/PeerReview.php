@@ -8,6 +8,10 @@ class PeerReview extends Model
 {
     protected $fillable = ['reviewer_id', 'reviewable_type', 'reviewable_id', 'rating', 'comment'];
 
+    protected $casts = [
+        'rating' => 'integer',
+    ];
+
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'reviewer_id');

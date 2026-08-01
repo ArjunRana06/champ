@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\DocumentChunk;
 use App\Models\StudyPlan;
 
 class StudyPlanService
@@ -52,6 +51,10 @@ class StudyPlanService
         ];
 
         $result = $this->ai->generateJson($messages, null, 0.3, 4096);
+
+        if (empty($result) || empty($result['title'])) {
+            throw new \Exception('Failed to generate study plan. Please try again.');
+        }
 
         $plan = StudyPlan::create([
             'user_id' => auth()->id(),

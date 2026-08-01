@@ -55,6 +55,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
     Route::post('/documents/upload', [DocumentController::class, 'upload'])->name('documents.upload');
     Route::get('/documents/{id}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
+    Route::get('/documents/{id}/status', [DocumentController::class, 'status'])->name('documents.status');
+    Route::post('/documents/{id}/retry', [DocumentController::class, 'retry'])->name('documents.retry');
     Route::delete('/documents/{id}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 
     Route::resource('mcqs', McqController::class)->except(['show']);
@@ -84,6 +86,8 @@ Route::post('/flashcards/generate', [FlashcardController::class, 'generate'])->n
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    Route::delete('/notifications/{id}', [NotificationController::class, 'deleteNotification'])->name('notifications.delete');
+    Route::delete('/notifications', [NotificationController::class, 'clearAll'])->name('notifications.clear-all');
 
     Route::get('/study-plans', [StudyPlanController::class, 'index'])->name('study-plans.index');
     Route::get('/study-plans/create', [StudyPlanController::class, 'create'])->name('study-plans.create');
@@ -104,10 +108,14 @@ Route::post('/flashcards/generate', [FlashcardController::class, 'generate'])->n
     Route::delete('/bookmarks/{id}', [BookmarkController::class, 'destroy'])->name('bookmarks.destroy');
 
     Route::post('/chat', [ChatController::class, 'sendMessage'])->name('chat.send');
-    Route::post('/chat/stream', [ChatController::class, 'sendMessageStream'])->name('chat.stream');
+    Route::get('/chat/history', [ChatController::class, 'loadHistory'])->name('chat.history');
+    Route::post('/chat/regenerate', [ChatController::class, 'regenerate'])->name('chat.regenerate');
     Route::post('/chat/clear', [ChatController::class, 'clearChat'])->name('chat.clear');
     Route::get('/ai-chat', [ChatController::class, 'showChatPage'])->name('ai.chat');
     Route::post('/chat/explain', [ChatController::class, 'explainAnswer'])->name('chat.explain');
+
+    Route::get('/ai-settings', [ChatController::class, 'showSettings'])->name('ai.settings')->middleware('role:Admin');
+    Route::post('/ai-settings', [ChatController::class, 'updateSettings'])->name('ai.settings.update')->middleware('role:Admin');
 
     // Exam Calendar
     Route::get('/exams', [App\Http\Controllers\ExamController::class, 'index'])->name('exams.index');
@@ -144,15 +152,21 @@ Route::post('/flashcards/generate', [FlashcardController::class, 'generate'])->n
     Route::post('/study-groups/{studyGroup}/leave', [App\Http\Controllers\StudyGroupController::class, 'leave'])->name('study-groups.leave');
     Route::post('/study-groups/{studyGroup}/share', [App\Http\Controllers\StudyGroupController::class, 'share'])->name('study-groups.share');
     Route::delete('/study-groups/{studyGroup}/share/{resource}', [App\Http\Controllers\StudyGroupController::class, 'unshare'])->name('study-groups.unshare');
+    Route::put('/study-groups/{studyGroup}', [App\Http\Controllers\StudyGroupController::class, 'update'])->name('study-groups.update');
     Route::delete('/study-groups/{studyGroup}', [App\Http\Controllers\StudyGroupController::class, 'destroy'])->name('study-groups.destroy');
+    Route::post('/study-groups/{studyGroup}/members/{member}/remove', [App\Http\Controllers\StudyGroupController::class, 'removeMember'])->name('study-groups.remove-member');
+    Route::post('/study-groups/{studyGroup}/members/{member}/role', [App\Http\Controllers\StudyGroupController::class, 'updateMemberRole'])->name('study-groups.member-role');
+    Route::post('/study-groups/{studyGroup}/resources/{resource}/move-to-shared', [App\Http\Controllers\StudyGroupController::class, 'moveToShared'])->name('study-groups.move-to-shared');
 
     // Shared Question Banks
     Route::get('/shared-questions', [App\Http\Controllers\SharedQuestionBankController::class, 'index'])->name('shared-questions.index');
     Route::post('/shared-questions/toggle-visibility', [App\Http\Controllers\SharedQuestionBankController::class, 'toggleVisibility'])->name('shared-questions.toggle');
+    Route::get('/shared-questions/fetch', [App\Http\Controllers\SharedQuestionBankController::class, 'fetchMore'])->name('shared-questions.fetch');
 
     // Peer Reviews
     Route::get('/peer-reviews', [App\Http\Controllers\PeerReviewController::class, 'index'])->name('peer-reviews.index');
     Route::post('/peer-reviews', [App\Http\Controllers\PeerReviewController::class, 'store'])->name('peer-reviews.store');
+    Route::delete('/peer-reviews/{peerReview}', [App\Http\Controllers\PeerReviewController::class, 'destroy'])->name('peer-reviews.destroy');
 
     // Offline page
     Route::get('/offline', function () { return view('Backend.offline'); })->name('offline');

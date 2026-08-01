@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\ShortAnswer;
-use App\Models\Subject;
 use App\Services\QuestionGeneratorService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
@@ -97,6 +96,8 @@ class ShortAnswerController extends Controller
             'subject_id' => $request->subject_id,
         ]);
 
+        $this->notificationService->notifyQuestionUpdated(auth()->id(), 'Short Answer');
+
         return redirect()->route('short-answers.index')->with('success', 'Short answer question updated successfully.');
     }
 
@@ -104,6 +105,9 @@ class ShortAnswerController extends Controller
     {
         if ($shortAnswer->user_id !== auth()->id()) abort(403);
         $shortAnswer->delete();
+
+        $this->notificationService->notifyQuestionDeleted(auth()->id(), 'Short Answer');
+
         return back()->with('success', 'Question deleted.');
     }
 }

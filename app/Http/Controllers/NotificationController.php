@@ -28,8 +28,24 @@ class NotificationController extends Controller
             ]);
         }
 
-        $notifications = Notification::forUser($userId)->latest()->paginate(20);
-        return view('Backend.notifications.index', compact('notifications'));
+        $type = $request->type;
+        $query = Notification::forUser($userId);
+
+        if ($type && in_array($type, ['success', 'error', 'warning', 'info'])) {
+            $query->where('type', $type);
+        }
+
+        $notifications = $query->latest()->paginate(20);
+
+        $successCount = Notification::forUser($userId)->where('type', 'success')->count();
+        $errorCount = Notification::forUser($userId)->where('type', 'error')->count();
+        $warningCount = Notification::forUser($userId)->where('type', 'warning')->count();
+        $infoCount = Notification::forUser($userId)->where('type', 'info')->count();
+        $unreadCount = $this->notificationService->getUnreadCount($userId);
+
+        return view('Backend.notifications.index', compact(
+            'notifications', 'successCount', 'errorCount', 'warningCount', 'infoCount', 'unreadCount'
+        ));
     }
 
     public function markAsRead($id)
@@ -38,10 +54,13 @@ class NotificationController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function markAllAsRead()
+    public function markAllAsRead(Request $request)
     {
         $this->notificationService->markAllAsRead(auth()->id());
-        return response()->json(['success' => true]);
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+        return back()->with('success', 'All notifications marked as read.');
     }
 
     public function unreadCount()
@@ -49,5 +68,20 @@ class NotificationController extends Controller
         return response()->json([
             'count' => $this->notificationService->getUnreadCount(auth()->id()),
         ]);
+    }
+
+    public function deleteNotification($id)
+    {
+        Notification::where('id', $id)->where('user_id', auth()->id())->delete();
+        return response()->json(['success' => true]);
+    }
+
+    public function clearAll(Request $request)
+    {
+        Notification::where('user_id', auth()->id())->delete();
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+        return back()->with('success', 'All notifications cleared.');
     }
 }

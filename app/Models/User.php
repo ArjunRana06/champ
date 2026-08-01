@@ -4,19 +4,19 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'xp', 'level', 'streak', 'last_active_date', 'badges'])]
-#[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasRoles;
+
+    protected $fillable = ['name', 'email', 'password', 'xp', 'level', 'streak', 'last_active_date', 'badges'];
+
+    protected $hidden = ['password', 'remember_token'];
 
     protected function casts(): array
     {
@@ -31,8 +31,6 @@ class User extends Authenticatable
         ];
     }
 
-    // app/Models/User.php
-
     // Inside the User class, add:
     public function subjects()
     {
@@ -42,5 +40,75 @@ class User extends Authenticatable
     public function documents()
     {
         return $this->hasMany(Document::class);
+    }
+
+    public function mcqs()
+    {
+        return $this->hasMany(Mcq::class);
+    }
+
+    public function trueFalseQuestions()
+    {
+        return $this->hasMany(TrueFalseQuestion::class);
+    }
+
+    public function shortAnswers()
+    {
+        return $this->hasMany(ShortAnswer::class);
+    }
+
+    public function fillBlanks()
+    {
+        return $this->hasMany(FillBlank::class);
+    }
+
+    public function matchingQuestions()
+    {
+        return $this->hasMany(MatchingQuestion::class);
+    }
+
+    public function flashcards()
+    {
+        return $this->hasMany(Flashcard::class);
+    }
+
+    public function studyPlans()
+    {
+        return $this->hasMany(StudyPlan::class);
+    }
+
+    public function exams()
+    {
+        return $this->hasMany(Exam::class);
+    }
+
+    public function activities()
+    {
+        return $this->hasMany(Activity::class);
+    }
+
+    public function pomodoroSessions()
+    {
+        return $this->hasMany(PomodoroSession::class);
+    }
+
+    public function timeEntries()
+    {
+        return $this->hasMany(TimeEntry::class);
+    }
+
+    public function appNotifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function bookmarks()
+    {
+        return $this->hasMany(Bookmark::class);
+    }
+
+    public function quizAttempts()
+    {
+        return $this->hasMany(QuizAttempt::class);
     }
 }

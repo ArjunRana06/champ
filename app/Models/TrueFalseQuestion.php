@@ -16,6 +16,7 @@ class TrueFalseQuestion extends Model
 
     protected $casts = [
         'correct_answer' => 'boolean',
+        'is_public' => 'boolean',
     ];
 
     public function user()

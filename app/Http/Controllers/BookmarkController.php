@@ -3,10 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bookmark;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class BookmarkController extends Controller
 {
+    protected NotificationService $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     public function index()
     {
         $bookmarks = Bookmark::forUser(auth()->id())
@@ -33,6 +41,9 @@ class BookmarkController extends Controller
 
         if ($existing) {
             $existing->delete();
+
+            $this->notificationService->notifyBookmarkRemoved($userId);
+
             return response()->json(['bookmarked' => false]);
         }
 
@@ -43,6 +54,8 @@ class BookmarkController extends Controller
             'label' => $request->label,
         ]);
 
+        $this->notificationService->notifyBookmarkAdded($userId);
+
         return response()->json(['bookmarked' => true]);
     }
 
@@ -50,6 +63,9 @@ class BookmarkController extends Controller
     {
         $bookmark = Bookmark::forUser(auth()->id())->findOrFail($id);
         $bookmark->delete();
+
+        $this->notificationService->notifyBookmarkRemoved(auth()->id());
+
         return back()->with('success', 'Bookmark removed.');
     }
 }

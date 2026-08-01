@@ -63,6 +63,7 @@
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(24px) saturate(2);
             border: 1px solid rgba(255,255,255,0.6);
+            border-radius: 2rem;
             box-shadow: 0 20px 60px rgba(0,0,0,0.06);
         }
 

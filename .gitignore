@@ -3,6 +3,10 @@
 .env
 .env.backup
 .env.production
+.env.local
+.env.staging
+.env.testing
+.env.development
 /storage/framework/views/*.php
 /storage/framework/cache/data/*
 /storage/logs/*.log
@@ -25,3 +29,9 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+*.swp
+*.swo
+.php_cs.cache
+*.sqlite
+database/*.sqlite
+storage/debugbar*

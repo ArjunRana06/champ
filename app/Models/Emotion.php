@@ -15,6 +15,10 @@ class Emotion extends Model
         'confidence_score',
     ];
 
+    protected $casts = [
+        'confidence_score' => 'float',
+    ];
+
     public function activity()
     {
         return $this->belongsTo(Activity::class);

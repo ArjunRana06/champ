@@ -15,17 +15,34 @@
             <a href="#" class="nav-icon-btn" title="Notifications" id="notificationBell" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-bell"></i>
                 <span class="badge-dot" id="notificationBadge" style="display:none;"></span>
+                <span class="badge-number" id="notificationBadgeCount" style="display:none;"></span>
             </a>
-            <div class="dropdown-menu dropdown-menu-end p-2" style="min-width: 320px;" id="notificationDropdown">
-                <div class="d-flex justify-content-between align-items-center px-2 py-1">
-                    <strong style="font-size:0.85rem;color:var(--text-primary);">Notifications</strong>
-                    <button class="btn-soft py-1 px-2" style="font-size:0.7rem;" onclick="markAllNotifRead()">Mark all read</button>
+            <div class="dropdown-menu dropdown-menu-end p-0" style="min-width: 380px; max-width: 420px;" id="notificationDropdown">
+                <div class="dropdown-header-custom d-flex justify-content-between align-items-center px-3 py-3" style="border-bottom: 1px solid var(--divider-color);">
+                    <div>
+                        <strong style="font-size:0.95rem;color:var(--text-primary);">Notifications</strong>
+                        <span class="notif-count-badge ms-2" id="notifHeaderCount">0</span>
+                    </div>
+                    <div class="d-flex gap-1">
+                        <button class="btn-soft py-1 px-2 notif-mark-all-btn" onclick="markAllNotifRead()" title="Mark all read" style="font-size:0.7rem;">
+                            <i class="bi bi-check-all"></i>
+                        </button>
+                        <button class="btn-soft py-1 px-2 notif-clear-btn" onclick="clearAllNotif()" title="Clear all" style="font-size:0.7rem;color:#ef4444;">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    </div>
                 </div>
-                <div id="notificationList" style="max-height:300px;overflow-y:auto;">
-                    <div class="text-center py-3" style="color:var(--text-muted);font-size:0.85rem;">Loading...</div>
+                <div id="notificationList" style="max-height:360px;overflow-y:auto;">
+                    <div class="text-center py-4" style="color:var(--text-muted);font-size:0.85rem;">
+                        <div class="mb-2"><i class="bi bi-bell" style="font-size:1.5rem;"></i></div>
+                        Loading...
+                    </div>
                 </div>
-                <hr class="my-1">
-                <a href="{{ route('notifications.index') }}" class="dropdown-item rounded-3 text-center" style="font-size:0.8rem;">View all</a>
+                <div class="text-center py-2" style="border-top:1px solid var(--divider-color);">
+                    <a href="{{ route('notifications.index') }}" class="dropdown-item rounded-3 text-center" style="font-size:0.8rem;">
+                        View all notifications <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -64,48 +81,314 @@
     </div>
 </nav>
 
+<style>
+    @keyframes bellPulse {
+        0%, 100% { transform: scale(1); }
+        25% { transform: scale(1.15); color: #ef4444; }
+        50% { transform: scale(1); }
+        75% { transform: scale(1.1); color: #f59e0b; }
+    }
+    #notificationBell.bell-animate {
+        animation: bellPulse 0.6s ease-in-out 2;
+    }
+    .dropdown-header-custom {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border-radius: 1.2rem 1.2rem 0 0;
+    }
+    .notif-count-badge {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 20px; height: 20px; border-radius: 10px;
+        background: #6366f1; color: white;
+        font-size: 0.65rem; font-weight: 700; padding: 0 6px;
+    }
+    .badge-number {
+        position: absolute; top: -2px; right: -6px;
+        min-width: 16px; height: 16px; border-radius: 8px;
+        background: #ef4444; color: white;
+        font-size: 0.55rem; font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+        padding: 0 3px; border: 1.5px solid white;
+    }
+    .notif-item {
+        transition: background 0.15s;
+        border-bottom: 1px solid var(--divider-color);
+    }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item:hover { background: var(--table-row-hover); }
+    .notif-item.unread {
+        background: rgba(99,102,241,0.03);
+    }
+    .notif-item.unread .notif-title {
+        font-weight: 600;
+    }
+    .notif-icon {
+        width: 36px; height: 36px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        font-size: 0.9rem;
+    }
+    .notif-title {
+        font-size: 0.82rem; color: var(--text-primary);
+        display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .notif-body {
+        font-size: 0.75rem; color: var(--text-secondary);
+        display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .notif-time {
+        font-size: 0.65rem; color: var(--text-muted); white-space: nowrap;
+    }
+    @keyframes notifSlideIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .notif-item {
+        animation: notifSlideIn 0.2s ease-out;
+    }
+</style>
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    function fetchNotifications() {
+    let lastUnreadCount = 0;
+    let notifDropdownOpen = false;
+
+    const escHtml = (s) => {
+        if (!s) return '';
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    };
+
+    const typeMeta = {
+        'success': { icon: 'bi-check-circle-fill', color: '#059669', bg: '#ecfdf5' },
+        'error':   { icon: 'bi-exclamation-circle-fill', color: '#dc2626', bg: '#fef2f2' },
+        'warning': { icon: 'bi-exclamation-triangle-fill', color: '#d97706', bg: '#fffbeb' },
+        'info':    { icon: 'bi-info-circle-fill', color: '#6366f1', bg: '#eef2ff' },
+    };
+
+    function getTypeMeta(type) {
+        return typeMeta[type] || typeMeta.info;
+    }
+
+    function timeAgo(dateStr) {
+        const now = new Date();
+        const date = new Date(dateStr);
+        const diff = Math.floor((now - date) / 1000);
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+        return date.toLocaleDateString();
+    }
+
+    function updateBadgeUI(count) {
+        const badge = document.getElementById('notificationBadge');
+        const badgeCount = document.getElementById('notificationBadgeCount');
+        const headerCount = document.getElementById('notifHeaderCount');
+        const sidebarBadge = document.getElementById('sidebarNotifBadge');
+        const bell = document.getElementById('notificationBell');
+
+        if (badgeCount) {
+            if (count > 0) {
+                badgeCount.style.display = 'flex';
+                badgeCount.textContent = count > 99 ? '99+' : count;
+            } else {
+                badgeCount.style.display = 'none';
+            }
+        }
+        if (badge) {
+            badge.style.display = count > 0 ? 'block' : 'none';
+        }
+        if (headerCount) {
+            headerCount.textContent = count || '0';
+        }
+        if (sidebarBadge) {
+            if (count > 0) {
+                sidebarBadge.style.display = 'inline';
+                sidebarBadge.textContent = count > 99 ? '99+' : count;
+            } else {
+                sidebarBadge.style.display = 'none';
+            }
+        }
+        if (bell && count > 0) {
+            bell.style.animation = 'none';
+            void bell.offsetHeight;
+            bell.style.animation = 'bellPulse 0.6s ease-in-out 2';
+        }
+    }
+
+    function fetchUnreadCount() {
+        fetch('{{ route("notifications.unread-count") }}', {
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+        })
+        .then(r => r.json())
+        .then(data => {
+            const count = data.count || 0;
+            if (count !== lastUnreadCount) {
+                if (count > lastUnreadCount) {
+                    // New notification arrived — show toast
+                    const diff = count - lastUnreadCount;
+                    showToast(diff + ' new notification' + (diff > 1 ? 's' : ''), 'info');
+                    // Play sound if available
+                    try {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.frequency.value = 800;
+                        gain.gain.value = 0.08;
+                        osc.start();
+                        osc.stop(ctx.currentTime + 0.12);
+                    } catch (e) {}
+                }
+                lastUnreadCount = count;
+                updateBadgeUI(count);
+                // If dropdown is open, refresh full list
+                if (notifDropdownOpen) {
+                    fetchFullNotifications();
+                }
+            }
+        })
+        .catch(() => {});
+    }
+
+    function fetchFullNotifications() {
         fetch('{{ route("notifications.index") }}?ajax=1', {
             headers: {'X-Requested-With': 'XMLHttpRequest'}
         })
         .then(r => r.json())
         .then(data => {
             const list = document.getElementById('notificationList');
-            const badge = document.getElementById('notificationBadge');
-            if (badge) {
-                if (data.unread_count > 0) {
-                    badge.style.display = 'block';
-                } else {
-                    badge.style.display = 'none';
-                }
-            }
+            lastUnreadCount = data.unread_count || 0;
+            updateBadgeUI(lastUnreadCount);
+
             if (list) {
                 if (!data.notifications || data.notifications.length === 0) {
-                    list.innerHTML = '<div class="text-center py-3" style="color:var(--text-muted);font-size:0.85rem;">No notifications yet</div>';
+                    list.innerHTML = `
+                        <div class="text-center py-4" style="color:var(--text-muted);font-size:0.85rem;">
+                            <div class="mb-2"><i class="bi bi-bell-slash" style="font-size:1.5rem;"></i></div>
+                            All caught up! No notifications yet.
+                        </div>`;
                     return;
                 }
-                list.innerHTML = data.notifications.map(n => `
-                    <a href="${n.link || '#'}" class="dropdown-item rounded-3 ${n.is_read ? '' : 'fw-bold'}" style="font-size:0.82rem;white-space:normal;border-bottom:1px solid var(--divider-color);padding:0.5rem 0.7rem;" onclick="if(!${n.is_read}) markNotifRead(${n.id})">
-                        <div style="color:var(--text-primary);">${n.title}</div>
-                        <small style="color:var(--text-secondary);">${n.body || ''}</small>
-                    </a>
-                `).join('');
+
+                let html = '';
+                data.notifications.forEach((n, i) => {
+                    const meta = getTypeMeta(n.type);
+                    const safeTitle = escHtml(n.title);
+                    const safeBody = escHtml(n.body);
+                    const safeLink = escHtml(n.link || '#');
+                    const unreadClass = n.is_read ? '' : 'unread';
+                    const clickAttr = n.is_read ? '' : ` onclick="markNotifRead(${n.id}, this)"`;
+                    const style = `animation-delay:${i * 0.03}s`;
+
+                    html += `
+                    <a href="${safeLink}" class="dropdown-item rounded-0 notif-item ${unreadClass} d-flex align-items-start gap-2 px-3 py-2 text-decoration-none" style="${style}"${clickAttr}>
+                        <div class="notif-icon" style="background:${meta.bg};color:${meta.color};">
+                            <i class="bi ${meta.icon}"></i>
+                        </div>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="notif-title">${safeTitle}</div>
+                            <div class="notif-body">${safeBody}</div>
+                            <div class="notif-time">${timeAgo(n.created_at)}</div>
+                        </div>
+                        ${!n.is_read ? `<div class="ms-1" style="width:8px;height:8px;border-radius:50%;background:#6366f1;flex-shrink:0;margin-top:14px;"></div>` : ''}
+                    </a>`;
+                });
+                list.innerHTML = html;
             }
         })
-        .catch(() => {});
+        .catch(() => {
+            const list = document.getElementById('notificationList');
+            if (list) {
+                list.innerHTML = `
+                    <div class="text-center py-4" style="color:var(--text-muted);font-size:0.85rem;">
+                        <div class="mb-2"><i class="bi bi-wifi-off" style="font-size:1.5rem;"></i></div>
+                        Could not load notifications
+                    </div>`;
+            }
+        });
     }
-    fetchNotifications();
-    setInterval(fetchNotifications, 30000);
 
-    window.markNotifRead = function(id) {
-        fetch('/notifications/' + id + '/read', {method:'POST', headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}'}});
+    // Track dropdown open/close
+    const bellDropdown = document.getElementById('notificationBell')?.closest('.dropdown');
+    if (bellDropdown) {
+        bellDropdown.addEventListener('show.bs.dropdown', function () {
+            notifDropdownOpen = true;
+            fetchFullNotifications();
+        });
+        bellDropdown.addEventListener('hide.bs.dropdown', function () {
+            notifDropdownOpen = false;
+        });
+    }
+
+    // Start real-time polling (every 3s for count, full list when dropdown open)
+    fetchUnreadCount();
+    setInterval(fetchUnreadCount, 3000);
+
+    // Also fetch full list in background every 30s for stale data
+    setInterval(() => {
+        if (!notifDropdownOpen) fetchFullNotifications();
+    }, 30000);
+
+    // Pause when tab hidden
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            fetchUnreadCount();
+        }
+    });
+
+    window.markNotifRead = function(id, el) {
+        fetch('/notifications/' + id + '/read', {method:'POST', headers:{
+            'X-CSRF-TOKEN':'{{ csrf_token() }}'
+        }}).then(() => {
+            if (el) {
+                el.classList.remove('unread');
+                const dot = el.querySelector('.ms-1');
+                if (dot) dot.remove();
+            }
+            lastUnreadCount = Math.max(0, lastUnreadCount - 1);
+            updateBadgeUI(lastUnreadCount);
+        });
     };
+
+    function updateSidebarBadge(count) {
+        const sidebarBadge = document.getElementById('sidebarNotifBadge');
+        if (sidebarBadge) {
+            if (count > 0) {
+                sidebarBadge.style.display = 'inline';
+                sidebarBadge.textContent = count > 99 ? '99+' : count;
+            } else {
+                sidebarBadge.style.display = 'none';
+            }
+        }
+    }
+
     window.markAllNotifRead = function() {
         fetch('/notifications/read-all', {method:'POST', headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}'}})
-        .then(() => fetchNotifications());
+        .then(() => {
+            lastUnreadCount = 0;
+            updateBadgeUI(0);
+            document.querySelectorAll('.notif-item.unread').forEach(el => {
+                el.classList.remove('unread');
+                const dot = el.querySelector('.ms-1');
+                if (dot) dot.remove();
+            });
+            if (notifDropdownOpen) fetchFullNotifications();
+        });
+    };
+
+    window.clearAllNotif = function() {
+        if (!confirm('Clear all notifications?')) return;
+        fetch('/notifications', {method:'DELETE', headers:{
+            'X-CSRF-TOKEN':'{{ csrf_token() }}'
+        }}).then(() => {
+            lastUnreadCount = 0;
+            updateBadgeUI(0);
+            if (notifDropdownOpen) fetchFullNotifications();
+        });
     };
 });
 </script>

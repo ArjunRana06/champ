@@ -14,6 +14,10 @@ class Flashcard extends Model
         'front', 'back', 'difficulty', 'is_public'
     ];
 
+    protected $casts = [
+        'is_public' => 'boolean',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

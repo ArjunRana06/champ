@@ -399,6 +399,38 @@
         /* MAIN PADDING */
         main { padding: 1.5rem; flex: 1; }
 
+        /* Toast container */
+        #toast-container {
+            position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999;
+            display: flex; flex-direction: column; gap: 0.5rem;
+            pointer-events: none;
+        }
+        #toast-container .toast-item {
+            pointer-events: auto;
+            padding: 0.85rem 1.2rem;
+            border-radius: 1rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(1.8);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--card-shadow);
+            font-size: 0.88rem;
+            color: var(--text-primary);
+            display: flex; align-items: center; gap: 0.75rem;
+            min-width: 300px;
+            max-width: 450px;
+            animation: toastIn 0.3s ease-out;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        #toast-container .toast-item.removing {
+            opacity: 0; transform: translateX(100px);
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        #toast-container .toast-item .toast-icon { font-size: 1.1rem; flex-shrink: 0; }
+        #toast-container .toast-item .toast-msg { flex: 1; }
+
         /* FOOTER */
         .dashboard-footer {
             background: var(--footer-bg);
@@ -624,6 +656,13 @@
         }
         .form-glass .form-control::placeholder { color: #9ca3af; }
         .form-glass textarea.form-control { resize: vertical; min-height: 100px; }
+        .form-glass .input-group-text {
+            background: #f8fafc;
+            border: 1.5px solid #e5e7eb;
+            color: #6366f1;
+            border-radius: 1rem 0 0 1rem;
+            font-size: 0.9rem;
+        }
 
         .pagination-glass .page-link {
             background: white;
@@ -665,9 +704,35 @@
         </div>
     </div>
 
+    <div id="toast-container"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        function showToast(message, type) {
+            type = type || 'info';
+            const icons = { success: 'bi-check-circle-fill', error: 'bi-exclamation-circle-fill', warning: 'bi-exclamation-triangle-fill', info: 'bi-info-circle-fill' };
+            const colors = { success: '#059669', error: '#dc2626', warning: '#d97706', info: '#6366f1' };
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast-item';
+            toast.innerHTML = '<span class="toast-icon" style="color:' + (colors[type] || colors.info) + ';"><i class="bi ' + (icons[type] || icons.info) + '"></i></span><span class="toast-msg">' + message + '</span><button onclick="this.closest(\'.toast-item\').classList.add(\'removing\');setTimeout(()=>this.closest(\'.toast-item\').remove(),300)" style="background:none;border:none;color:var(--text-muted);cursor:pointer;padding:0;font-size:1.1rem;line-height:1;">&times;</button>';
+            container.appendChild(toast);
+            setTimeout(() => {
+                if (toast.parentNode) { toast.classList.add('removing'); setTimeout(() => toast.remove(), 300); }
+            }, 5000);
+        }
+        @if(session('success'))
+            showToast('{{ session('success') }}', 'success');
+        @endif
+        @if(session('error'))
+            showToast('{{ session('error') }}', 'error');
+        @endif
+        @if(session('warning'))
+            showToast('{{ session('warning') }}', 'warning');
+        @endif
+    </script>
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('{{ asset("sw.js") }}').catch(() => {});

@@ -1,13 +1,9 @@
 <?php
-// app/Http/Controllers/DocumentController.php
 
 namespace App\Http\Controllers;
 
 use App\Models\Document;
-use App\Models\DocumentChunk;
-use App\Models\Embedding;
-use App\Models\Subject;
-use App\Models\DocumentSummary;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\ProcessDocumentJob;
@@ -15,23 +11,27 @@ use App\Services\SummarizationService;
 
 class DocumentController extends Controller
 {
+    protected NotificationService $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     public function index(Request $request)
     {
-        // If the request expects JSON (either via header or query param)
         if ($request->ajax() || $request->query('ajax') == 1) {
             $documents = auth()->user()->documents()->with('subject')->latest()->get();
             return response()->json(['documents' => $documents]);
         }
-        // Otherwise, return the normal view
         $subjects = auth()->user()->subjects;
         return view('Backend.Uploads.index', compact('subjects'));
     }
 
     public function upload(Request $request)
     {
-
         $request->validate([
-            'document' => 'required|file|mimes:pdf,doc,docx,ppt,pptx,xls,xlsx,txt,jpg,jpeg,png,gif,bmp,webp,csv,rtf,odt|max:51200',
+            'document' => 'required|file',
             'subject_id' => 'nullable|exists:subjects,id'
         ]);
         $file = $request->file('document');
@@ -45,8 +45,9 @@ class DocumentController extends Controller
             'status' => 'pending'
         ]);
 
-        // Dispatch job for processing (RAG pipeline)
         ProcessDocumentJob::dispatch($document);
+
+        $this->notificationService->notifyDocumentUploaded(auth()->id(), $document->original_name);
 
         return response()->json(['success' => true, 'document' => $document]);
     }
@@ -54,7 +55,7 @@ class DocumentController extends Controller
     public function preview($id)
     {
         $document = auth()->user()->documents()->findOrFail($id);
-        $path = storage_path('app/public/' . $document->file_path);
+        $path = Storage::disk('public')->path($document->file_path);
 
         if (!file_exists($path)) {
             abort(404);
@@ -66,14 +67,15 @@ class DocumentController extends Controller
     public function destroy($id)
     {
         $document = auth()->user()->documents()->findOrFail($id);
+        $name = $document->original_name;
 
-        // Delete file from storage
         if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
             Storage::disk('public')->delete($document->file_path);
         }
 
-        // Cascade deletes chunks and embeddings via DB foreign keys
         $document->delete();
+
+        $this->notificationService->notifyDocumentDeleted(auth()->id(), $name);
 
         return response()->json(['success' => true]);
     }
@@ -88,15 +90,51 @@ class DocumentController extends Controller
 
         try {
             $summary = $summarizationService->summarize($document);
-            if (request()->ajax() || !request()->expectsJson()) {
+
+            $this->notificationService->notifyDocumentSummarized(auth()->id(), $document->original_name);
+
+            if (request()->ajax() || request()->expectsJson()) {
                 return response()->json(['success' => true, 'summary' => nl2br(e($summary->summary))]);
             }
             return back()->with('success', 'Summary generated successfully!');
         } catch (\Exception $e) {
-            if (request()->ajax() || !request()->expectsJson()) {
+            if (request()->ajax() || request()->expectsJson()) {
                 return response()->json(['error' => $e->getMessage()], 500);
             }
             return back()->with('error', 'Summarization failed: ' . $e->getMessage());
         }
+    }
+
+    public function status($id)
+    {
+        $document = auth()->user()->documents()->findOrFail($id);
+        return response()->json([
+            'id' => $document->id,
+            'status' => $document->status,
+            'progress' => $document->processing_progress ?? 0,
+            'message' => $document->processing_message ?? '',
+            'total_chunks' => $document->total_chunks ?? 0,
+        ]);
+    }
+
+    public function retry($id)
+    {
+        $document = auth()->user()->documents()->findOrFail($id);
+
+        if ($document->status === 'processing' || $document->status === 'pending') {
+            return response()->json(['error' => 'Document is already being processed.'], 400);
+        }
+
+        $document->update([
+            'status' => 'pending',
+            'processing_progress' => 0,
+            'processing_message' => 'Retrying...',
+        ]);
+
+        ProcessDocumentJob::dispatch($document);
+
+        $this->notificationService->notifyDocumentRetried(auth()->id(), $document->original_name);
+
+        return response()->json(['success' => true, 'message' => 'Document re-queued for processing.']);
     }
 }

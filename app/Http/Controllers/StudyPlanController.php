@@ -4,15 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\StudyPlan;
 use App\Services\StudyPlanService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class StudyPlanController extends Controller
 {
     protected StudyPlanService $studyPlanService;
+    protected NotificationService $notificationService;
 
-    public function __construct(StudyPlanService $studyPlanService)
+    public function __construct(StudyPlanService $studyPlanService, NotificationService $notificationService)
     {
         $this->studyPlanService = $studyPlanService;
+        $this->notificationService = $notificationService;
     }
 
     public function index()
@@ -50,6 +53,9 @@ class StudyPlanController extends Controller
 
         try {
             $plan = $this->studyPlanService->generate($subjects, $examDates, $hoursPerDay, $focus);
+
+            $this->notificationService->notifyStudyPlanGenerated(auth()->id());
+
             return redirect()->route('study-plans.show', $plan)->with('success', 'Study plan generated successfully!');
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to generate study plan: ' . $e->getMessage());
@@ -67,6 +73,9 @@ class StudyPlanController extends Controller
     {
         if ($studyPlan->user_id !== auth()->id()) abort(403);
         $studyPlan->delete();
+
+        $this->notificationService->notifyStudyPlanDeleted(auth()->id());
+
         return redirect()->route('study-plans.index')->with('success', 'Study plan deleted.');
     }
 }

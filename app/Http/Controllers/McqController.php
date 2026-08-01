@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Mcq;
-use App\Models\Subject;
-use App\Models\Document;
 use App\Services\McqGeneratorService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
@@ -22,14 +20,12 @@ class McqController extends Controller
 
     public function index()
     {
-        // dd('MCQ Index');
         $mcqs = Mcq::where('user_id', auth()->id())->latest()->paginate(20);
         return view('Backend.mcq.index', compact('mcqs'));
     }
 
     public function create()
     {
-        // dd('MCQ Create');
         $subjects = auth()->user()->subjects;
         return view('Backend.mcq.create', compact('subjects'));
     }
@@ -46,22 +42,19 @@ class McqController extends Controller
 
         $userId = auth()->id();
 
-        // Get relevant chunks based on subject/document
         $chunks = $this->mcqService->getRelevantChunks(
             $request->subject_id,
             $request->document_id,
             $request->topic,
-            $request->count * 2 // fetch extra chunks for better coverage
+            $request->count * 2
         );
 
         if (empty($chunks)) {
             return back()->with('error', 'No relevant content found in your uploaded materials for this subject/topic.');
         }
 
-        // Generate MCQs using AI
         $mcqs = $this->mcqService->generateMcqs($chunks, $request->count, $request->difficulty ?? 'medium');
 
-        // Save to database
         foreach ($mcqs as $mcqData) {
             Mcq::create([
                 'user_id' => $userId,
@@ -109,6 +102,8 @@ class McqController extends Controller
             'subject_id' => $request->subject_id,
         ]);
 
+        $this->notificationService->notifyQuestionUpdated(auth()->id(), 'MCQ');
+
         return redirect()->route('mcqs.index')->with('success', 'MCQ updated successfully.');
     }
 
@@ -116,6 +111,9 @@ class McqController extends Controller
     {
         if ($mcq->user_id !== auth()->id()) abort(403);
         $mcq->delete();
+
+        $this->notificationService->notifyQuestionDeleted(auth()->id(), 'MCQ');
+
         return back()->with('success', 'MCQ deleted.');
     }
 }

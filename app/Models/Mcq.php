@@ -16,6 +16,7 @@ class Mcq extends Model
 
     protected $casts = [
         'options' => 'array',
+        'is_public' => 'boolean',
     ];
 
     public function user()

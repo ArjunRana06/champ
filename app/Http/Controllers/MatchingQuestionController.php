@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\MatchingQuestion;
-use App\Models\Subject;
 use App\Services\QuestionGeneratorService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
@@ -100,6 +99,8 @@ class MatchingQuestionController extends Controller
             'subject_id' => $request->subject_id,
         ]);
 
+        $this->notificationService->notifyQuestionUpdated(auth()->id(), 'Matching');
+
         return redirect()->route('matching.index')->with('success', 'Matching question updated successfully.');
     }
 
@@ -107,6 +108,9 @@ class MatchingQuestionController extends Controller
     {
         if ($matching->user_id !== auth()->id()) abort(403);
         $matching->delete();
+
+        $this->notificationService->notifyQuestionDeleted(auth()->id(), 'Matching');
+
         return back()->with('success', 'Question deleted.');
     }
 }

@@ -4,10 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\TimeEntry;
 use App\Models\Subject;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class TimeEntryController extends Controller
 {
+    protected NotificationService $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     public function index()
     {
         $userId = auth()->id();
@@ -29,11 +37,13 @@ class TimeEntryController extends Controller
             'description' => 'nullable|string|max:255',
         ]);
 
-        // Stop any active timer
-        TimeEntry::where('user_id', auth()->id())->whereNull('ended_at')->update([
-            'ended_at' => now(),
-            'duration_minutes' => 0,
-        ]);
+        $staleEntries = TimeEntry::where('user_id', auth()->id())->whereNull('ended_at')->get();
+        foreach ($staleEntries as $entry) {
+            $entry->update([
+                'ended_at' => now(),
+                'duration_minutes' => max(1, now()->diffInMinutes($entry->started_at)),
+            ]);
+        }
 
         TimeEntry::create([
             'user_id' => auth()->id(),
@@ -42,18 +52,25 @@ class TimeEntryController extends Controller
             'started_at' => now(),
         ]);
 
+        $this->notificationService->notifyTimerStarted(auth()->id());
+
         return response()->json(['success' => true]);
     }
 
     public function stop()
     {
         $entry = TimeEntry::where('user_id', auth()->id())->whereNull('ended_at')->latest()->first();
+        $minutes = 0;
         if ($entry) {
+            $minutes = now()->diffInMinutes($entry->started_at);
             $entry->update([
                 'ended_at' => now(),
-                'duration_minutes' => now()->diffInMinutes($entry->started_at),
+                'duration_minutes' => $minutes,
             ]);
         }
+
+        $this->notificationService->notifyTimerStopped(auth()->id(), max(1, $minutes));
+
         return response()->json(['success' => true]);
     }
 
@@ -61,6 +78,9 @@ class TimeEntryController extends Controller
     {
         if ($timeEntry->user_id !== auth()->id()) abort(403);
         $timeEntry->delete();
+
+        $this->notificationService->notifyTimeEntryDeleted(auth()->id());
+
         return back()->with('success', 'Entry deleted.');
     }
 }

@@ -16,6 +16,7 @@ use App\Models\StudyPlan;
 use App\Models\Exam;
 use App\Models\PomodoroSession;
 use App\Models\TimeEntry;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -125,6 +126,10 @@ class DashboardController extends Controller
             ->pluck('documents_count', 'name')
             ->toArray();
 
+        // Recent notifications
+        $recentNotifications = Notification::forUser($user->id)->latest()->take(5)->get();
+        $unreadNotificationsCount = Notification::forUser($user->id)->unread()->count();
+
         // Trend calculations
         $lastMonth = now()->subMonth();
         $subjectsTrend = $this->getTrend(
@@ -154,6 +159,8 @@ class DashboardController extends Controller
             'recentDocuments',
             'topSubjects',
             'recentActivities',
+            'recentNotifications',
+            'unreadNotificationsCount',
             'subjectNames',
             'subjectsTrend',
             'documentsTrend',

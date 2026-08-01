@@ -5,16 +5,19 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Services\NotificationService;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
-
-
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    protected NotificationService $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     public function index()
     {
         $users = User::with('roles')->get();
@@ -23,20 +26,13 @@ class UserController extends Controller
         return view('Backend.User.index', compact('users', 'roles', 'totalUsers'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        // dd($request->all());
         $request->validate([
             'name' => 'required',
             'email' => 'required|email|unique:users',
@@ -44,42 +40,33 @@ class UserController extends Controller
             'role' => 'required'
         ]);
 
-        // 1. Create user
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
 
-        // 2. Assign role
         $user->assignRole($request->role);
+
+        $this->notificationService->notifyUserCreated(auth()->id(), $user->name);
 
         return redirect()->route('users.index')
             ->with('success', 'User created successfully');
     }
-    /**
-     * Display the specified resource.
-     */
+
     public function show($id)
     {
         $user = User::with('roles')->findOrFail($id);
         return view('Backend.User.show', compact('user'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
         $user = User::findOrFail($id);
         $roles = Role::all();
         return view('Backend.User.edit', compact('user', 'roles'));
-        // return view('Backend.User.edit');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -98,16 +85,21 @@ class UserController extends Controller
 
         $user->syncRoles($request->role);
 
+        $this->notificationService->notifyUserUpdated(auth()->id(), $user->name);
+
         return redirect()->route('users.index')->with('success', 'User updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         $user = User::findOrFail($id);
+        if ($user->hasRole('Admin') && User::role('Admin')->count() <= 1) {
+            abort(403, 'Cannot delete the last admin user.');
+        }
+        $name = $user->name;
         $user->delete();
+
+        $this->notificationService->notifyUserDeleted(auth()->id(), $name);
 
         return redirect()->route('users.index')->with('success', 'User deleted successfully.');
     }

@@ -8,10 +8,18 @@ use App\Models\ShortAnswer;
 use App\Models\FillBlank;
 use App\Models\MatchingQuestion;
 use App\Models\Flashcard;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class ExportController extends Controller
 {
+    protected NotificationService $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     public function form()
     {
         $counts = [
@@ -42,6 +50,8 @@ class ExportController extends Controller
         $content = stream_get_contents($output);
         fclose($output);
 
+        $this->notificationService->notifyExportCompleted(auth()->id(), 'CSV');
+
         return response($content, 200, [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $type . '_' . date('Y-m-d') . '.csv"',
@@ -53,6 +63,8 @@ class ExportController extends Controller
         $type = $request->input('type', 'mcqs');
         $questions = $this->getQuestions($type);
 
+        $this->notificationService->notifyExportCompleted(auth()->id(), 'JSON');
+
         return response()->json($questions)->withHeaders([
             'Content-Disposition' => 'attachment; filename="' . $type . '_' . date('Y-m-d') . '.json"',
         ]);
@@ -62,7 +74,6 @@ class ExportController extends Controller
     {
         $flashcards = Flashcard::where('user_id', auth()->id())->get();
 
-        // Anki APKG format is complex; export as TSV for Anki import instead
         $output = fopen('php://temp', 'w+');
         fputcsv($output, ['Question', 'Answer', 'Subject'], "\t");
 
@@ -78,6 +89,8 @@ class ExportController extends Controller
         $content = stream_get_contents($output);
         fclose($output);
 
+        $this->notificationService->notifyExportCompleted(auth()->id(), 'Anki');
+
         return response($content, 200, [
             'Content-Type' => 'text/tab-separated-values',
             'Content-Disposition' => 'attachment; filename="anki_import_' . date('Y-m-d') . '.tsv"',
@@ -92,6 +105,9 @@ class ExportController extends Controller
         $html = view('Backend.export.pdf', compact('questions', 'type'))->render();
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
+
+        $this->notificationService->notifyExportCompleted(auth()->id(), 'PDF');
+
         return $pdf->download($type . '_' . date('Y-m-d') . '.pdf');
     }
 
