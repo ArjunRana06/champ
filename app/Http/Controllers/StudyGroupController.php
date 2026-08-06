@@ -64,16 +64,18 @@ class StudyGroupController extends Controller
 
         $this->notificationService->notifyGroupCreated(auth()->id(), $group->name);
 
-        if ($request->ajax() || $request->expectsJson()) {
-            return response()->json(['success' => true, 'message' => 'Study group created!', 'group' => $group]);
-        }
-        return redirect()->route('study-groups.index')->with('success', 'Study group created!');
+        return $this->successResponse($request, 'Study group created!', [
+            'group' => $group,
+            'redirect' => route('study-groups.index'),
+        ]);
     }
 
     public function update(Request $request, StudyGroup $studyGroup)
     {
         $isAdmin = $studyGroup->members()->where('user_id', auth()->id())->where('role', 'admin')->exists();
-        if (!$isAdmin) abort(403);
+        if (!$isAdmin) {
+            return $this->errorResponse($request, 'Only group admins can edit the group.', 403);
+        }
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -82,10 +84,7 @@ class StudyGroupController extends Controller
 
         $studyGroup->update($request->only(['name', 'description']));
 
-        if ($request->ajax() || $request->expectsJson()) {
-            return response()->json(['success' => true, 'message' => 'Group updated!']);
-        }
-        return back()->with('success', 'Group updated!');
+        return $this->successResponse($request, 'Group updated!');
     }
 
     public function show(StudyGroup $studyGroup)
@@ -107,7 +106,11 @@ class StudyGroupController extends Controller
             'user_id' => auth()->id(),
         ], ['role' => 'member']);
 
-        if ($member->wasRecentlyCreated && $studyGroup->created_by !== auth()->id()) {
+        if (!$member->wasRecentlyCreated) {
+            return $this->errorResponse($request, 'You are already a member of this group.', 422);
+        }
+
+        if ($studyGroup->created_by !== auth()->id()) {
             $this->notificationService->notifyGroupJoinedToCreator(
                 $studyGroup->created_by,
                 auth()->user()->name,
@@ -118,57 +121,75 @@ class StudyGroupController extends Controller
 
         $this->notificationService->notifyGroupJoined(auth()->id(), $studyGroup->name);
 
-        if ($request->ajax() || $request->expectsJson()) {
-            return response()->json(['success' => true, 'message' => 'Joined group!']);
-        }
-        return back()->with('success', 'Joined group!');
+        return $this->successResponse($request, 'Joined group!');
     }
 
     public function leave(Request $request, StudyGroup $studyGroup)
     {
-        StudyGroupMember::where('study_group_id', $studyGroup->id)
+        $member = StudyGroupMember::where('study_group_id', $studyGroup->id)
             ->where('user_id', auth()->id())
-            ->delete();
+            ->first();
+
+        if (!$member) {
+            return $this->errorResponse($request, 'You are not a member of this group.', 422);
+        }
+
+        $isLastAdmin = $member->role === 'admin'
+            && $studyGroup->members()->where('role', 'admin')->count() <= 1;
+
+        if ($isLastAdmin) {
+            return $this->errorResponse(
+                $request,
+                'You are the only admin of this group. Delete the group or promote another member first.',
+                422
+            );
+        }
+
+        $member->delete();
 
         $this->notificationService->notifyGroupLeft(auth()->id(), $studyGroup->name);
 
-        if ($request->ajax() || $request->expectsJson()) {
-            return response()->json(['success' => true, 'message' => 'You left the group.']);
-        }
-        return redirect()->route('study-groups.index')->with('success', 'You left the group.');
+        return $this->successResponse($request, 'You left the group.', ['redirect' => route('study-groups.index')]);
     }
 
     public function removeMember(Request $request, StudyGroup $studyGroup, StudyGroupMember $member)
     {
         $isAdmin = $studyGroup->members()->where('user_id', auth()->id())->where('role', 'admin')->exists();
-        if (!$isAdmin) abort(403);
-        if ($member->study_group_id !== $studyGroup->id) abort(404);
+        if (!$isAdmin) {
+            return $this->errorResponse($request, 'Only group admins can remove members.', 403);
+        }
+        if ($member->study_group_id !== $studyGroup->id) {
+            return $this->errorResponse($request, 'Member not found in this group.', 404);
+        }
         if ($member->role === 'admin' && $studyGroup->members()->where('role', 'admin')->count() <= 1) {
-            return response()->json(['success' => false, 'message' => 'Cannot remove the last admin.'], 422);
+            return $this->errorResponse($request, 'Cannot remove the last admin.', 422);
         }
 
         $member->delete();
 
-        if ($request->ajax() || $request->expectsJson()) {
-            return response()->json(['success' => true, 'message' => 'Member removed.']);
-        }
-        return back()->with('success', 'Member removed.');
+        return $this->successResponse($request, 'Member removed.');
     }
 
     public function updateMemberRole(Request $request, StudyGroup $studyGroup, StudyGroupMember $member)
     {
         $isAdmin = $studyGroup->members()->where('user_id', auth()->id())->where('role', 'admin')->exists();
-        if (!$isAdmin) abort(403);
-        if ($member->study_group_id !== $studyGroup->id) abort(404);
+        if (!$isAdmin) {
+            return $this->errorResponse($request, 'Only group admins can change roles.', 403);
+        }
+        if ($member->study_group_id !== $studyGroup->id) {
+            return $this->errorResponse($request, 'Member not found in this group.', 404);
+        }
 
         $request->validate(['role' => 'required|in:admin,member']);
 
+        if ($member->role === 'admin' && $request->role === 'member'
+            && $studyGroup->members()->where('role', 'admin')->count() <= 1) {
+            return $this->errorResponse($request, 'Cannot demote the last admin.', 422);
+        }
+
         $member->update(['role' => $request->role]);
 
-        if ($request->ajax() || $request->expectsJson()) {
-            return response()->json(['success' => true, 'message' => 'Role updated!']);
-        }
-        return back()->with('success', 'Role updated.');
+        return $this->successResponse($request, 'Role updated!');
     }
 
     public function share(Request $request, StudyGroup $studyGroup)
@@ -179,16 +200,31 @@ class StudyGroupController extends Controller
         ]);
 
         $isMember = $studyGroup->members()->where('user_id', auth()->id())->exists();
-        if (!$isMember) abort(403);
+        if (!$isMember) {
+            return $this->errorResponse($request, 'You must be a member of this group to share questions.', 403);
+        }
 
         $model = $this->getModel($request->type);
-        $item = $model::where('id', $request->id)->where('user_id', auth()->id())->firstOrFail();
+        $item = $model::where('id', $request->id)->where('user_id', auth()->id())->first();
 
-        GroupResource::firstOrCreate([
+        if (!$item) {
+            return $this->errorResponse($request, 'Question not found, or it does not belong to you.', 404);
+        }
+
+        $alreadyShared = GroupResource::where([
             'study_group_id' => $studyGroup->id,
             'resourceable_type' => $model,
             'resourceable_id' => $item->id,
-        ], [
+        ])->exists();
+
+        if ($alreadyShared) {
+            return $this->errorResponse($request, 'This question is already shared with this group.', 422);
+        }
+
+        GroupResource::create([
+            'study_group_id' => $studyGroup->id,
+            'resourceable_type' => $model,
+            'resourceable_id' => $item->id,
             'user_id' => auth()->id(),
         ]);
 
@@ -205,46 +241,49 @@ class StudyGroupController extends Controller
             );
         }
 
-        if ($request->ajax() || $request->expectsJson()) {
-            return response()->json(['success' => true, 'message' => 'Question shared with group!']);
-        }
-        return back()->with('success', 'Question shared with group!');
+        return $this->successResponse($request, 'Question shared with group!');
     }
 
     public function unshare(Request $request, StudyGroup $studyGroup, GroupResource $resource)
     {
-        if ($resource->study_group_id !== $studyGroup->id) abort(404);
+        if ($resource->study_group_id !== $studyGroup->id) {
+            return $this->errorResponse($request, 'Resource not found in this group.', 404);
+        }
 
         $isAdmin = $studyGroup->members()
             ->where('user_id', auth()->id())
             ->where('role', 'admin')
             ->exists();
 
-        if ($resource->user_id !== auth()->id() && !$isAdmin) abort(403);
+        if ($resource->user_id !== auth()->id() && !$isAdmin) {
+            return $this->errorResponse($request, 'You can only remove resources you shared.', 403);
+        }
 
         $resource->delete();
 
         $this->notificationService->notifyGroupResourceUnshared(auth()->id(), $studyGroup->name);
 
-        if ($request->ajax() || $request->expectsJson()) {
-            return response()->json(['success' => true, 'message' => 'Resource removed from group.']);
-        }
-        return back()->with('success', 'Resource removed from group.');
+        return $this->successResponse($request, 'Resource removed from group.');
     }
 
     public function moveToShared(Request $request, StudyGroup $studyGroup, GroupResource $resource)
     {
-        if ($resource->study_group_id !== $studyGroup->id) abort(404);
+        if ($resource->study_group_id !== $studyGroup->id) {
+            return $this->errorResponse($request, 'Resource not found in this group.', 404);
+        }
         $isAdmin = $studyGroup->members()->where('user_id', auth()->id())->where('role', 'admin')->exists();
-        if (!$isAdmin && $resource->user_id !== auth()->id()) abort(403);
+        if (!$isAdmin && $resource->user_id !== auth()->id()) {
+            return $this->errorResponse($request, 'You can only share resources you own.', 403);
+        }
 
         $modelClass = $resource->resourceable_type;
         $item = $modelClass::find($resource->resourceable_id);
-        if ($item) {
-            $item->update(['is_public' => true]);
+        if (!$item) {
+            return $this->errorResponse($request, 'The original question no longer exists.', 404);
         }
+        $item->update(['is_public' => true]);
 
-        return response()->json(['success' => true, 'message' => 'Resource made public to all students!']);
+        return $this->successResponse($request, 'Resource made public to all students!');
     }
 
     public function destroy(Request $request, StudyGroup $studyGroup)
@@ -253,7 +292,9 @@ class StudyGroupController extends Controller
             ->where('user_id', auth()->id())
             ->where('role', 'admin')
             ->exists();
-        if (!$isAdmin) abort(403);
+        if (!$isAdmin) {
+            return $this->errorResponse($request, 'Only group admins can delete the group.', 403);
+        }
 
         $name = $studyGroup->name;
 
@@ -266,10 +307,24 @@ class StudyGroupController extends Controller
         GroupResource::where('study_group_id', $studyGroup->id)->delete();
         $studyGroup->delete();
 
+        return $this->successResponse($request, 'Group deleted.', ['redirect' => route('study-groups.index')]);
+    }
+
+    private function successResponse(Request $request, string $message, array $extra = [])
+    {
         if ($request->ajax() || $request->expectsJson()) {
-            return response()->json(['success' => true, 'message' => 'Group deleted.']);
+            return response()->json(array_merge(['success' => true, 'message' => $message], $extra));
         }
-        return redirect()->route('study-groups.index')->with('success', 'Group deleted.');
+        $target = $extra['redirect'] ?? null;
+        return ($target ? redirect($target) : redirect()->back())->with('success', $message);
+    }
+
+    private function errorResponse(Request $request, string $message, int $status = 422)
+    {
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json(['success' => false, 'message' => $message], $status);
+        }
+        abort($status, $message);
     }
 
     private function getUserQuestions(): array

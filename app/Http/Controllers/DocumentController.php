@@ -31,10 +31,33 @@ class DocumentController extends Controller
     public function upload(Request $request)
     {
         $request->validate([
-            'document' => 'required|file',
+            'document' => 'required|file|max:51200',
             'subject_id' => 'nullable|exists:subjects,id'
         ]);
         $file = $request->file('document');
+
+        $allowedMimes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'text/plain', 'text/csv', 'text/rtf', 'text/html',
+            'image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp',
+            'application/octet-stream',
+            'application/zip',
+        ];
+
+        $mime = $file->getMimeType();
+        if (!in_array($mime, $allowedMimes, true)) {
+            return response()->json([
+                'error' => 'This file type is not supported. Supported formats: PDF, Word (.doc/.docx), PowerPoint (.ppt/.pptx), Excel (.xls/.xlsx), CSV, TXT, RTF, and images (JPG, PNG, GIF, BMP, WEBP).',
+                'message' => 'This file type is not supported. Supported formats: PDF, Word (.doc/.docx), PowerPoint (.ppt/.pptx), Excel (.xls/.xlsx), CSV, TXT, RTF, and images (JPG, PNG, GIF, BMP, WEBP).',
+            ], 422);
+        }
+
         $path = $file->store('documents', 'public');
 
         $document = auth()->user()->documents()->create([

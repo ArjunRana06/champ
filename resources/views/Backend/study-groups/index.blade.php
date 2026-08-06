@@ -176,6 +176,10 @@
 
         document.getElementById('createGroupForm')?.addEventListener('submit', function (e) {
             e.preventDefault();
+            if (!this.checkValidity()) {
+                this.classList.add('was-validated');
+                return;
+            }
             const btn = document.getElementById('createGroupSubmit');
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Creating...';
@@ -184,17 +188,22 @@
                 headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' },
                 body: new FormData(this)
             })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
+            .then(r => r.json().then(data => ({ ok: r.ok, data })))
+            .then(({ ok, data }) => {
+                if (ok && data.success) {
                     showToast(data.message, 'success');
                     modal.hide();
                     location.reload();
+                } else {
+                    showToast(data.message || 'Could not create group', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-save"></i> Create';
                 }
             })
             .catch(() => {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-save"></i> Create';
+                showToast('Something went wrong. Please try again.', 'error');
             });
         });
     });
@@ -206,16 +215,21 @@
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
+        .then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+            if (ok && data.success) {
                 showToast(data.message, 'success');
                 location.reload();
+            } else {
+                showToast(data.message || 'Could not join group', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-plus-circle"></i> Join';
             }
         })
         .catch(() => {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-plus-circle"></i> Join';
+            showToast('Something went wrong. Please try again.', 'error');
         });
     }
 
@@ -227,17 +241,23 @@
             method: 'DELETE',
             headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
+        .then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+            if (ok && data.success) {
                 showToast(data.message, 'success');
                 const card = btn.closest('.group-card');
                 if (card) card.remove();
+                if (data.redirect) window.location.href = data.redirect;
+            } else {
+                showToast(data.message || 'Could not delete group', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-trash"></i>';
             }
         })
         .catch(() => {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-trash"></i>';
+            showToast('Something went wrong. Please try again.', 'error');
         });
     }
 </script>

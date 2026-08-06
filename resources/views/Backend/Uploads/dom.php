@@ -32,7 +32,7 @@
                         <i class="bi bi-folder2-open"></i> Choose Files
                     </button>
                     <div class="mt-3 small text-muted">
-                        Any file type supported — no size limit
+                        PDF, Word, PowerPoint, Excel, CSV, TXT, RTF, and images — up to 50 MB per file
                     </div>
                 </div>
             </div>

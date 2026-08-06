@@ -21,7 +21,11 @@ class StudyPlanController extends Controller
     public function index()
     {
         $plans = StudyPlan::where('user_id', auth()->id())->latest()->paginate(10);
-        return view('Backend.study-plans.index', compact('plans'));
+        $totalPlans = StudyPlan::where('user_id', auth()->id())->count();
+        $totalHoursDay = StudyPlan::where('user_id', auth()->id())->sum('hours_per_day');
+        $uniqueSubjects = StudyPlan::where('user_id', auth()->id())
+            ->pluck('subjects')->flatten()->unique()->filter()->count();
+        return view('Backend.study-plans.index', compact('plans', 'totalPlans', 'totalHoursDay', 'uniqueSubjects'));
     }
 
     public function create()

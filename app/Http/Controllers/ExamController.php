@@ -17,11 +17,23 @@ class ExamController extends Controller
 
     public function index()
     {
-        $exams = Exam::where('user_id', auth()->id())
+        $userId = auth()->id();
+        $exams = Exam::where('user_id', $userId)
             ->with('subject')
             ->orderBy('exam_date')
             ->get();
-        return view('Backend.exams.index', compact('exams'));
+
+        $upcomingCount = $exams->where('is_completed', false)->where('exam_date', '>=', today())->count();
+        $completedCount = $exams->where('is_completed', true)->count();
+        $overdueCount = $exams->where('is_completed', false)->where('exam_date', '<', today())->count();
+        $thisWeekCount = $exams->where('is_completed', false)
+            ->whereBetween('exam_date', [today(), now()->endOfWeek()])->count();
+        $nextExam = $exams->where('is_completed', false)->where('exam_date', '>=', today())->sortBy('exam_date')->first();
+        $subjects = auth()->user()->subjects;
+
+        return view('Backend.exams.index', compact(
+            'exams', 'upcomingCount', 'completedCount', 'overdueCount', 'thisWeekCount', 'nextExam', 'subjects'
+        ));
     }
 
     public function create()

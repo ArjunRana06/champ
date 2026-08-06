@@ -9,6 +9,7 @@ use App\Models\FillBlank;
 use App\Models\MatchingQuestion;
 use App\Models\Flashcard;
 use App\Models\Subject;
+use App\Models\StudyGroup;
 use App\Services\NotificationService;
 use App\Traits\HasQuestionType;
 use Illuminate\Http\Request;
@@ -65,7 +66,12 @@ class SharedQuestionBankController extends Controller
             $q->where('user_id', auth()->id())->orWhereHas('mcqs', fn($q) => $q->where('is_public', true));
         })->orderBy('name')->get();
 
-        return view('Backend.shared-questions.index', compact('shared', 'types', 'myQuestions', 'subjects', 'subjectId', 'search'));
+        $myGroups = StudyGroup::whereHas('members', fn($q) => $q->where('user_id', auth()->id()))
+            ->withCount('members')
+            ->latest()
+            ->get();
+
+        return view('Backend.shared-questions.index', compact('shared', 'types', 'myQuestions', 'subjects', 'subjectId', 'search', 'myGroups'));
     }
 
     public function fetchMore(Request $request)

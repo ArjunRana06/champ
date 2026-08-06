@@ -1,8 +1,10 @@
 @extends('Backend.master')
 
 @php
-function questionText($item) {
-    return $item->question ?? $item->statement ?? $item->front ?? $item->sentence_with_blanks ?? (is_array($item->left_items) ? ($item->left_items[0] ?? 'Matching question') : 'Question #'.$item->id);
+if (!function_exists('questionText')) {
+    function questionText($item) {
+        return $item->question ?? $item->statement ?? $item->front ?? $item->sentence_with_blanks ?? (is_array($item->left_items) ? ($item->left_items[0] ?? 'Matching question') : 'Question #'.$item->id);
+    }
 }
 @endphp
 

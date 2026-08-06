@@ -1,8 +1,10 @@
 @extends('Backend.master')
 
 @php
-function questionText($item) {
-    return $item->question ?? $item->statement ?? $item->front ?? $item->sentence_with_blanks ?? (is_array($item->left_items) ? ($item->left_items[0] ?? 'Matching question') : 'Question #'.$item->id);
+if (!function_exists('questionText')) {
+    function questionText($item) {
+        return $item->question ?? $item->statement ?? $item->front ?? $item->sentence_with_blanks ?? (is_array($item->left_items) ? ($item->left_items[0] ?? 'Matching question') : 'Question #'.$item->id);
+    }
 }
 @endphp
 
@@ -127,6 +129,12 @@ function questionText($item) {
                             </div>
                             <small style="color:var(--text-muted);">{{ $item->subject?->name ?? 'General' }}</small>
                         </div>
+                        <button type="button" class="btn-soft py-1 px-2 group-share-btn" style="font-size:0.65rem;"
+                                data-type="{{ $type }}" data-id="{{ $item->id }}"
+                                title="Share into a study group">
+                            <i class="bi bi-people"></i>
+                            <span>Share</span>
+                        </button>
                         <button class="btn-soft py-1 px-2 toggle-vis-btn" style="font-size:0.65rem;{{ $item->is_public ? 'color:#059669;border-color:#059669;' : 'color:var(--text-muted);' }}"
                                 data-type="{{ $type }}" data-id="{{ $item->id }}" data-public="{{ $item->is_public ? '1' : '0' }}">
                             <i class="bi {{ $item->is_public ? 'bi-unlock-fill' : 'bi-lock-fill' }}"></i>
@@ -151,6 +159,56 @@ function questionText($item) {
     </div>
 </div>
 
+<!-- Share to Group Modal -->
+<div class="modal" id="groupShareModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content border-0 shadow rounded-4">
+            <form id="groupShareForm">
+                @csrf
+                <input type="hidden" name="type" id="groupShareType">
+                <input type="hidden" name="id" id="groupShareId">
+                <div class="modal-header border-0" style="padding:1.5rem 1.5rem 0;">
+                    <h5 class="modal-title" style="color:var(--text-primary);font-weight:800;">
+                        <i class="bi bi-people-fill me-2" style="color:var(--card-accent);"></i> Share Question to Group
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="padding:1.5rem;">
+                    <div id="groupShareEmpty" style="display:none;text-align:center;padding:1rem 0;">
+                        <i class="bi bi-people" style="font-size:2rem;color:#c7d2fe;display:block;margin-bottom:0.5rem;"></i>
+                        <p style="color:var(--text-secondary);font-size:0.9rem;margin:0 0 0.3rem;">You need to be in a study group to share questions.</p>
+                        <a href="{{ route('study-groups.index') }}" class="dark-btn py-1 px-3" style="font-size:0.75rem;display:inline-flex;">
+                            <i class="bi bi-plus-circle me-1"></i> Join or Create a Group
+                        </a>
+                    </div>
+                    <div id="groupShareFormBody">
+                        <div class="mb-4 p-3" style="background:#f8fafc;border-radius:1rem;border:1px solid #e5e7eb;">
+                            <label style="font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--card-accent);margin-bottom:0.3rem;display:block;">Question</label>
+                            <p id="groupShareQuestion" style="color:var(--text-primary);font-size:0.9rem;margin:0;"></p>
+                        </div>
+                        <div class="mb-3">
+                            <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--card-accent);margin-bottom:0.4rem;display:block;">
+                                Share to Group <span style="color:#dc2626;">*</span>
+                            </label>
+                            <select name="group_id" id="groupShareGroup" class="form-control" required
+                                    style="background:white;border:1.5px solid #e5e7eb;border-radius:1rem;padding:0.7rem 1.1rem;font-size:0.9rem;width:100%;font-family:'Inter',sans-serif;">
+                                <option value="">Select group...</option>
+                                @foreach($myGroups as $group)
+                                <option value="{{ $group->id }}">{{ $group->name }} ({{ $group->members_count }} member{{ $group->members_count === 1 ? '' : 's' }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0" style="padding:0 1.5rem 1.5rem;">
+                    <button type="button" class="btn-soft" data-bs-dismiss="modal"><i class="bi bi-x"></i> Cancel</button>
+                    <button type="submit" class="dark-btn" id="groupShareSubmit" form="groupShareForm"><i class="bi bi-share"></i> Share</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <style>
 .nav-pills .nav-link { color: var(--text-secondary); background: transparent; border: 1.5px solid transparent; }
 .nav-pills .nav-link:hover { color: var(--card-accent); background: var(--badge-bg); border-color: var(--card-accent); }
@@ -162,6 +220,76 @@ function questionText($item) {
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // Share to Group modal
+    const groupShareModalEl = document.getElementById('groupShareModal');
+    let groupShareModal = null;
+    if (groupShareModalEl) {
+        groupShareModal = new bootstrap.Modal(groupShareModalEl);
+    }
+
+    function openGroupShare(type, id, questionText) {
+        if (!groupShareModal) return;
+        const root = document.getElementById('modal-root');
+        if (root && groupShareModalEl.parentNode !== root) root.appendChild(groupShareModalEl);
+
+        document.getElementById('groupShareType').value = type;
+        document.getElementById('groupShareId').value = id;
+        document.getElementById('groupShareQuestion').textContent = questionText || 'Question';
+        document.getElementById('groupShareGroup').value = '';
+        document.getElementById('groupShareForm').classList.remove('was-validated');
+
+        const hasGroups = document.getElementById('groupShareGroup').options.length > 1;
+        document.getElementById('groupShareFormBody').style.display = hasGroups ? 'block' : 'none';
+        document.getElementById('groupShareEmpty').style.display = hasGroups ? 'none' : 'block';
+        document.getElementById('groupShareSubmit').style.display = hasGroups ? '' : 'none';
+
+        groupShareModal.show();
+    }
+
+    document.querySelectorAll('.group-share-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const text = this.closest('.d-flex').querySelector('div div')?.textContent.trim() || 'Question';
+            openGroupShare(this.dataset.type, this.dataset.id, text);
+        });
+    });
+
+    document.getElementById('groupShareForm')?.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!this.checkValidity()) {
+            this.classList.add('was-validated');
+            return;
+        }
+        const btn = document.getElementById('groupShareSubmit');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Sharing...';
+
+        const groupId = document.getElementById('groupShareGroup').value;
+        fetch('{{ url("study-groups") }}/' + groupId + '/share', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: document.getElementById('groupShareType').value,
+                id: document.getElementById('groupShareId').value
+            })
+        })
+        .then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-share"></i> Share';
+            if (ok && data.success) {
+                showToast(data.message, 'success');
+                groupShareModal.hide();
+            } else {
+                showToast(data.message || 'Could not share question.', 'error');
+            }
+        })
+        .catch(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-share"></i> Share';
+            showToast('Something went wrong. Please try again.', 'error');
+        });
+    });
+
     document.querySelectorAll('.toggle-vis-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
             const type = this.dataset.type;
@@ -178,14 +306,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type, id })
             })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
+            .then(r => r.json().then(data => ({ ok: r.ok, data })))
+            .then(({ ok, data }) => {
+                if (ok && data.success) {
                     showToast(data.message, 'success');
                     this.dataset.public = data.is_public ? '1' : '0';
                     this.innerHTML = '<i class="bi ' + (data.is_public ? 'bi-unlock-fill' : 'bi-lock-fill') + '"></i> <span class="vis-text">' + (data.is_public ? 'Public' : 'Private') + '</span>';
                     this.style.color = data.is_public ? '#059669' : 'var(--text-muted)';
                     this.style.borderColor = data.is_public ? '#059669' : '';
+                    this.disabled = false;
+                } else {
+                    showToast(data.message || 'Error toggling visibility', 'error');
+                    this.innerHTML = '<i class="bi ' + (wasPublic ? 'bi-unlock-fill' : 'bi-lock-fill') + '"></i> <span class="vis-text">' + (wasPublic ? 'Public' : 'Private') + '</span>';
                     this.disabled = false;
                 }
             })

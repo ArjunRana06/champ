@@ -20,25 +20,34 @@ class RAGService
                 return [];
             }
 
-            $model = config('services.openrouter.embedding_model');
+            $primary = config('services.openrouter.embedding_model');
+            $fallbacks = config('services.openrouter.embedding_fallback_models', []);
+            $models = array_values(array_unique(array_filter(array_merge([$primary], $fallbacks))));
 
-            try {
-                $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'Content-Type' => 'application/json',
-                ])->timeout(8)->post('https://openrouter.ai/api/v1/embeddings', [
-                    'model' => $model,
-                    'input' => $query,
-                ]);
+            foreach ($models as $model) {
+                try {
+                    $response = Http::withHeaders([
+                        'Authorization' => 'Bearer ' . $apiKey,
+                        'Content-Type' => 'application/json',
+                    ])->timeout(8)->post('https://openrouter.ai/api/v1/embeddings', [
+                        'model' => $model,
+                        'input' => $query,
+                    ]);
 
-                if ($response->failed()) {
-                    return [];
+                    if ($response->failed()) {
+                        continue;
+                    }
+
+                    $embedding = $response->json()['data'][0]['embedding'] ?? [];
+                    if (!empty($embedding)) {
+                        return $embedding;
+                    }
+                } catch (\Exception $e) {
+                    continue;
                 }
-
-                return $response->json()['data'][0]['embedding'] ?? [];
-            } catch (\Exception $e) {
-                return [];
             }
+
+            return [];
         });
     }
 

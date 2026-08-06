@@ -19,11 +19,28 @@ class PomodoroController extends Controller
 
     public function index()
     {
-        $sessions = PomodoroSession::where('user_id', auth()->id())->latest()->paginate(20);
-        $todayCount = PomodoroSession::where('user_id', auth()->id())
-            ->whereDate('created_at', today())->count();
+        $userId = auth()->id();
+        $sessions = PomodoroSession::where('user_id', $userId)->with('subject')->latest()->paginate(20);
+        $todayCount = PomodoroSession::where('user_id', $userId)->whereDate('created_at', today())->count();
+        $todayMinutes = PomodoroSession::where('user_id', $userId)->whereDate('created_at', today())->sum('duration_minutes');
+        $weekMinutes = PomodoroSession::where('user_id', $userId)
+            ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->sum('duration_minutes');
+        $totalMinutes = PomodoroSession::where('user_id', $userId)->sum('duration_minutes');
+
+        $weekDaily = collect();
+        $start = now()->startOfWeek();
+        for ($i = 0; $i < 7; $i++) {
+            $day = $start->copy()->addDays($i);
+            $weekDaily->push([
+                'label' => $day->format('D'),
+                'minutes' => PomodoroSession::where('user_id', $userId)->whereDate('created_at', $day)->sum('duration_minutes'),
+            ]);
+        }
+
         $subjects = auth()->user()->subjects;
-        return view('Backend.pomodoro.index', compact('sessions', 'todayCount', 'subjects'));
+        return view('Backend.pomodoro.index', compact(
+            'sessions', 'todayCount', 'todayMinutes', 'weekMinutes', 'totalMinutes', 'weekDaily', 'subjects'
+        ));
     }
 
     public function complete(Request $request)

@@ -66,7 +66,11 @@ return [
             'nvidia/nemotron-nano-12b-v2-vl:free',
             'inclusionai/ling-3.0-flash:free',
         ],
-        'embedding_model' => env('OPENROUTER_EMBEDDING_MODEL', 'openai/text-embedding-3-small'),
+        'embedding_model' => env('OPENROUTER_EMBEDDING_MODEL', 'nvidia/nemotron-3-embed-1b:free'),
+        'embedding_fallback_models' => [
+            'nvidia/llama-nemotron-embed-vl-1b-v2:free',
+            'openai/text-embedding-3-small',
+        ],
         'timeout' => 15,
         'max_retries' => 3,
         'rate_limit_per_minute' => 60,

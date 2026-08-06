@@ -122,7 +122,7 @@
         if (answeredTracker.has(questionId)) return;
         answeredTracker.add(questionId);
 
-        const isCorrect = selected === correct;
+        const isCorrect = selected.dataset.value === correct;
         const btns = container.querySelectorAll('.tf-btn');
 
         btns.forEach(b => b.style.cursor = 'default');

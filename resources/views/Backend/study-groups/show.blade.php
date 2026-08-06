@@ -169,6 +169,12 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" style="padding:1.5rem;">
+                    <div class="mb-4 p-3" style="background:#f8fafc;border-radius:1rem;border:1px solid #e5e7eb;">
+                        <label style="font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--card-accent);margin-bottom:0.3rem;display:block;">Sharing into</label>
+                        <p style="color:var(--text-primary);font-size:0.9rem;font-weight:700;margin:0;">
+                            <i class="bi bi-people-fill me-1" style="color:var(--card-accent);"></i> {{ $studyGroup->name }}
+                        </p>
+                    </div>
                     <div class="mb-4">
                         <label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--card-accent);margin-bottom:0.4rem;display:block;">Question Type</label>
                         <select name="type" id="questionType" class="form-control" required
@@ -238,13 +244,9 @@
     document.addEventListener('DOMContentLoaded', function () {
         // Share modal
         let shareModalEl = document.getElementById('shareModal');
+        let shareModal = null;
         if (shareModalEl) {
-            let shareModal = new bootstrap.Modal(shareModalEl);
-            document.getElementById('shareQuestionBtn')?.addEventListener('click', function () {
-                let root = document.getElementById('modal-root');
-                if (root && shareModalEl.parentNode !== root) root.appendChild(shareModalEl);
-                shareModal.show();
-            });
+            shareModal = new bootstrap.Modal(shareModalEl);
         }
 
         // Edit modal
@@ -267,44 +269,82 @@
                     headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' },
                     body: new FormData(this)
                 })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
+                .then(r => r.json().then(data => ({ ok: r.ok, data })))
+                .then(({ ok, data }) => {
+                    if (ok && data.success) {
                         showToast(data.message, 'success');
                         document.getElementById('groupName').textContent = document.querySelector('#editGroupForm input[name="name"]').value;
                         document.getElementById('groupDescription').textContent = document.querySelector('#editGroupForm textarea[name="description"]').value || 'No description';
                         editModal.hide();
+                    } else {
+                        showToast(data.message || 'Could not update group', 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-save"></i> Save';
                     }
                 })
                 .catch(() => {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="bi bi-save"></i> Save';
+                    showToast('Something went wrong. Please try again.', 'error');
                 });
             });
         }
 
         // Share form - question type selector
         let questions = @json($questions);
+        let hasAnyQuestion = Object.values(questions).some(arr => arr.length > 0);
         let typeSelect = document.getElementById('questionType');
         let questionSelect = document.getElementById('questionId');
         if (typeSelect && questionSelect) {
             typeSelect.addEventListener('change', function () {
                 let type = this.value;
-                questionSelect.innerHTML = '<option value="">Select question...</option>';
-                if (type && questions[type]) {
+                questionSelect.innerHTML = '';
+                if (!type) {
+                    questionSelect.innerHTML = '<option value="">Select type first...</option>';
+                    return;
+                }
+                if (questions[type] && questions[type].length) {
+                    let placeholder = document.createElement('option');
+                    placeholder.value = '';
+                    placeholder.textContent = 'Select question...';
+                    placeholder.disabled = true;
+                    placeholder.selected = true;
+                    questionSelect.appendChild(placeholder);
                     questions[type].forEach(function (q) {
                         let opt = document.createElement('option');
                         opt.value = q.id;
                         opt.textContent = '[' + q.subject + '] ' + q.label;
                         questionSelect.appendChild(opt);
                     });
+                } else {
+                    let opt = document.createElement('option');
+                    opt.value = '';
+                    opt.textContent = 'No ' + type.replace('_', ' ') + ' questions yet. Generate some first!';
+                    opt.disabled = true;
+                    questionSelect.appendChild(opt);
                 }
             });
         }
 
+        // Share button: warn when there is nothing to share
+        document.getElementById('shareQuestionBtn')?.addEventListener('click', function (e) {
+            if (!hasAnyQuestion) {
+                e.preventDefault();
+                showToast('You have no questions to share yet. Generate some questions first!', 'warning');
+                return;
+            }
+            let root = document.getElementById('modal-root');
+            if (root && shareModalEl.parentNode !== root) root.appendChild(shareModalEl);
+            shareModal.show();
+        });
+
         // Share form - submit via AJAX
         document.getElementById('shareForm')?.addEventListener('submit', function (e) {
             e.preventDefault();
+            if (!this.checkValidity()) {
+                this.classList.add('was-validated');
+                return;
+            }
             const btn = document.getElementById('shareSubmit');
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Sharing...';
@@ -313,16 +353,22 @@
                 headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' },
                 body: new FormData(this)
             })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
+            .then(r => r.json().then(data => ({ ok: r.ok, data })))
+            .then(({ ok, data }) => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-share"></i> Share';
+                if (ok && data.success) {
                     showToast(data.message, 'success');
+                    shareModal.hide();
                     location.reload();
+                } else {
+                    showToast(data.message || 'Could not share question.', 'error');
                 }
             })
             .catch(() => {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-share"></i> Share';
+                showToast('Something went wrong. Please try again.', 'error');
             });
         });
     });
@@ -336,19 +382,21 @@
             headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/json' },
             body: JSON.stringify({ role: newRole })
         })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
+        .then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+            if (ok && data.success) {
                 showToast(data.message, 'success');
                 location.reload();
             } else {
                 showToast(data.message || 'Error updating role', 'error');
                 btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-shield-' + (currentRole === 'admin' ? 'exclamation' : 'check') + '"></i>';
             }
         })
         .catch(() => {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-shield-' + (currentRole === 'admin' ? 'exclamation' : 'check') + '"></i>';
+            showToast('Something went wrong. Please try again.', 'error');
         });
     }
 
@@ -360,20 +408,22 @@
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
+        .then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+            if (ok && data.success) {
                 showToast(data.message, 'success');
                 const row = btn.closest('.member-row');
                 if (row) row.remove();
             } else {
                 showToast(data.message || 'Error removing member', 'error');
                 btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-x"></i>';
             }
         })
         .catch(() => {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-x"></i>';
+            showToast('Something went wrong. Please try again.', 'error');
         });
     }
 
@@ -385,9 +435,9 @@
             method: 'DELETE',
             headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
+        .then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+            if (ok && data.success) {
                 showToast(data.message, 'success');
                 const row = btn.closest('.resource-row');
                 if (row) row.remove();
@@ -395,11 +445,16 @@
                 if (list && !list.querySelector('.resource-row')) {
                     list.innerHTML = '<div class="text-center py-5" style="color:var(--text-muted);font-size:0.85rem;"><i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:0.5rem;"></i>No resources shared yet.</div>';
                 }
+            } else {
+                showToast(data.message || 'Could not remove resource', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-x"></i>';
             }
         })
         .catch(() => {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-x"></i>';
+            showToast('Something went wrong. Please try again.', 'error');
         });
     }
 
@@ -410,18 +465,23 @@
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(r => r.json())
-        .then(data => {
-            showToast(data.message, 'success');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-globe"></i>';
-            btn.classList.remove('btn-soft');
-            btn.classList.add('btn-soft', 'success');
-            btn.style.color = '#059669';
+        .then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+            if (ok && data.success) {
+                showToast(data.message, 'success');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-globe"></i>';
+                btn.style.color = '#059669';
+            } else {
+                showToast(data.message || 'Could not make public', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-globe"></i>';
+            }
         })
         .catch(() => {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-globe"></i>';
+            showToast('Something went wrong. Please try again.', 'error');
         });
     }
 </script>
