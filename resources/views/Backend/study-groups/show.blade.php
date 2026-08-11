@@ -133,10 +133,6 @@
                     @php $canUnshare = $resource->user_id === auth()->id() || $currentUserRole === 'admin'; @endphp
                     @if($canUnshare)
                     <div class="d-flex gap-1">
-                        <button class="btn-soft py-1 px-2" style="font-size:0.65rem;color:#059669;"
-                                onclick="makePublic({{ $resource->id }}, this)" title="Share to all students">
-                            <i class="bi bi-globe"></i>
-                        </button>
                         <button class="btn-soft danger py-1 px-2" style="font-size:0.65rem;"
                                 onclick="unshareResource({{ $resource->id }}, this)" title="Remove">
                             <i class="bi bi-x"></i>
@@ -454,33 +450,6 @@
         .catch(() => {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-x"></i>';
-            showToast('Something went wrong. Please try again.', 'error');
-        });
-    }
-
-    function makePublic(resourceId, btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
-        fetch('{{ url("study-groups") }}/{{ $studyGroup->id }}/resources/' + resourceId + '/move-to-shared', {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(r => r.json().then(data => ({ ok: r.ok, data })))
-        .then(({ ok, data }) => {
-            if (ok && data.success) {
-                showToast(data.message, 'success');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-globe"></i>';
-                btn.style.color = '#059669';
-            } else {
-                showToast(data.message || 'Could not make public', 'error');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-globe"></i>';
-            }
-        })
-        .catch(() => {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-globe"></i>';
             showToast('Something went wrong. Please try again.', 'error');
         });
     }

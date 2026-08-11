@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Exam;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ExamController extends Controller
 {
@@ -39,6 +40,7 @@ class ExamController extends Controller
     public function create()
     {
         $subjects = auth()->user()->subjects;
+
         return view('Backend.exams.create', compact('subjects'));
     }
 
@@ -46,7 +48,7 @@ class ExamController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'subject_id' => 'nullable|exists:subjects,id',
+            'subject_id' => ['nullable', Rule::exists('subjects', 'id')->where('user_id', auth()->id())],
             'exam_date' => 'required|date',
             'time' => 'nullable|string|max:10',
             'location' => 'nullable|string|max:255',
@@ -66,11 +68,13 @@ class ExamController extends Controller
 
     public function update(Request $request, Exam $exam)
     {
-        if ($exam->user_id !== auth()->id()) abort(403);
+        if ($exam->user_id !== auth()->id()) {
+            abort(403);
+        }
 
         $request->validate([
             'title' => 'required|string|max:255',
-            'subject_id' => 'nullable|exists:subjects,id',
+            'subject_id' => ['nullable', Rule::exists('subjects', 'id')->where('user_id', auth()->id())],
             'exam_date' => 'required|date',
             'time' => 'nullable|string|max:10',
             'location' => 'nullable|string|max:255',
@@ -89,7 +93,9 @@ class ExamController extends Controller
 
     public function destroy(Exam $exam)
     {
-        if ($exam->user_id !== auth()->id()) abort(403);
+        if ($exam->user_id !== auth()->id()) {
+            abort(403);
+        }
         $title = $exam->title;
         $exam->delete();
 

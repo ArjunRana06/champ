@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>AI Study Assistant · Next‑Gen Learning</title>
+    <title>Study Assistant for Students · Next‑Gen Learning</title>
     <meta name="description" content="Upload your notes and study smarter with AI. Chat with your materials, generate quizzes, flashcards, study plans, track time with Pomodoro, and master subjects faster.">
-    <meta property="og:title" content="AI Study Assistant · Next‑Gen Learning">
+    <meta property="og:title" content="Study Assistant for Students · Next‑Gen Learning">
     <meta property="og:description" content="Upload your notes and study smarter with AI. Chat, generate quizzes, flashcards, study plans, Pomodoro timer, and more.">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
@@ -400,7 +400,7 @@
                 <div class="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
                     <i class="fas fa-brain text-white text-lg"></i>
                 </div>
-                <span class="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-700 hidden sm:block" style="font-family: 'Space Grotesk', sans-serif;">AI Study</span>
+                <span class="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-700 hidden sm:block" style="font-family: 'Space Grotesk', sans-serif;">Study Assistant</span>
             </a>
             <div class="hidden md:flex items-center gap-8">
                 <a href="#features" class="nav-link">Features</a>
@@ -827,7 +827,7 @@
                         <div class="w-9 h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center shadow-md">
                             <i class="fas fa-brain text-white text-sm"></i>
                         </div>
-                        <span class="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-700" style="font-family: 'Space Grotesk', sans-serif;">AI Study</span>
+                        <span class="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-700" style="font-family: 'Space Grotesk', sans-serif;">Study Assistant</span>
                     </div>
                     <p class="text-gray-500 text-sm leading-relaxed max-w-xs">Empowering students with AI-powered study tools. Upload, chat, quiz — and master any subject.</p>
                     <div class="flex gap-3 mt-5">
@@ -865,7 +865,7 @@
                 </div>
             </div>
             <div class="flex flex-col sm:flex-row items-center justify-between pt-6 text-gray-400 text-xs">
-                <p>&copy; {{ date('Y') }} AI Study Assistant. Built with <i class="fas fa-heart text-red-400"></i> for students.</p>
+                <p>&copy; {{ date('Y') }} Study Assistant for Students. Built with <i class="fas fa-heart text-red-400"></i> for students.</p>
                 <p class="mt-2 sm:mt-0">Powered by Champ & AI</p>
             </div>
         </div>

@@ -2,7 +2,6 @@
     <div class="sidebar-brand">
         <span class="brand-icon"><i class="bi bi-brain"></i></span>
         <span class="brand-text">{{ config('app.name') }}</span>
-        <span class="brand-badge">v2.0</span>
     </div>
 
     <nav class="sidebar-nav">

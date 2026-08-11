@@ -293,9 +293,78 @@
             </table>
         </div>
     </div>
+
+    <!-- Recent Searches -->
+    <div class="glass-card mt-4" data-aos="fade-up">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 style="color:var(--text-primary);font-weight:700;font-size:1rem;margin:0;">
+                <i class="bi bi-clock-history me-2" style="color:var(--card-accent);"></i> Recent Searches
+            </h5>
+            <div class="d-flex gap-2">
+                @if($recentSearches->count())
+                    <button class="btn-soft py-1 px-2 danger" style="font-size:0.72rem;" onclick="clearDashHistory()"><i class="bi bi-trash3"></i> Clear</button>
+                @endif
+            </div>
+        </div>
+        @if($recentSearches->count() > 0)
+            <div class="d-flex flex-column gap-2" id="dashRecentSearches">
+                @foreach($recentSearches as $rs)
+                    <div class="d-flex align-items-center gap-3 p-2" style="border:1px solid var(--glass-border);border-radius:0.9rem;transition:all 0.2s;{{ $loop->index > 0 ? 'margin-top:0;' : '' }}"
+                         onmouseover="this.style.borderColor='var(--card-accent)'" onmouseout="this.style.borderColor='var(--glass-border)'">
+                        <div style="width:36px;height:36px;border-radius:12px;background:rgba(99,102,241,0.1);color:var(--card-accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <a href="{{ route('search', ['q' => $rs->query]) }}" class="flex-grow-1 text-decoration-none" style="min-width:0;">
+                            <div style="font-size:0.88rem;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $rs->query }}</div>
+                            <div style="font-size:0.7rem;color:var(--text-muted);">{{ $rs->result_count }} result{{ $rs->result_count !== 1 ? 's' : '' }} · {{ $rs->searched_at->diffForHumans() }}</div>
+                        </a>
+                        <button class="btn-soft py-1 px-2" style="font-size:0.7rem;border:none;background:transparent;color:var(--text-muted);"
+                                title="Remove" onclick="dashDeleteHistory({{ $rs->id }}, this)">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="text-center py-4" style="color:var(--text-muted);font-size:0.85rem;">
+                <i class="bi bi-search-heart me-1"></i> No searches yet — try searching for subjects or documents.
+            </div>
+        @endif
+    </div>
 </div>
 
 @push('scripts')
+<script>
+    function dashDeleteHistory(id, btn) {
+        fetch('{{ route("search.history.destroy", ':id') }}'.replace(':id', id), {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        })
+        .then(r => r.json())
+        .then(() => {
+            const card = btn.closest('.d-flex');
+            if (card) card.style.opacity = '0';
+            setTimeout(() => {
+                const wrap = document.getElementById('dashRecentSearches');
+                if (!wrap) return;
+                if (wrap.querySelectorAll('.d-flex').length <= 1) {
+                    window.location.reload();
+                } else {
+                    card?.remove();
+                }
+            }, 150);
+        });
+    }
+    function dashClearHistory() {
+        if (!confirm('Clear your entire search history?')) return;
+        fetch('{{ route("search.history.clear") }}', {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        })
+        .then(r => r.json())
+        .then(() => window.location.reload());
+    }
+</script>
 <script>
     const monthlyLabels = @json($monthlyQuestions->pluck('month'));
     const monthlyCounts = @json($monthlyQuestions->pluck('count'));

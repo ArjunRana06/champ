@@ -40,8 +40,7 @@ return [
         'model' => env('GEMINI_MODEL', 'gemini-3.1-flash-lite'),
         'fallback_models' => [
             'gemini-3.6-flash',
-            'gemini-flash-latest',
-            'gemini-2.0-flash',
+            'gemini-3.1-flash-lite',
         ],
     ],
 

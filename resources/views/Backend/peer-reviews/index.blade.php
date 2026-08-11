@@ -10,6 +10,7 @@ if (!function_exists('questionText')) {
 
 @section('content')
 <div class="container-fluid px-0">
+    @if($hasGroups)
     <div class="page-header">
         <div>
             <h2>Peer Reviews</h2>
@@ -68,7 +69,7 @@ if (!function_exists('questionText')) {
                     </div>
                 </div>
                 <button class="dark-btn py-1 px-2" style="font-size:0.7rem;white-space:nowrap;"
-                        onclick="openReview('{{ $item['type'] }}', {{ $item['item']->id }}, '{{ addslashes(Str::limit(strip_tags(questionText($item['item'])), 120)) }}')">
+                        onclick="openReview('{{ $item['type'] }}', {{ $item['item']->id }}, {{ json_encode(Str::limit(strip_tags(questionText($item['item'])), 120)) }})">
                     <i class="bi bi-star"></i> Review
                 </button>
             </div>
@@ -174,7 +175,7 @@ if (!function_exists('questionText')) {
                 @else
                 <div class="text-center py-4" style="color:var(--text-muted);font-size:0.85rem;">
                     <i class="bi bi-inbox" style="font-size:1.5rem;display:block;margin-bottom:0.3rem;"></i>
-                    No one has reviewed your questions yet. Make your questions public to get reviews!
+                    No one has reviewed your questions yet. Share questions with your study group to get reviews!
                 </div>
                 @endif
                 @if($receivedReviews->count() === 0)
@@ -187,6 +188,9 @@ if (!function_exists('questionText')) {
             </div>
         </div>
     </div>
+    @else
+    @include('Backend.partials.group-required')
+    @endif
 </div>
 
 <!-- Review Modal -->

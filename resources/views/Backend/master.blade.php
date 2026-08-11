@@ -7,11 +7,9 @@
     <title>{{ config('app.name') }} - Dashboard</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <link rel="manifest" href="{{ asset('manifest.json') }}">
-    <meta name="theme-color" content="#6366f1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" integrity="sha384-/rJKQnzOkEo+daG0jMjU1IwwY9unxt1NBw3Ef2fmOJ3PW/TfAg2KXVoWwMZQZtw9" crossorigin="anonymous">
 
     <style>
         :root {
@@ -706,9 +704,9 @@
 
     <div id="toast-container"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js" integrity="sha384-wziAfh6b/qT+3LrqebF9WeK4+J5sehS6FA10J1t3a866kJ/fvU5UwofWnQyzLtwu" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
     <script>
         function showToast(message, type) {
             type = type || 'info';
@@ -717,26 +715,32 @@
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = 'toast-item';
-            toast.innerHTML = '<span class="toast-icon" style="color:' + (colors[type] || colors.info) + ';"><i class="bi ' + (icons[type] || icons.info) + '"></i></span><span class="toast-msg">' + message + '</span><button onclick="this.closest(\'.toast-item\').classList.add(\'removing\');setTimeout(()=>this.closest(\'.toast-item\').remove(),300)" style="background:none;border:none;color:var(--text-muted);cursor:pointer;padding:0;font-size:1.1rem;line-height:1;">&times;</button>';
+            const icon = document.createElement('span');
+            icon.className = 'toast-icon';
+            icon.style.color = colors[type] || colors.info;
+            icon.innerHTML = '<i class="bi ' + (icons[type] || icons.info) + '"></i>';
+            const msg = document.createElement('span');
+            msg.className = 'toast-msg';
+            msg.textContent = message;
+            const close = document.createElement('button');
+            close.innerHTML = '&times;';
+            close.setAttribute('aria-label', 'Close');
+            close.onclick = () => { toast.classList.add('removing'); setTimeout(() => toast.remove(), 300); };
+            toast.append(icon, msg, close);
             container.appendChild(toast);
             setTimeout(() => {
                 if (toast.parentNode) { toast.classList.add('removing'); setTimeout(() => toast.remove(), 300); }
             }, 5000);
         }
         @if(session('success'))
-            showToast('{{ session('success') }}', 'success');
+            showToast(@json(session('success')), 'success');
         @endif
         @if(session('error'))
-            showToast('{{ session('error') }}', 'error');
+            showToast(@json(session('error')), 'error');
         @endif
         @if(session('warning'))
-            showToast('{{ session('warning') }}', 'warning');
+            showToast(@json(session('warning')), 'warning');
         @endif
-    </script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('{{ asset("sw.js") }}').catch(() => {});
-        }
     </script>
     <script>
         AOS.init({ duration: 600, once: true, offset: 30 });

@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TimeEntry;
 use App\Models\Subject;
+use App\Models\TimeEntry;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class TimeEntryController extends Controller
 {
@@ -62,17 +63,18 @@ class TimeEntryController extends Controller
             ->whereHas('subject')
             ->with('subject')
             ->get()
-            ->groupBy(fn($e) => $e->subject_id)
-            ->map(fn($group) => [
+            ->groupBy(fn ($e) => $e->subject_id)
+            ->map(fn ($group) => [
                 'name' => $group->first()->subject->name,
                 'minutes' => $group->sum('duration_minutes'),
             ])
-            ->filter(fn($g) => $g['minutes'] > 0)
+            ->filter(fn ($g) => $g['minutes'] > 0)
             ->sortByDesc('minutes')
             ->values()
             ->all();
 
         $subjects = Subject::where('user_id', $userId)->get();
+
         return view('Backend.time-entries.index', compact(
             'entries', 'todayMinutes', 'weekMinutes', 'monthMinutes', 'totalMinutes', 'totalSessions',
             'activeEntry', 'weekDaily', 'subjectStats', 'subjects'
@@ -82,7 +84,10 @@ class TimeEntryController extends Controller
     public function start(Request $request)
     {
         $request->validate([
-            'subject_id' => 'nullable|exists:subjects,id',
+            'subject_id' => [
+                'nullable',
+                Rule::exists('subjects', 'id')->where(fn ($q) => $q->where('user_id', auth()->id())),
+            ],
             'description' => 'nullable|string|max:255',
         ]);
 
@@ -90,7 +95,7 @@ class TimeEntryController extends Controller
         foreach ($staleEntries as $entry) {
             $entry->update([
                 'ended_at' => now(),
-                'duration_minutes' => max(1, now()->diffInMinutes($entry->started_at)),
+                'duration_minutes' => max(1, (int) $entry->started_at->diffInMinutes(now())),
             ]);
         }
 
@@ -111,7 +116,7 @@ class TimeEntryController extends Controller
         $entry = TimeEntry::where('user_id', auth()->id())->whereNull('ended_at')->latest()->first();
         $minutes = 0;
         if ($entry) {
-            $minutes = now()->diffInMinutes($entry->started_at);
+            $minutes = (int) $entry->started_at->diffInMinutes(now());
             $entry->update([
                 'ended_at' => now(),
                 'duration_minutes' => $minutes,
@@ -123,9 +128,21 @@ class TimeEntryController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function discard()
+    {
+        $entry = TimeEntry::where('user_id', auth()->id())->whereNull('ended_at')->latest()->first();
+        if ($entry) {
+            $entry->delete();
+        }
+
+        return response()->json(['success' => true]);
+    }
+
     public function destroy(TimeEntry $timeEntry)
     {
-        if ($timeEntry->user_id !== auth()->id()) abort(403);
+        if ($timeEntry->user_id !== auth()->id()) {
+            abort(403);
+        }
         $timeEntry->delete();
 
         $this->notificationService->notifyTimeEntryDeleted(auth()->id());

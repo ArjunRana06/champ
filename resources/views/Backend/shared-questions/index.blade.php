@@ -10,6 +10,7 @@ if (!function_exists('questionText')) {
 
 @section('content')
 <div class="container-fluid px-0">
+    @if($hasGroups)
     <div class="page-header">
         <div>
             <h2>Shared Question Banks</h2>
@@ -91,7 +92,7 @@ if (!function_exists('questionText')) {
                     @else
                     <div class="text-center py-4" style="color:var(--text-muted);font-size:0.85rem;">
                         <i class="bi bi-inbox" style="font-size:1.5rem;display:block;margin-bottom:0.3rem;"></i>
-                        No public {{ str_replace('_', ' ', $type) }} questions found.
+                        No {{ str_replace('_', ' ', $type) }} questions shared with your groups yet.
                     </div>
                     @endif
                 </div>
@@ -102,15 +103,15 @@ if (!function_exists('questionText')) {
     @else
     <div class="glass-card text-center py-5 mb-4">
         <i class="bi bi-inbox" style="font-size:3rem;color:#c7d2fe;"></i>
-        <p class="mt-3" style="color:var(--text-secondary);">No public questions shared yet.</p>
-        <p style="color:var(--text-muted);font-size:0.85rem;">Make your questions public from the section below to contribute!</p>
+        <p class="mt-3" style="color:var(--text-secondary);">No questions shared with your groups yet.</p>
+        <p style="color:var(--text-muted);font-size:0.85rem;">Share your questions with a study group from the section below!</p>
     </div>
     @endif
 
     <div class="glass-card">
         <h5 style="color:var(--text-primary);font-weight:700;margin-bottom:1rem;">
             <i class="bi bi-person me-2" style="color:var(--card-accent);"></i> Your Questions
-            <small style="font-weight:400;color:var(--text-muted);font-size:0.75rem;">(toggle visibility to share with peers)</small>
+            <small style="font-weight:400;color:var(--text-muted);font-size:0.75rem;">(share with your study groups)</small>
         </h5>
         @php $hasOwn = false; @endphp
         @foreach($types as $type)
@@ -122,23 +123,33 @@ if (!function_exists('questionText')) {
                 </h6>
                 <div class="d-flex flex-column gap-2 mb-3">
                     @foreach($items as $item)
+                    @php $sharedGroups = $myShared[$type]->get($item->id) ?? collect(); @endphp
                     <div class="d-flex align-items-center gap-3 py-2 px-3" style="background:rgba(255,255,255,0.3);border-radius:1rem;">
                         <div style="flex:1;min-width:0;">
                             <div style="font-size:0.88rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                                 {{ Str::limit(strip_tags(questionText($item)), 80) }}
                             </div>
-                            <small style="color:var(--text-muted);">{{ $item->subject?->name ?? 'General' }}</small>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <small style="color:var(--text-muted);">{{ $item->subject?->name ?? 'General' }}</small>
+                                @foreach($sharedGroups as $resource)
+                                <span class="d-inline-flex align-items-center gap-1 shared-group-chip"
+                                      style="background:#eef2ff;color:var(--card-accent);border-radius:2rem;padding:0.15rem 0.55rem;font-size:0.6rem;font-weight:600;">
+                                    <i class="bi bi-people-fill"></i> {{ $resource->group?->name ?? 'Group' }}
+                                    <button type="button" class="unshare-btn border-0 p-0 bg-transparent"
+                                            style="color:#dc2626;font-size:0.75rem;line-height:1;"
+                                            data-url="{{ route('study-groups.unshare', [$resource->study_group_id, $resource->id]) }}"
+                                            title="Unshare from this group">
+                                        <i class="bi bi-x-circle-fill"></i>
+                                    </button>
+                                </span>
+                                @endforeach
+                            </div>
                         </div>
                         <button type="button" class="btn-soft py-1 px-2 group-share-btn" style="font-size:0.65rem;"
                                 data-type="{{ $type }}" data-id="{{ $item->id }}"
                                 title="Share into a study group">
                             <i class="bi bi-people"></i>
                             <span>Share</span>
-                        </button>
-                        <button class="btn-soft py-1 px-2 toggle-vis-btn" style="font-size:0.65rem;{{ $item->is_public ? 'color:#059669;border-color:#059669;' : 'color:var(--text-muted);' }}"
-                                data-type="{{ $type }}" data-id="{{ $item->id }}" data-public="{{ $item->is_public ? '1' : '0' }}">
-                            <i class="bi {{ $item->is_public ? 'bi-unlock-fill' : 'bi-lock-fill' }}"></i>
-                            <span class="vis-text">{{ $item->is_public ? 'Public' : 'Private' }}</span>
                         </button>
                     </div>
                     @endforeach
@@ -157,6 +168,9 @@ if (!function_exists('questionText')) {
         </div>
         @endif
     </div>
+    @else
+    @include('Backend.partials.group-required')
+    @endif
 </div>
 
 <!-- Share to Group Modal -->
@@ -290,41 +304,36 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    document.querySelectorAll('.toggle-vis-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            const type = this.dataset.type;
-            const id = this.dataset.id;
-            const wasPublic = this.dataset.public === '1';
-            const icon = this.querySelector('i');
-            const text = this.querySelector('.vis-text');
+    document.querySelectorAll('.unshare-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!confirm('Unshare this question from this group?')) return;
+            const btnEl = this;
+            const url = this.dataset.url;
 
-            this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+            btnEl.disabled = true;
+            btnEl.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" style="font-size:0.6rem;"></span>';
 
-            fetch('{{ route("shared-questions.toggle") }}', {
-                method: 'POST',
-                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type, id })
+            fetch(url, {
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' }
             })
             .then(r => r.json().then(data => ({ ok: r.ok, data })))
             .then(({ ok, data }) => {
                 if (ok && data.success) {
                     showToast(data.message, 'success');
-                    this.dataset.public = data.is_public ? '1' : '0';
-                    this.innerHTML = '<i class="bi ' + (data.is_public ? 'bi-unlock-fill' : 'bi-lock-fill') + '"></i> <span class="vis-text">' + (data.is_public ? 'Public' : 'Private') + '</span>';
-                    this.style.color = data.is_public ? '#059669' : 'var(--text-muted)';
-                    this.style.borderColor = data.is_public ? '#059669' : '';
-                    this.disabled = false;
+                    location.reload();
                 } else {
-                    showToast(data.message || 'Error toggling visibility', 'error');
-                    this.innerHTML = '<i class="bi ' + (wasPublic ? 'bi-unlock-fill' : 'bi-lock-fill') + '"></i> <span class="vis-text">' + (wasPublic ? 'Public' : 'Private') + '</span>';
-                    this.disabled = false;
+                    btnEl.disabled = false;
+                    btnEl.innerHTML = '<i class="bi bi-x-circle-fill"></i>';
+                    showToast(data.message || 'Could not unshare question.', 'error');
                 }
             })
             .catch(() => {
-                this.innerHTML = '<i class="bi ' + (wasPublic ? 'bi-unlock-fill' : 'bi-lock-fill') + '"></i> <span class="vis-text">' + (wasPublic ? 'Public' : 'Private') + '</span>';
-                this.disabled = false;
-                showToast('Error toggling visibility', 'error');
+                btnEl.disabled = false;
+                btnEl.innerHTML = '<i class="bi bi-x-circle-fill"></i>';
+                showToast('Something went wrong. Please try again.', 'error');
             });
         });
     });

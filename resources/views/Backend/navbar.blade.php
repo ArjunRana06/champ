@@ -3,11 +3,25 @@
         <button class="sidebar-toggle-btn d-lg-none" type="button" id="sidebarToggle">
             <i class="bi bi-list"></i>
         </button>
-        <form action="{{ route('search') }}" method="GET" class="search-box">
-            <i class="bi bi-search"></i>
-            <input type="text" name="q" placeholder="Search subjects, documents..." value="{{ request('q') }}"
-                   onkeydown="if(event.key==='Enter') this.form.submit()">
-        </form>
+        <div class="search-box" id="searchBoxWrap">
+            <form action="{{ route('search') }}" method="GET" id="globalSearchForm" autocomplete="off">
+                <i class="bi bi-search"></i>
+                <input type="text" name="q" id="globalSearchInput" placeholder="Search subjects, documents..." value="{{ request('q') }}"
+                       autocomplete="off">
+            </form>
+            <div class="search-suggest" id="searchSuggest" hidden>
+                <div class="suggest-header">
+                    <span class="suggest-title" id="suggestTitle"><i class="bi bi-clock-history"></i> Recent searches</span>
+                    <button type="button" class="suggest-clear-all" id="suggestClearAll"><i class="bi bi-trash3"></i> Clear all</button>
+                </div>
+                <div class="suggest-list" id="suggestList"></div>
+                <div class="suggest-empty" id="suggestEmpty">
+                    <i class="bi bi-search"></i>
+                    <span>No recent searches yet</span>
+                    <small>Your searches will appear here.</small>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="navbar-right">
@@ -144,6 +158,146 @@
     }
     .notif-item {
         animation: notifSlideIn 0.2s ease-out;
+    }
+
+    /* ---------- Search history autocomplete ---------- */
+    .search-box { position: relative; }
+    .search-suggest {
+        position: absolute;
+        top: calc(100% + 10px);
+        left: 0;
+        right: 0;
+        background: var(--dropdown-bg);
+        backdrop-filter: blur(24px) saturate(1.8);
+        border: 1px solid var(--glass-border);
+        border-radius: 1.2rem;
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+        z-index: 60;
+        animation: suggestIn 0.18s ease-out;
+    }
+    @keyframes suggestIn {
+        from { opacity: 0; transform: translateY(-6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .suggest-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.7rem 1rem 0.55rem;
+        border-bottom: 1px solid var(--divider-color);
+    }
+    .suggest-title {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--card-accent);
+    }
+    .suggest-title i { font-size: 0.85rem; margin-right: 0.25rem; }
+    .suggest-clear-all {
+        background: none;
+        border: none;
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.15rem 0.4rem;
+        border-radius: 0.5rem;
+        transition: all 0.15s;
+        font-family: 'Inter', sans-serif;
+    }
+    .suggest-clear-all:hover { color: #ef4444; background: rgba(239,68,68,0.08); }
+    .suggest-list { max-height: 320px; overflow-y: auto; padding: 0.35rem; }
+    .suggest-item {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        width: 100%;
+        padding: 0.55rem 0.7rem;
+        border-radius: 0.8rem;
+        border: none;
+        background: none;
+        cursor: pointer;
+        text-align: left;
+        font-family: 'Inter', sans-serif;
+        color: var(--text-primary);
+        transition: background 0.15s;
+        animation: notifSlideIn 0.2s ease-out;
+    }
+    .suggest-item:hover,
+    .suggest-item.active { background: var(--badge-bg); }
+    .suggest-item .s-item-icon {
+        width: 32px; height: 32px;
+        border-radius: 10px;
+        background: rgba(99,102,241,0.1);
+        color: var(--card-accent);
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .suggest-item .s-item-body { flex: 1; min-width: 0; }
+    .suggest-item .s-item-query {
+        font-size: 0.85rem;
+        font-weight: 500;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .suggest-item .s-item-meta {
+        font-size: 0.65rem;
+        color: var(--text-muted);
+        margin-top: 1px;
+    }
+    .suggest-item .s-item-del {
+        width: 28px; height: 28px;
+        border-radius: 50%;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.15s;
+    }
+    .suggest-item .s-item-del:hover { background: rgba(239,68,68,0.12); color: #ef4444; }
+    .suggest-item .s-item-go {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        flex-shrink: 0;
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+    .suggest-item:hover .s-item-go { opacity: 1; }
+    .suggest-empty {
+        text-align: center;
+        padding: 1.5rem 1rem;
+        color: var(--text-muted);
+    }
+    .suggest-empty i { font-size: 1.6rem; display: block; margin-bottom: 0.4rem; color: #c7d2fe; }
+    .suggest-empty span { font-size: 0.85rem; display: block; font-weight: 500; color: var(--text-primary); }
+    .suggest-empty small { font-size: 0.72rem; color: var(--text-muted); }
+    .suggest-loading {
+        padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.8rem;
+    }
+    .suggest-spinner {
+        display: inline-block; width: 16px; height: 16px;
+        border: 2px solid var(--badge-bg); border-top-color: var(--card-accent);
+        border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 0.4rem;
+        vertical-align: -3px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .suggest-hint {
+        display: flex; align-items: center; gap: 0.6rem;
+        padding: 0.5rem 1rem;
+        border-top: 1px solid var(--divider-color);
+        font-size: 0.65rem; color: var(--text-muted);
+    }
+    .suggest-hint kbd {
+        background: var(--badge-bg); color: var(--card-accent);
+        border-radius: 4px; padding: 0 0.35rem;
+        font-size: 0.62rem; font-family: 'Inter', sans-serif;
+        border: 1px solid var(--glass-border);
+    }
+    @media (max-width: 576px) {
+        .search-box { display: block; width: 100%; }
+        .search-suggest { left: 0; right: 0; }
     }
 </style>
 
@@ -391,5 +545,182 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 });
+
+// ---------- Search history autocomplete ----------
+(function () {
+    const wrap = document.getElementById('searchBoxWrap');
+    if (!wrap) return;
+
+    const input = document.getElementById('globalSearchInput');
+    const panel = document.getElementById('searchSuggest');
+    const listEl = document.getElementById('suggestList');
+    const titleEl = document.getElementById('suggestTitle');
+    const clearAllBtn = document.getElementById('suggestClearAll');
+    const emptyEl = document.getElementById('suggestEmpty');
+    const form = document.getElementById('globalSearchForm');
+
+    let items = [];
+    let activeIndex = -1;
+    let lastTerm = null;
+
+    function escHtml(s) {
+        if (!s) return '';
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    function render() {
+        listEl.innerHTML = '';
+        if (!items.length) {
+            panel.classList.add('show-empty');
+            emptyEl.hidden = false;
+            return;
+        }
+        panel.classList.remove('show-empty');
+        emptyEl.hidden = true;
+
+        items.forEach((item, i) => {
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.className = 'suggest-item' + (i === activeIndex ? ' active' : '');
+            row.style.animationDelay = (i * 0.025) + 's';
+            const goArrow = input.value.trim() === '' ? '<span class="s-item-go"><i class="bi bi-arrow-return-left"></i></span>' : '';
+            row.innerHTML = `
+                <span class="s-item-icon"><i class="bi bi-search"></i></span>
+                <span class="s-item-body">
+                    <span class="s-item-query">${escHtml(item.query)}</span>
+                    <span class="s-item-meta">${item.result_count != null ? item.result_count + ' result' + (item.result_count === 1 ? '' : 's') + ' · ' : ''}${escHtml(item.searched_at)}</span>
+                </span>
+                ${goArrow}
+                <span class="s-item-del" data-del="${item.id}" title="Remove"><i class="bi bi-x-lg"></i></span>
+            `;
+
+            row.querySelector('.s-item-body').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                input.value = item.query;
+                form.submit();
+            });
+
+            row.querySelector('.s-item-del').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                deleteItem(item.id, row);
+            });
+
+            listEl.appendChild(row);
+        });
+
+        if (clearAllBtn) clearAllBtn.style.display = items.length ? 'inline-flex' : 'none';
+    }
+
+    function open() {
+        panel.hidden = false;
+    }
+
+    function close() {
+        panel.hidden = true;
+        activeIndex = -1;
+    }
+
+    function fetchSuggestions() {
+        const term = input.value.trim();
+        if (term === lastTerm) { open(); return; }
+        lastTerm = term;
+
+        if (term !== '') {
+            titleEl.innerHTML = '<i class="bi bi-search"></i> Search suggestions';
+        } else {
+            titleEl.innerHTML = '<i class="bi bi-clock-history"></i> Recent searches';
+        }
+
+        listEl.innerHTML = '<div class="suggest-loading"><span class="suggest-spinner"></span>Loading...</div>';
+        emptyEl.hidden = true;
+        open();
+
+        const params = new URLSearchParams();
+        if (term) params.set('q', term);
+
+        fetch('{{ route("search.history") }}?' + params.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            items = data.history || [];
+            activeIndex = -1;
+            render();
+        })
+        .catch(() => {
+            items = [];
+            render();
+        });
+    }
+
+    function deleteItem(id, rowEl) {
+        fetch('{{ route("search.history.destroy", ':id') }}'.replace(':id', id), {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        })
+        .then(r => r.json())
+        .then(() => {
+            if (rowEl) rowEl.style.opacity = '0';
+            setTimeout(() => {
+                items = items.filter(i => i.id !== id);
+                render();
+                if (items.length) {
+                    open();
+                } else {
+                    close();
+                }
+            }, 120);
+        });
+    }
+
+    function clearAll() {
+        if (!confirm('Clear your entire search history?')) return;
+        fetch('{{ route("search.history.clear") }}', {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        })
+        .then(r => r.json())
+        .then(() => {
+            items = [];
+            render();
+            close();
+        });
+    }
+
+    function setActive(dir) {
+        if (!items.length) return;
+        activeIndex = (activeIndex + dir + items.length) % items.length;
+        const rows = listEl.querySelectorAll('.suggest-item');
+        rows.forEach((r, i) => r.classList.toggle('active', i === activeIndex));
+        rows[activeIndex]?.scrollIntoView({ block: 'nearest' });
+    }
+
+    input.addEventListener('focus', () => fetchSuggestions());
+
+    input.addEventListener('input', () => { lastTerm = null; fetchSuggestions(); });
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') { e.preventDefault(); open(); setActive(1); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(-1); }
+        else if (e.key === 'Enter') {
+            if (activeIndex >= 0 && items[activeIndex]) {
+                e.preventDefault();
+                input.value = items[activeIndex].query;
+                form.submit();
+            }
+        }
+        else if (e.key === 'Escape') { close(); }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!wrap.contains(e.target)) close();
+    });
+
+    if (clearAllBtn) clearAllBtn.addEventListener('click', clearAll);
+})();
 </script>
 @endpush

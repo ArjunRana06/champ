@@ -17,6 +17,7 @@ use App\Models\Exam;
 use App\Models\PomodoroSession;
 use App\Models\TimeEntry;
 use App\Models\Notification;
+use App\Models\SearchHistory;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -130,6 +131,12 @@ class DashboardController extends Controller
         $recentNotifications = Notification::forUser($user->id)->latest()->take(5)->get();
         $unreadNotificationsCount = Notification::forUser($user->id)->unread()->count();
 
+        // Recent searches
+        $recentSearches = SearchHistory::forUser($user->id)
+            ->orderBy('searched_at', 'desc')
+            ->limit(5)
+            ->get();
+
         // Trend calculations
         $lastMonth = now()->subMonth();
         $subjectsTrend = $this->getTrend(
@@ -161,6 +168,7 @@ class DashboardController extends Controller
             'recentActivities',
             'recentNotifications',
             'unreadNotificationsCount',
+            'recentSearches',
             'subjectNames',
             'subjectsTrend',
             'documentsTrend',

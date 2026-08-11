@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FillBlank;
+use App\Models\Flashcard;
+use App\Models\GroupResource;
+use App\Models\MatchingQuestion;
+use App\Models\Mcq;
+use App\Models\ShortAnswer;
 use App\Models\StudyGroup;
 use App\Models\StudyGroupMember;
-use App\Models\GroupResource;
-use App\Models\Mcq;
 use App\Models\TrueFalseQuestion;
-use App\Models\ShortAnswer;
-use App\Models\FillBlank;
-use App\Models\MatchingQuestion;
-use App\Models\Flashcard;
 use App\Services\NotificationService;
 use App\Traits\HasQuestionType;
 use Illuminate\Http\Request;
@@ -30,12 +30,12 @@ class StudyGroupController extends Controller
     {
         $userId = auth()->id();
 
-        $myGroups = StudyGroup::whereHas('members', fn($q) => $q->where('user_id', $userId))
+        $myGroups = StudyGroup::whereHas('members', fn ($q) => $q->where('user_id', $userId))
             ->withCount(['members', 'resources'])
-            ->with(['members' => fn($q) => $q->where('user_id', $userId)])
+            ->with(['members' => fn ($q) => $q->where('user_id', $userId)])
             ->latest()->get();
 
-        $otherGroups = StudyGroup::whereDoesntHave('members', fn($q) => $q->where('user_id', $userId))
+        $otherGroups = StudyGroup::whereDoesntHave('members', fn ($q) => $q->where('user_id', $userId))
             ->withCount('members')
             ->latest()
             ->get();
@@ -73,7 +73,7 @@ class StudyGroupController extends Controller
     public function update(Request $request, StudyGroup $studyGroup)
     {
         $isAdmin = $studyGroup->members()->where('user_id', auth()->id())->where('role', 'admin')->exists();
-        if (!$isAdmin) {
+        if (! $isAdmin) {
             return $this->errorResponse($request, 'Only group admins can edit the group.', 403);
         }
 
@@ -90,7 +90,9 @@ class StudyGroupController extends Controller
     public function show(StudyGroup $studyGroup)
     {
         $isMember = $studyGroup->members()->where('user_id', auth()->id())->exists();
-        if (!$isMember) abort(403, 'You must be a member to view this group.');
+        if (! $isMember) {
+            abort(403, 'You must be a member to view this group.');
+        }
 
         $studyGroup->load(['members.user', 'resources.user', 'resources.resourceable']);
 
@@ -106,7 +108,7 @@ class StudyGroupController extends Controller
             'user_id' => auth()->id(),
         ], ['role' => 'member']);
 
-        if (!$member->wasRecentlyCreated) {
+        if (! $member->wasRecentlyCreated) {
             return $this->errorResponse($request, 'You are already a member of this group.', 422);
         }
 
@@ -130,7 +132,7 @@ class StudyGroupController extends Controller
             ->where('user_id', auth()->id())
             ->first();
 
-        if (!$member) {
+        if (! $member) {
             return $this->errorResponse($request, 'You are not a member of this group.', 422);
         }
 
@@ -155,7 +157,7 @@ class StudyGroupController extends Controller
     public function removeMember(Request $request, StudyGroup $studyGroup, StudyGroupMember $member)
     {
         $isAdmin = $studyGroup->members()->where('user_id', auth()->id())->where('role', 'admin')->exists();
-        if (!$isAdmin) {
+        if (! $isAdmin) {
             return $this->errorResponse($request, 'Only group admins can remove members.', 403);
         }
         if ($member->study_group_id !== $studyGroup->id) {
@@ -173,7 +175,7 @@ class StudyGroupController extends Controller
     public function updateMemberRole(Request $request, StudyGroup $studyGroup, StudyGroupMember $member)
     {
         $isAdmin = $studyGroup->members()->where('user_id', auth()->id())->where('role', 'admin')->exists();
-        if (!$isAdmin) {
+        if (! $isAdmin) {
             return $this->errorResponse($request, 'Only group admins can change roles.', 403);
         }
         if ($member->study_group_id !== $studyGroup->id) {
@@ -200,14 +202,14 @@ class StudyGroupController extends Controller
         ]);
 
         $isMember = $studyGroup->members()->where('user_id', auth()->id())->exists();
-        if (!$isMember) {
+        if (! $isMember) {
             return $this->errorResponse($request, 'You must be a member of this group to share questions.', 403);
         }
 
         $model = $this->getModel($request->type);
         $item = $model::where('id', $request->id)->where('user_id', auth()->id())->first();
 
-        if (!$item) {
+        if (! $item) {
             return $this->errorResponse($request, 'Question not found, or it does not belong to you.', 404);
         }
 
@@ -255,7 +257,7 @@ class StudyGroupController extends Controller
             ->where('role', 'admin')
             ->exists();
 
-        if ($resource->user_id !== auth()->id() && !$isAdmin) {
+        if ($resource->user_id !== auth()->id() && ! $isAdmin) {
             return $this->errorResponse($request, 'You can only remove resources you shared.', 403);
         }
 
@@ -266,33 +268,13 @@ class StudyGroupController extends Controller
         return $this->successResponse($request, 'Resource removed from group.');
     }
 
-    public function moveToShared(Request $request, StudyGroup $studyGroup, GroupResource $resource)
-    {
-        if ($resource->study_group_id !== $studyGroup->id) {
-            return $this->errorResponse($request, 'Resource not found in this group.', 404);
-        }
-        $isAdmin = $studyGroup->members()->where('user_id', auth()->id())->where('role', 'admin')->exists();
-        if (!$isAdmin && $resource->user_id !== auth()->id()) {
-            return $this->errorResponse($request, 'You can only share resources you own.', 403);
-        }
-
-        $modelClass = $resource->resourceable_type;
-        $item = $modelClass::find($resource->resourceable_id);
-        if (!$item) {
-            return $this->errorResponse($request, 'The original question no longer exists.', 404);
-        }
-        $item->update(['is_public' => true]);
-
-        return $this->successResponse($request, 'Resource made public to all students!');
-    }
-
     public function destroy(Request $request, StudyGroup $studyGroup)
     {
         $isAdmin = $studyGroup->members()
             ->where('user_id', auth()->id())
             ->where('role', 'admin')
             ->exists();
-        if (!$isAdmin) {
+        if (! $isAdmin) {
             return $this->errorResponse($request, 'Only group admins can delete the group.', 403);
         }
 
@@ -316,6 +298,7 @@ class StudyGroupController extends Controller
             return response()->json(array_merge(['success' => true, 'message' => $message], $extra));
         }
         $target = $extra['redirect'] ?? null;
+
         return ($target ? redirect($target) : redirect()->back())->with('success', $message);
     }
 
@@ -343,12 +326,13 @@ class StudyGroupController extends Controller
                 ->with('subject')
                 ->latest()
                 ->get()
-                ->map(fn($q) => [
+                ->map(fn ($q) => [
                     'id' => $q->id,
                     'label' => $q->question ?? $q->statement ?? $q->front ?? $q->sentence_with_blanks ?? 'Question #'.$q->id,
                     'subject' => $q->subject?->name ?? 'No subject',
                 ]);
         }
+
         return $questions;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Notification;
+use Illuminate\Database\Eloquent\Collection;
 
 class NotificationService
 {
@@ -36,7 +37,7 @@ class NotificationService
         return Notification::forUser($userId)->unread()->count();
     }
 
-    public function getRecent(int $userId, int $limit = 10): \Illuminate\Database\Eloquent\Collection
+    public function getRecent(int $userId, int $limit = 10): Collection
     {
         return Notification::forUser($userId)
             ->latest()
@@ -175,7 +176,7 @@ class NotificationService
         $this->create(
             $userId,
             'info',
-            ucfirst($type) . ' updated',
+            ucfirst($type).' updated',
             "Your {$type} question has been updated."
         );
     }
@@ -185,8 +186,18 @@ class NotificationService
         $this->create(
             $userId,
             'warning',
-            ucfirst($type) . ' deleted',
+            ucfirst($type).' deleted',
             "A {$type} question has been deleted."
+        );
+    }
+
+    public function notifyAllQuestionsDeleted(int $userId, string $type): void
+    {
+        $this->create(
+            $userId,
+            'warning',
+            'All '.ucfirst($type).' questions cleared',
+            "All your {$type} questions have been deleted."
         );
     }
 
@@ -323,11 +334,12 @@ class NotificationService
 
     public function notifyPomodoroCompleted(int $userId, int $minutes, int $xp = 10): void
     {
+        $xpText = $xp > 0 ? " +{$xp} XP" : '';
         $this->create(
             $userId,
             'success',
             'Pomodoro completed',
-            "Great focus! You completed a {$minutes}-minute session. +{$xp} XP",
+            "Great focus! You completed a {$minutes}-minute session.{$xpText}",
             route('pomodoro.index')
         );
     }
@@ -551,11 +563,14 @@ class NotificationService
     {
         $map = [
             'success' => ['icon' => 'bi-check-circle-fill', 'color' => '#059669', 'bg' => '#ecfdf5'],
-            'error'   => ['icon' => 'bi-exclamation-circle-fill', 'color' => '#dc2626', 'bg' => '#fef2f2'],
+            'error' => ['icon' => 'bi-exclamation-circle-fill', 'color' => '#dc2626', 'bg' => '#fef2f2'],
             'warning' => ['icon' => 'bi-exclamation-triangle-fill', 'color' => '#d97706', 'bg' => '#fffbeb'],
-            'info'    => ['icon' => 'bi-info-circle-fill', 'color' => '#6366f1', 'bg' => '#eef2ff'],
+            'info' => ['icon' => 'bi-info-circle-fill', 'color' => '#6366f1', 'bg' => '#eef2ff'],
         ];
-        if ($type && isset($map[$type])) return $map[$type];
+        if ($type && isset($map[$type])) {
+            return $map[$type];
+        }
+
         return $map['info'];
     }
 

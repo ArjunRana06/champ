@@ -111,4 +111,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(QuizAttempt::class);
     }
+
+    public function searchHistories()
+    {
+        return $this->hasMany(SearchHistory::class);
+    }
+
+    public function chatConversations()
+    {
+        return $this->hasMany(ChatConversation::class);
+    }
 }

@@ -42,12 +42,12 @@ class StudyPlanService
   "tips": ["Tip 1", "Tip 2", "Tip 3"],
   "daily_goal": "A suggested daily goal",
   "focus_areas": ["Key area 1 to prioritize", "Key area 2"]
-}'
+}',
             ],
             [
                 'role' => 'user',
-                'content' => "Create a study plan for me.\n\nSubjects: {$subjectsList}\n\nExam Dates:\n{$datesList}\n\nHours available per day: {$hoursPerDay}\n\nFocus area: {$focus}\n\nTheir study materials cover:\n{$documentContext}\n\nPlease create a balanced weekly schedule that covers all subjects, prioritizes subjects with upcoming exams, references specific topics from their materials, and includes breaks. Make each session concrete and actionable."
-            ]
+                'content' => "Create a study plan for me.\n\nSubjects: {$subjectsList}\n\nExam Dates:\n{$datesList}\n\nHours available per day: {$hoursPerDay}\n\nFocus area: {$focus}\n\nTheir study materials cover:\n{$documentContext}\n\nPlease create a balanced weekly schedule that covers all subjects, prioritizes subjects with upcoming exams, references specific topics from their materials, and includes breaks. Make each session concrete and actionable.",
+            ],
         ];
 
         $result = $this->ai->generateJson($messages, null, 0.3, 4096);
@@ -63,7 +63,7 @@ class StudyPlanService
             'subjects' => $subjects,
             'exam_dates' => $examDates,
             'hours_per_day' => $hoursPerDay,
-            'model_used' => config('services.openrouter.model'),
+            'model_used' => $this->ai->getLastProvider() === 'none' ? config('services.openrouter.model') : $this->ai->getLastProvider(),
         ]);
 
         return $plan;
@@ -72,13 +72,15 @@ class StudyPlanService
     private function getDocumentContext(array $subjects): string
     {
         $user = auth()->user();
-        if (!$user) return 'No materials available.';
+        if (! $user) {
+            return 'No materials available.';
+        }
 
         $documents = $user->documents()
             ->where('status', 'completed')
             ->whereIn('subject_id', function ($q) use ($subjects) {
                 $q->select('id')->from('subjects')
-                  ->whereIn('name', $subjects);
+                    ->whereIn('name', $subjects);
             })
             ->latest()
             ->take(5)
@@ -93,7 +95,7 @@ class StudyPlanService
             $summary = $doc->summary;
             $context .= "- {$doc->original_name}";
             if ($summary) {
-                $context .= ': ' . mb_substr(strip_tags($summary->summary), 0, 300);
+                $context .= ': '.mb_substr(strip_tags($summary->summary), 0, 300);
             }
             $context .= "\n";
         }

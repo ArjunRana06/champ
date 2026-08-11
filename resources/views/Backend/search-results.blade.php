@@ -22,6 +22,34 @@
 
     <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:1.5rem;">{{ $total }} result{{ $total !== 1 ? 's' : '' }} found</p>
 
+    @if(isset($recentSearches) && $recentSearches->count())
+    <div class="glass-card mb-4 py-3 px-4" data-aos="fade-up">
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <i class="bi bi-clock-history" style="color:var(--card-accent);"></i>
+            <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-secondary);">Recently searched</span>
+            <a href="#" onclick="event.preventDefault();clearSearchHistory()" style="margin-left:auto;font-size:0.75rem;color:#ef4444;text-decoration:none;"><i class="bi bi-trash3 me-1"></i>Clear all</a>
+        </div>
+        <div class="d-flex flex-wrap gap-2" id="recentSearchChips">
+            @foreach($recentSearches as $rs)
+            <a href="{{ route('search', ['q' => $rs->query]) }}" class="btn-soft" style="font-size:0.8rem;border-radius:40px;">
+                <i class="bi bi-search" style="font-size:0.7rem;"></i> {{ $rs->query }}
+            </a>
+            @endforeach
+        </div>
+    </div>
+    <script>
+        function clearSearchHistory() {
+            if (!confirm('Clear your entire search history?')) return;
+            fetch('{{ route('search.history.clear') }}', {method:'DELETE', headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}'}})
+            .then(r => r.json())
+            .then(() => {
+                document.getElementById('recentSearchChips')?.closest('.glass-card')?.remove();
+                showToast('Search history cleared.', 'success');
+            });
+        }
+    </script>
+    @endif
+
     @if($total === 0)
         <div class="glass-card text-center py-5">
             <i class="bi bi-search" style="font-size:3rem;color:#c7d2fe;"></i>

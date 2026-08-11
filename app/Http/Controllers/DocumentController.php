@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Document;
+use App\Jobs\ProcessDocumentJob;
 use App\Services\NotificationService;
+use App\Services\SummarizationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use App\Jobs\ProcessDocumentJob;
-use App\Services\SummarizationService;
+use Illuminate\Validation\Rule;
 
 class DocumentController extends Controller
 {
@@ -22,9 +22,11 @@ class DocumentController extends Controller
     {
         if ($request->ajax() || $request->query('ajax') == 1) {
             $documents = auth()->user()->documents()->with('subject')->latest()->get();
+
             return response()->json(['documents' => $documents]);
         }
         $subjects = auth()->user()->subjects;
+
         return view('Backend.Uploads.index', compact('subjects'));
     }
 
@@ -32,7 +34,7 @@ class DocumentController extends Controller
     {
         $request->validate([
             'document' => 'required|file|max:51200',
-            'subject_id' => 'nullable|exists:subjects,id'
+            'subject_id' => ['nullable', Rule::exists('subjects', 'id')->where('user_id', auth()->id())],
         ]);
         $file = $request->file('document');
 
@@ -44,14 +46,14 @@ class DocumentController extends Controller
             'application/vnd.openxmlformats-officedocument.presentationml.presentation',
             'application/vnd.ms-excel',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'text/plain', 'text/csv', 'text/rtf', 'text/html',
+            'text/plain', 'text/csv', 'text/rtf',
             'image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp',
             'application/octet-stream',
             'application/zip',
         ];
 
         $mime = $file->getMimeType();
-        if (!in_array($mime, $allowedMimes, true)) {
+        if (! in_array($mime, $allowedMimes, true)) {
             return response()->json([
                 'error' => 'This file type is not supported. Supported formats: PDF, Word (.doc/.docx), PowerPoint (.ppt/.pptx), Excel (.xls/.xlsx), CSV, TXT, RTF, and images (JPG, PNG, GIF, BMP, WEBP).',
                 'message' => 'This file type is not supported. Supported formats: PDF, Word (.doc/.docx), PowerPoint (.ppt/.pptx), Excel (.xls/.xlsx), CSV, TXT, RTF, and images (JPG, PNG, GIF, BMP, WEBP).',
@@ -65,7 +67,7 @@ class DocumentController extends Controller
             'file_path' => $path,
             'mime_type' => $file->getMimeType(),
             'subject_id' => $request->subject_id,
-            'status' => 'pending'
+            'status' => 'pending',
         ]);
 
         ProcessDocumentJob::dispatch($document);
@@ -80,11 +82,28 @@ class DocumentController extends Controller
         $document = auth()->user()->documents()->findOrFail($id);
         $path = Storage::disk('public')->path($document->file_path);
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             abort(404);
         }
 
-        return response()->file($path);
+        $activeTypes = [
+            'text/html',
+            'application/xhtml+xml',
+            'image/svg+xml',
+            'text/xml',
+            'application/xml',
+        ];
+        $isActive = in_array($document->mime_type, $activeTypes, true);
+        $mime = $isActive ? 'application/octet-stream' : $document->mime_type;
+
+        return response()->file($path, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => ($isActive ? 'attachment' : 'inline').'; filename="'.addslashes($document->original_name).'"',
+            'X-Content-Type-Options' => 'nosniff',
+            'Content-Security-Policy' => "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+            'X-Frame-Options' => 'SAMEORIGIN',
+            'Referrer-Policy' => 'no-referrer',
+        ]);
     }
 
     public function destroy($id)
@@ -119,18 +138,21 @@ class DocumentController extends Controller
             if (request()->ajax() || request()->expectsJson()) {
                 return response()->json(['success' => true, 'summary' => nl2br(e($summary->summary))]);
             }
+
             return back()->with('success', 'Summary generated successfully!');
         } catch (\Exception $e) {
             if (request()->ajax() || request()->expectsJson()) {
                 return response()->json(['error' => $e->getMessage()], 500);
             }
-            return back()->with('error', 'Summarization failed: ' . $e->getMessage());
+
+            return back()->with('error', 'Summarization failed: '.$e->getMessage());
         }
     }
 
     public function status($id)
     {
         $document = auth()->user()->documents()->findOrFail($id);
+
         return response()->json([
             'id' => $document->id,
             'status' => $document->status,

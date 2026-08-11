@@ -245,6 +245,7 @@ let running = false;
 let remaining = settings.focus * 60;
 let totalForPhase = settings.focus * 60;
 let ticker = null;
+let endsAtRef = null;
 let completedFocus = store.get('completed', 0);
 
 const els = {
@@ -359,6 +360,7 @@ function switchPhase(next) {
     remaining = totalForPhase;
     running = false;
     clearInterval(ticker); ticker = null;
+    endsAtRef = null;
     els.start.style.display = 'inline-flex';
     els.pause.style.display = 'none';
     els.skip.style.display = 'none';
@@ -366,6 +368,7 @@ function switchPhase(next) {
     renderRing();
     renderDots();
     renderTitle();
+    persist();
 }
 
 function finishPhase() {
@@ -382,6 +385,31 @@ function finishPhase() {
     }
 }
 
+function persist() {
+    const st = { running: running, phase: phase, total: totalForPhase, subject: els.subject.value };
+    if (running) {
+        endsAtRef = Date.now() + Math.max(0, remaining) * 1000;
+        st.endsAt = endsAtRef;
+    } else {
+        st.remaining = Math.max(0, remaining);
+    }
+    store.set('state', st);
+}
+
+function tickLoop() {
+    remaining--;
+    if (remaining <= 0) {
+        remaining = 0;
+        renderRing();
+        renderTitle();
+        finishPhase();
+        return;
+    }
+    els.timer.textContent = fmt(remaining);
+    els.ring.style.strokeDashoffset = RING_C * (1 - remaining / totalForPhase);
+    renderTitle();
+}
+
 function tick() {
     if (running) return;
     running = true;
@@ -389,43 +417,73 @@ function tick() {
     els.pause.style.display = 'inline-flex';
     els.skip.style.display = 'inline-flex';
     renderTitle();
-    ticker = setInterval(() => {
-        remaining--;
-        if (remaining <= 0) {
-            remaining = 0;
-            renderRing();
-            renderTitle();
-            finishPhase();
-            return;
-        }
-        els.timer.textContent = fmt(remaining);
-        els.ring.style.strokeDashoffset = RING_C * (1 - remaining / totalForPhase);
-        renderTitle();
-    }, 1000);
+    ticker = setInterval(tickLoop, 1000);
     els.timer.textContent = fmt(remaining);
     els.ring.style.strokeDashoffset = RING_C * (1 - remaining / totalForPhase);
+    persist();
 }
 
 function pause() {
     running = false;
     clearInterval(ticker); ticker = null;
+    endsAtRef = null;
     els.start.style.display = 'inline-flex';
     els.pause.style.display = 'none';
     els.skip.style.display = 'none';
     els.start.innerHTML = '<i class="bi bi-play-fill"></i> Resume';
     renderTitle();
+    persist();
+}
+
+function restoreState() {
+    els.subject.value = store.get('subject', '') || '';
+    els.auto.checked = store.get('auto', true);
+    const st = store.get('state', null);
+    if (!st || !st.phase || !PHASE_META[st.phase] || !(st.total > 0)) {
+        switchPhase('focus');
+        return;
+    }
+    phase = st.phase;
+    totalForPhase = st.total > 0 ? st.total : settings[st.phase] * 60;
+    if (st.subject) els.subject.value = st.subject;
+
+    if (st.running && typeof st.endsAt === 'number') {
+        remaining = Math.round((st.endsAt - Date.now()) / 1000);
+        if (remaining <= 0) {
+            remaining = 0;
+            finishPhase();
+            return;
+        }
+        running = true;
+        els.start.style.display = 'none';
+        els.pause.style.display = 'inline-flex';
+        els.skip.style.display = 'inline-flex';
+        renderRing(); renderDots(); renderTitle();
+        endsAtRef = st.endsAt;
+        ticker = setInterval(tickLoop, 1000);
+    } else {
+        remaining = (typeof st.remaining === 'number' && st.remaining > 0) ? st.remaining : totalForPhase;
+        running = false;
+        els.start.style.display = 'inline-flex';
+        els.pause.style.display = 'none';
+        els.skip.style.display = 'none';
+        els.start.innerHTML = '<i class="bi bi-play-fill"></i> ' + (phase === 'focus' ? 'Start' : 'Start Break');
+        renderRing(); renderDots(); renderTitle();
+    }
 }
 
 els.start.addEventListener('click', tick);
 els.pause.addEventListener('click', pause);
 els.skip.addEventListener('click', function () {
-    const wasFocus = phase === 'focus';
-    if (wasFocus) recordFocusSession();
-    finishPhase();
+    const next = phase === 'focus'
+        ? (completedFocus % settings.cycle === 0 ? 'long' : 'short')
+        : 'focus';
+    switchPhase(next);
 });
 els.reset.addEventListener('click', function () {
     clearInterval(ticker); ticker = null;
     running = false;
+    endsAtRef = null;
     phase = 'focus';
     totalForPhase = settings.focus * 60;
     remaining = totalForPhase;
@@ -434,6 +492,14 @@ els.reset.addEventListener('click', function () {
     els.skip.style.display = 'none';
     els.start.innerHTML = '<i class="bi bi-play-fill"></i> Start';
     renderRing(); renderDots(); renderTitle();
+    persist();
+});
+els.subject.addEventListener('change', function () {
+    store.set('subject', els.subject.value);
+    persist();
+});
+els.auto.addEventListener('change', function () {
+    store.set('auto', els.auto.checked);
 });
 
 document.querySelectorAll('.pomo-mode-pill').forEach(pill => {
@@ -477,6 +543,7 @@ function saveSettings() {
         totalForPhase = settings.focus * 60;
         remaining = totalForPhase;
         renderRing(); renderDots(); renderTitle();
+        persist();
     }
     window.closePomodoroSettingsModal();
     showToast('Timer settings saved', 'success');
@@ -505,13 +572,24 @@ function saveSettings() {
 })();
 
 document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) renderTitle();
+    if (!document.hidden) {
+        if (running && endsAtRef) {
+            remaining = Math.max(0, Math.round((endsAtRef - Date.now()) / 1000));
+            if (remaining <= 0) {
+                remaining = 0;
+                finishPhase();
+                return;
+            }
+            renderRing();
+        }
+        renderTitle();
+    }
 });
 
 if ('Notification' in window && settings.notif && Notification.permission === 'default') {
     Notification.requestPermission().catch(() => {});
 }
 
-switchPhase('focus');
+restoreState();
 </script>
 @endpush

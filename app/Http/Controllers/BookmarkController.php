@@ -28,15 +28,23 @@ class BookmarkController extends Controller
     public function toggle(Request $request)
     {
         $request->validate([
-            'bookmarkable_type' => 'required|string|in:App\Models\Mcq,App\Models\TrueFalseQuestion,App\Models\ShortAnswer,App\Models\FillBlank,App\Models\MatchingQuestion,App\Models\Flashcard,App\Models\Document,App\Models\Note,App\Models\StudyPlan',
+            'bookmarkable_type' => 'required|string|in:App\Models\Mcq,App\Models\TrueFalseQuestion,App\Models\ShortAnswer,App\Models\FillBlank,App\Models\MatchingQuestion,App\Models\Flashcard,App\Models\Document,App\Models\StudyPlan',
             'bookmarkable_id' => 'required|integer',
             'label' => 'nullable|string|max:100',
         ]);
 
         $userId = auth()->id();
+        $type = $request->bookmarkable_type;
+        $id = (int) $request->bookmarkable_id;
+
+        $resource = $type::where('user_id', $userId)->find($id);
+        if (! $resource) {
+            return response()->json(['error' => 'Invalid resource.'], 422);
+        }
+
         $existing = Bookmark::forUser($userId)
-            ->where('bookmarkable_type', $request->bookmarkable_type)
-            ->where('bookmarkable_id', $request->bookmarkable_id)
+            ->where('bookmarkable_type', $type)
+            ->where('bookmarkable_id', $id)
             ->first();
 
         if ($existing) {
@@ -49,8 +57,8 @@ class BookmarkController extends Controller
 
         Bookmark::create([
             'user_id' => $userId,
-            'bookmarkable_type' => $request->bookmarkable_type,
-            'bookmarkable_id' => $request->bookmarkable_id,
+            'bookmarkable_type' => $type,
+            'bookmarkable_id' => $id,
             'label' => $request->label,
         ]);
 

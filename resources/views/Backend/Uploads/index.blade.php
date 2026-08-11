@@ -108,6 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function fmtBytes(b) { if(!b)return'0 B'; const k=1024,s=['B','KB','MB'],i=Math.floor(Math.log(b)/Math.log(k)); return parseFloat((b/Math.pow(k,i)).toFixed(1))+' '+s[i]; }
     function fmtDate(s) { if(!s)return''; const d=new Date(s); return isNaN(d)?'':d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
     function esc(s) { if(!s)return''; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+    function jsEsc(s) { if(!s)return''; return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/\n/g,'\\n').replace(/\r/g,'\\r'); }
 
     function statusBadge(status, progress, message) {
         const labels = {completed:'Completed',failed:'Failed',processing:'Processing',pending:'Queued'};
@@ -211,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     actions+=`<button class="btn-soft py-1 px-2" style="font-size:0.72rem;color:#f59e0b;border-color:#f59e0b;" onclick="retryDoc(${d.id})" title="Retry processing"><i class="bi bi-arrow-clockwise"></i></button>`;
                 }
                 actions+=`<a href="/documents/${d.id}/preview" class="btn-soft py-1 px-2" style="font-size:0.72rem;" target="_blank" title="Preview"><i class="bi bi-eye"></i></a>`;
-                actions+=`<button class="btn-soft danger py-1 px-2" style="font-size:0.72rem;" onclick="deleteDoc(${d.id},'${esc(d.original_name)}')" title="Delete"><i class="bi bi-trash"></i></button>`;
+                actions+=`<button class="btn-soft danger py-1 px-2" style="font-size:0.72rem;" onclick="deleteDoc(${d.id},'${jsEsc(d.original_name)}')" title="Delete"><i class="bi bi-trash"></i></button>`;
 
                 return `
                 <div class="py-3" style="border-bottom:1px solid var(--divider-color);">

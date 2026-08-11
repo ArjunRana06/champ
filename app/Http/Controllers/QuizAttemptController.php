@@ -10,6 +10,7 @@ use App\Models\FillBlank;
 use App\Models\MatchingQuestion;
 use App\Models\Flashcard;
 use App\Services\NotificationService;
+use App\Services\QuestionDeduplicator;
 use Illuminate\Http\Request;
 
 class QuizAttemptController extends Controller
@@ -102,7 +103,27 @@ class QuizAttemptController extends Controller
         }
 
         shuffle($questions);
-        $questions = array_slice($questions, 0, $request->count);
+
+        $deduplicator = app(QuestionDeduplicator::class);
+        $seen = [];
+        $uniqueQuestions = [];
+        foreach ($questions as $q) {
+            $text = $q['question'] ?? $q['statement'] ?? '';
+            $key = $deduplicator->normalize($text);
+            if ($key === '') {
+                continue;
+            }
+            $isDup = isset($seen[$key]) || collect($seen)->contains(
+                fn ($other) => $deduplicator->isSimilar($text, $other)
+            );
+            if ($isDup) {
+                continue;
+            }
+            $seen[$key] = $text;
+            $uniqueQuestions[] = $q;
+        }
+
+        $questions = array_slice($uniqueQuestions, 0, $request->count);
 
         if (empty($questions)) {
             return back()->with('error', 'No questions available for the selected criteria. Generate some questions first.');

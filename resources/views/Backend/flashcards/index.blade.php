@@ -31,21 +31,47 @@
             </div>
             <span id="progress-text" style="font-size:0.8rem;color:var(--text-secondary);font-weight:500;min-width:60px;">0%</span>
         </div>
-        <button class="btn-soft py-1 px-2" style="font-size:0.75rem;" onclick="resetAll()">
-            <i class="bi bi-arrow-counterclockwise"></i> Reset
-        </button>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ request()->has('due') ? route('flashcards.index') : route('flashcards.index', ['due' => 1]) }}"
+               class="btn-soft py-1 px-2" style="font-size:0.75rem;{{ request()->has('due') ? 'color:var(--card-accent);border-color:var(--card-accent);' : 'color:#dc2626;border-color:#ef4444;' }}">
+                <i class="bi bi-bell"></i> Due ({{ $dueCount }})
+            </a>
+            <button class="btn-soft py-1 px-2" style="font-size:0.75rem;" onclick="resetAll()">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset
+            </button>
+            @if(($flashcards instanceof \Illuminate\Pagination\LengthAwarePaginator ? $flashcards->total() : $flashcards->count()) > 0)
+                <button class="btn-soft py-1 px-2" style="font-size:0.75rem;color:#dc2626;" onclick="confirmDeleteAll()">
+                    <i class="bi bi-trash"></i> Delete All
+                </button>
+            @endif
+        </div>
     </div>
 
     <div class="row g-4" id="flashcard-container">
         @forelse($flashcards as $flashcard)
+            @php
+                $rep = $reps->get($flashcard->id);
+                $isDue = $rep ? $rep->next_review_at <= now()->startOfDay() : true;
+            @endphp
             <div class="col-md-4" data-aos="fade-up" data-aos-delay="{{ $loop->index * 50 }}">
-                <div class="glass-card position-relative flashcard-card" id="fcard-{{ $flashcard->id }}" style="min-height:240px;perspective:1000px;">
+                <div class="glass-card position-relative flashcard-card" id="fcard-{{ $flashcard->id }}" style="min-height:240px;perspective:1000px;{{ $isDue ? 'border-color:#fca5a5;' : '' }}">
                     <div class="d-flex justify-content-between align-items-start mb-2" style="position:relative;z-index:2;">
                         <span style="font-size:0.7rem;padding:0.2rem 0.7rem;border-radius:20px;
                             background:{{ $flashcard->difficulty === 'easy' ? '#ecfdf5' : ($flashcard->difficulty === 'hard' ? '#fef2f2' : '#fffbeb') }};
                             color:{{ $flashcard->difficulty === 'easy' ? '#059669' : ($flashcard->difficulty === 'hard' ? '#dc2626' : '#d97706') }};
                             font-weight:600;">
                             {{ ucfirst($flashcard->difficulty) }}
+                        </span>
+                        <span class="next-review-label" style="font-size:0.7rem;padding:0.2rem 0.7rem;border-radius:20px;
+                            background:{{ $isDue ? '#fef2f2' : '#eef2ff' }};
+                            color:{{ $isDue ? '#dc2626' : '#6366f1' }};font-weight:600;">
+                            @if(! $rep)
+                                New card
+                            @elseif($isDue)
+                                Due now
+                            @else
+                                Next: {{ $rep->next_review_at->format('M j') }}
+                            @endif
                         </span>
                         <div class="d-flex gap-1">
                             <a href="{{ route('flashcards.edit', $flashcard) }}" class="btn-soft py-1 px-2" style="font-size:0.75rem;color:var(--card-accent);">
@@ -143,10 +169,7 @@
             e.stopPropagation();
             var card = this.closest('.flashcard-card');
             if (!card) return;
-            card.style.opacity = '0.4';
-            card.style.pointerEvents = 'none';
-            knownCount++;
-            updateProgress();
+            submitReview(this.dataset.id, 4, card, false);
         });
     });
 
@@ -155,18 +178,45 @@
             e.stopPropagation();
             var card = this.closest('.flashcard-card');
             if (!card) return;
-            var inner = card.querySelector('.flashcard-inner');
-            if (inner) {
-                inner.style.transform = 'rotateY(0deg)';
-                var id = inner.id.replace('fc-', '');
-                flippedCards.delete(id);
-            }
-            var actions = card.querySelector('.flashcard-actions');
-            if (actions) {
-                actions.style.display = 'none';
-            }
+            submitReview(this.dataset.id, 1, card, true);
         });
     });
+
+    function submitReview(id, quality, card, unflip) {
+        fetch('/flashcards/' + id + '/review', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+            body: JSON.stringify({quality: quality})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data || !data.success) return;
+            if (unflip) {
+                var inner = card.querySelector('.flashcard-inner');
+                if (inner) {
+                    inner.style.transform = 'rotateY(0deg)';
+                    var fid = inner.id.replace('fc-', '');
+                    flippedCards.delete(fid);
+                }
+                var actions = card.querySelector('.flashcard-actions');
+                if (actions) actions.style.display = 'none';
+            } else {
+                card.style.opacity = '0.4';
+                card.style.pointerEvents = 'none';
+                knownCount++;
+                updateProgress();
+            }
+            var label = card.querySelector('.next-review-label');
+            if (label && data.next_review_at) {
+                label.textContent = 'Next: ' + data.next_review_at;
+                label.style.background = '#eef2ff';
+                label.style.color = '#6366f1';
+            }
+        })
+        .catch(function() {
+            alert('Could not save your review. Please try again.');
+        });
+    }
 
     document.querySelectorAll('.flashcard-delete-btn').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
@@ -196,6 +246,12 @@
 
     function confirmDelete(id) {
         if (confirm('Delete this flashcard?')) document.getElementById('delete-form-' + id).submit();
+    }
+
+    function confirmDeleteAll() {
+        if (confirm('Delete ALL your flashcards? This cannot be undone.')) {
+            document.getElementById('delete-all-form').submit();
+        }
     }
 
     function toggleBookmark(type, id, btn) {
@@ -233,4 +289,5 @@
 @foreach($flashcards as $flashcard)
     <form id="delete-form-{{ $flashcard->id }}" action="{{ route('flashcards.destroy', $flashcard) }}" method="POST" style="display:none;">@csrf @method('DELETE')</form>
 @endforeach
+<form id="delete-all-form" action="{{ route('flashcards.delete-all') }}" method="POST" style="display:none;">@csrf @method('DELETE')</form>
 @endsection

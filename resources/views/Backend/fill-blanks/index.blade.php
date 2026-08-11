@@ -19,7 +19,8 @@
         </div>
     @endif
 
-    <div class="glass-card mb-4 d-flex align-items-center justify-content-between py-2 px-3" id="score-bar" style="display:none;border-left:4px solid #6366f1;">
+    @if(($questions instanceof \Illuminate\Pagination\LengthAwarePaginator ? $questions->total() : $questions->count()) > 0)
+    <div class="glass-card mb-4 d-flex align-items-center justify-content-between py-2 px-3" id="score-bar" style="display:flex;border-left:4px solid #6366f1;">
         <div>
             <span style="color:var(--text-primary);font-weight:600;font-size:0.9rem;">Score: </span>
             <span id="score-display" style="color:var(--card-accent);font-weight:700;font-size:1rem;">0</span>
@@ -31,10 +32,16 @@
             </div>
             <span id="progress-text" style="font-size:0.8rem;color:var(--text-secondary);font-weight:500;min-width:60px;">0%</span>
         </div>
-        <button class="btn-soft py-1 px-2" style="font-size:0.75rem;" onclick="resetAll()">
-            <i class="bi bi-arrow-counterclockwise"></i> Reset
-        </button>
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn-soft py-1 px-2" style="font-size:0.75rem;" onclick="resetAll()">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset
+            </button>
+            <button class="btn-soft py-1 px-2" style="font-size:0.75rem;color:#dc2626;" onclick="confirmDeleteAll()">
+                <i class="bi bi-trash"></i> Delete All
+            </button>
+        </div>
     </div>
+    @endif
 
     <div class="row g-4" id="question-container">
         @forelse($questions as $question)
@@ -170,7 +177,7 @@
         answered = 0;
         answeredTracker.clear();
         var bar = document.getElementById('score-bar');
-        if (bar) bar.style.display = 'none';
+        if (bar) bar.style.display = 'flex';
         var sd = document.getElementById('score-display');
         if (sd) sd.textContent = '0';
         var pb = document.getElementById('progress-bar');
@@ -181,6 +188,12 @@
 
     function confirmDelete(id) {
         if (confirm('Delete this question?')) document.getElementById('delete-form-' + id).submit();
+    }
+
+    function confirmDeleteAll() {
+        if (confirm('Delete ALL your fill-in-the-blank questions? This cannot be undone.')) {
+            document.getElementById('delete-all-form').submit();
+        }
     }
 
     function toggleBookmark(type, id, btn) {
@@ -215,4 +228,5 @@
 @foreach($questions as $question)
     <form id="delete-form-{{ $question->id }}" action="{{ route('fill-blanks.destroy', $question) }}" method="POST" style="display:none;">@csrf @method('DELETE')</form>
 @endforeach
+<form id="delete-all-form" action="{{ route('fill-blanks.delete-all') }}" method="POST" style="display:none;">@csrf @method('DELETE')</form>
 @endsection

@@ -27,12 +27,12 @@ class SummarizationService
 
         $fullText = '';
         foreach ($chunks as $chunk) {
-            $fullText .= $chunk->content . "\n\n";
+            $fullText .= $chunk->content."\n\n";
         }
 
         $maxChars = 24000;
         if (mb_strlen($fullText) > $maxChars) {
-            $fullText = mb_substr($fullText, 0, $maxChars) . "\n\n[... content truncated ...]";
+            $fullText = mb_substr($fullText, 0, $maxChars)."\n\n[... content truncated ...]";
         }
 
         $messages = [
@@ -44,12 +44,12 @@ class SummarizationService
 3. Important definitions or formulas (if any)
 4. Key takeaways
 
-Use clear formatting with markdown bullet points and short paragraphs. Be concise but thorough.'
+Use clear formatting with markdown bullet points and short paragraphs. Be concise but thorough.',
             ],
             [
                 'role' => 'user',
-                'content' => "Please summarize the following study material:\n\n" . $fullText
-            ]
+                'content' => "Please summarize the following study material:\n\n".$fullText,
+            ],
         ];
 
         $summary = $this->ai->chat($messages, null, 0.3, 4096);
@@ -61,7 +61,7 @@ Use clear formatting with markdown bullet points and short paragraphs. Be concis
             ],
             [
                 'summary' => $summary,
-                'model_used' => config('services.openrouter.model'),
+                'model_used' => $this->ai->getLastProvider() === 'none' ? config('services.openrouter.model') : $this->ai->getLastProvider(),
             ]
         );
     }

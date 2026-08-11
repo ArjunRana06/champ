@@ -132,7 +132,7 @@
                     <form method="GET" action="{{ route('time-entries.index') }}" class="d-flex gap-2 flex-wrap align-items-center">
                         <div class="d-flex gap-1" id="periodFilters">
                             @foreach(['all' => 'All', 'today' => 'Today', 'week' => 'Week', 'month' => 'Month'] as $val => $lbl)
-                                <button type="button" value="{{ $val }}" class="tt-filter-btn @if((request('period', 'all')) === $val) active @endif" onclick="window.location = '{{ route('time-entries.index') }}' + (this.value === 'all' ? '' : '?period=' + this.value) + '{{ request('subject') ? '&subject=' . request('subject') : '' }}';">{{ $lbl }}</button>
+                                <button type="button" value="{{ $val }}" class="tt-filter-btn @if((request('period', 'all')) === $val) active @endif" onclick="window.location = '{{ route('time-entries.index') }}' + (this.value === 'all' ? '' : '?period=' + this.value) + '{{ request('subject') ? '&subject=' . urlencode(request('subject')) : '' }}';">{{ $lbl }}</button>
                             @endforeach
                         </div>
                         <select name="subject" onchange="this.form.submit()" class="form-select" style="width:auto;font-size:0.78rem;padding:0.3rem 0.7rem;background:var(--input-bg);border:1.5px solid var(--input-border);border-radius:40px;color:var(--text-primary);">
@@ -272,7 +272,7 @@ cancelBtn.addEventListener('click', function () {
     if (!isRunning || !confirm('Discard the current running session without saving?')) return;
     isRunning = false;
     clearInterval(timerInterval);
-    fetch('{{ route("time-entries.stop") }}', {
+    fetch('{{ route("time-entries.discard") }}', {
         method: 'POST',
         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
     }).then(() => {

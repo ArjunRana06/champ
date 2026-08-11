@@ -2,13 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\FillBlank;
 use App\Models\GroupResource;
 use App\Models\Mcq;
-use App\Models\ShortAnswer;
 use App\Models\StudyGroup;
 use App\Models\StudyGroupMember;
-use App\Models\TrueFalseQuestion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -157,9 +154,11 @@ class CommunityTest extends TestCase
         $group = $this->makeGroup($owner);
 
         $this->actingAs($joiner)->post(route('study-groups.join', $group));
-        $this->actingAs($joiner)->post(route('study-groups.join', $group));
+        $this->actingAs($joiner)->post(route('study-groups.join', $group))->assertStatus(422);
 
-        $this->assertSame(2, StudyGroupMember::where('study_group_id', $group->id)->count());
+        $this->assertSame(1, StudyGroupMember::where('study_group_id', $group->id)
+            ->where('user_id', $joiner->id)
+            ->count());
     }
 
     public function test_user_can_leave_group(): void
@@ -425,12 +424,36 @@ class CommunityTest extends TestCase
 
     // ---------- Shared question bank ----------
 
-    public function test_public_questions_are_listed_for_everyone(): void
+    public function test_user_without_group_is_gated_from_shared_questions(): void
+    {
+        $viewer = $this->makeUser();
+        $mcq = $this->makeMcq($viewer);
+        $mcq->update(['is_public' => true]);
+
+        $this->actingAs($viewer)
+            ->get(route('shared-questions.index'))
+            ->assertOk()
+            ->assertSee('Study Group Required')
+            ->assertDontSee($mcq->question);
+    }
+
+    public function test_group_shared_questions_are_listed_for_group_members(): void
     {
         $author = $this->makeUser();
         $viewer = $this->makeUser();
+        $group = $this->makeGroup($author);
+        StudyGroupMember::create([
+            'study_group_id' => $group->id,
+            'user_id' => $viewer->id,
+            'role' => 'member',
+        ]);
         $mcq = $this->makeMcq($author);
-        $mcq->update(['is_public' => true]);
+        GroupResource::create([
+            'study_group_id' => $group->id,
+            'user_id' => $author->id,
+            'resourceable_type' => Mcq::class,
+            'resourceable_id' => $mcq->id,
+        ]);
 
         $this->actingAs($viewer)
             ->get(route('shared-questions.index'))
@@ -438,10 +461,16 @@ class CommunityTest extends TestCase
             ->assertSee($mcq->question);
     }
 
-    public function test_private_questions_are_not_listed(): void
+    public function test_private_questions_are_not_listed_for_group_members(): void
     {
         $author = $this->makeUser();
         $viewer = $this->makeUser();
+        $group = $this->makeGroup($author);
+        StudyGroupMember::create([
+            'study_group_id' => $group->id,
+            'user_id' => $viewer->id,
+            'role' => 'member',
+        ]);
         $mcq = $this->makeMcq($author);
 
         $this->actingAs($viewer)
@@ -450,36 +479,264 @@ class CommunityTest extends TestCase
             ->assertDontSee($mcq->question);
     }
 
-    public function test_owner_can_toggle_visibility(): void
+    public function test_group_shared_questions_are_not_listed_outside_that_group(): void
     {
         $author = $this->makeUser();
+        $viewer = $this->makeUser();
+        $this->makeGroup($viewer);
+        $group = $this->makeGroup($author);
         $mcq = $this->makeMcq($author);
+        GroupResource::create([
+            'study_group_id' => $group->id,
+            'user_id' => $author->id,
+            'resourceable_type' => Mcq::class,
+            'resourceable_id' => $mcq->id,
+        ]);
 
-        $this->actingAs($author)
-            ->post(route('shared-questions.toggle'), ['type' => 'mcqs', 'id' => $mcq->id],
-                ['X-Requested-With' => 'XMLHttpRequest'])
-            ->assertOk();
-
-        $this->assertDatabaseHas('mcqs', ['id' => $mcq->id, 'is_public' => true]);
-
-        $this->actingAs($author)
-            ->post(route('shared-questions.toggle'), ['type' => 'mcqs', 'id' => $mcq->id],
-                ['X-Requested-With' => 'XMLHttpRequest'])
-            ->assertOk();
-
-        $this->assertDatabaseHas('mcqs', ['id' => $mcq->id, 'is_public' => false]);
+        $this->actingAs($viewer)
+            ->get(route('shared-questions.index'))
+            ->assertOk()
+            ->assertDontSee($mcq->question);
     }
 
-    public function test_cannot_toggle_visibility_of_someone_elses_question(): void
+    public function test_member_can_unshare_own_shared_question(): void
     {
         $author = $this->makeUser();
-        $other = $this->makeUser();
+        $group = $this->makeGroup($author);
+        $mcq = $this->makeMcq($author);
+        $resource = GroupResource::create([
+            'study_group_id' => $group->id,
+            'user_id' => $author->id,
+            'resourceable_type' => Mcq::class,
+            'resourceable_id' => $mcq->id,
+        ]);
+
+        $this->actingAs($author)
+            ->delete(route('study-groups.unshare', [$group, $resource]))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('group_resources', ['id' => $resource->id]);
+    }
+
+    // ---------- Peer reviews ----------
+
+    public function test_user_without_group_is_gated_from_peer_reviews(): void
+    {
+        $user = $this->makeUser();
+
+        $this->actingAs($user)
+            ->get(route('peer-reviews.index'))
+            ->assertOk()
+            ->assertSee('Study Group Required');
+    }
+
+    public function test_user_without_group_cannot_review(): void
+    {
+        $author = $this->makeUser();
+        $reviewer = $this->makeUser();
         $mcq = $this->makeMcq($author);
 
-        $this->actingAs($other)
-            ->post(route('shared-questions.toggle'), ['type' => 'mcqs', 'id' => $mcq->id])
-            ->assertNotFound();
+        $this->actingAs($reviewer)
+            ->post(route('peer-reviews.store'), [
+                'reviewable_type' => Mcq::class,
+                'reviewable_id' => $mcq->id,
+                'rating' => 4,
+                'comment' => 'Great question',
+            ], ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertStatus(403);
 
-        $this->assertDatabaseHas('mcqs', ['id' => $mcq->id, 'is_public' => false]);
+        $this->assertDatabaseCount('peer_reviews', 0);
+    }
+
+    public function test_group_member_cannot_review_outside_group_question(): void
+    {
+        $owner = $this->makeUser();
+        $outsideAuthor = $this->makeUser();
+        $reviewer = $this->makeUser();
+        $group = $this->makeGroup($owner);
+        StudyGroupMember::create([
+            'study_group_id' => $group->id,
+            'user_id' => $reviewer->id,
+            'role' => 'member',
+        ]);
+        $outsideMcq = $this->makeMcq($outsideAuthor);
+        GroupResource::create([
+            'study_group_id' => $this->makeGroup($outsideAuthor)->id,
+            'user_id' => $outsideAuthor->id,
+            'resourceable_type' => Mcq::class,
+            'resourceable_id' => $outsideMcq->id,
+        ]);
+
+        $this->actingAs($reviewer)
+            ->post(route('peer-reviews.store'), [
+                'reviewable_type' => Mcq::class,
+                'reviewable_id' => $outsideMcq->id,
+                'rating' => 4,
+            ], ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertStatus(403);
+
+        $this->assertDatabaseCount('peer_reviews', 0);
+    }
+
+    public function test_group_member_can_review_same_group_question(): void
+    {
+        $owner = $this->makeUser();
+        $reviewer = $this->makeUser();
+        $group = $this->makeGroup($owner);
+        StudyGroupMember::create([
+            'study_group_id' => $group->id,
+            'user_id' => $reviewer->id,
+            'role' => 'member',
+        ]);
+        $mcq = $this->makeMcq($owner);
+        GroupResource::create([
+            'study_group_id' => $group->id,
+            'user_id' => $owner->id,
+            'resourceable_type' => Mcq::class,
+            'resourceable_id' => $mcq->id,
+        ]);
+
+        $this->actingAs($reviewer)
+            ->post(route('peer-reviews.store'), [
+                'reviewable_type' => Mcq::class,
+                'reviewable_id' => $mcq->id,
+                'rating' => 4,
+                'comment' => 'Nice!',
+            ], ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertOk();
+
+        $this->assertDatabaseHas('peer_reviews', [
+            'reviewer_id' => $reviewer->id,
+            'reviewable_type' => Mcq::class,
+            'reviewable_id' => $mcq->id,
+            'rating' => 4,
+        ]);
+    }
+
+    public function test_available_reviews_only_include_same_group_members(): void
+    {
+        $owner = $this->makeUser();
+        $member = $this->makeUser();
+        $reviewer = $this->makeUser();
+        $outsideAuthor = $this->makeUser();
+        $group = $this->makeGroup($owner);
+        StudyGroupMember::create([
+            'study_group_id' => $group->id,
+            'user_id' => $member->id,
+            'role' => 'member',
+        ]);
+        StudyGroupMember::create([
+            'study_group_id' => $group->id,
+            'user_id' => $reviewer->id,
+            'role' => 'member',
+        ]);
+
+        $memberMcq = $this->makeMcq($member);
+        GroupResource::create([
+            'study_group_id' => $group->id,
+            'user_id' => $member->id,
+            'resourceable_type' => Mcq::class,
+            'resourceable_id' => $memberMcq->id,
+        ]);
+        $outsideMcq = Mcq::create([
+            'user_id' => $outsideAuthor->id,
+            'subject_id' => null,
+            'document_id' => null,
+            'question' => 'Outside group question?',
+            'options' => ['A', 'B', 'C', 'D'],
+            'correct_answer' => 'A',
+            'explanation' => 'Because.',
+            'difficulty' => 'easy',
+            'is_public' => false,
+        ]);
+
+        $this->actingAs($reviewer)
+            ->get(route('peer-reviews.index'))
+            ->assertOk()
+            ->assertSee($memberMcq->question)
+            ->assertDontSee($outsideMcq->question);
+    }
+
+    public function test_private_question_from_group_member_is_not_available_for_review(): void
+    {
+        $owner = $this->makeUser();
+        $member = $this->makeUser();
+        $reviewer = $this->makeUser();
+        $group = $this->makeGroup($owner);
+        StudyGroupMember::create([
+            'study_group_id' => $group->id,
+            'user_id' => $member->id,
+            'role' => 'member',
+        ]);
+        StudyGroupMember::create([
+            'study_group_id' => $group->id,
+            'user_id' => $reviewer->id,
+            'role' => 'member',
+        ]);
+
+        $privateMcq = $this->makeMcq($member);
+
+        $this->actingAs($reviewer)
+            ->get(route('peer-reviews.index'))
+            ->assertOk()
+            ->assertDontSee($privateMcq->question);
+
+        $this->actingAs($reviewer)
+            ->post(route('peer-reviews.store'), [
+                'reviewable_type' => Mcq::class,
+                'reviewable_id' => $privateMcq->id,
+                'rating' => 4,
+            ], ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertStatus(403);
+
+        $this->assertDatabaseCount('peer_reviews', 0);
+    }
+
+    public function test_question_shared_into_group_is_available_for_review(): void
+    {
+        $owner = $this->makeUser();
+        $member = $this->makeUser();
+        $reviewer = $this->makeUser();
+        $group = $this->makeGroup($owner);
+        StudyGroupMember::create([
+            'study_group_id' => $group->id,
+            'user_id' => $member->id,
+            'role' => 'member',
+        ]);
+        StudyGroupMember::create([
+            'study_group_id' => $group->id,
+            'user_id' => $reviewer->id,
+            'role' => 'member',
+        ]);
+
+        $sharedMcq = $this->makeMcq($member);
+        GroupResource::create([
+            'study_group_id' => $group->id,
+            'user_id' => $member->id,
+            'resourceable_type' => Mcq::class,
+            'resourceable_id' => $sharedMcq->id,
+        ]);
+
+        $this->actingAs($reviewer)
+            ->get(route('peer-reviews.index'))
+            ->assertOk()
+            ->assertSee($sharedMcq->question);
+
+        $this->actingAs($reviewer)
+            ->post(route('peer-reviews.store'), [
+                'reviewable_type' => Mcq::class,
+                'reviewable_id' => $sharedMcq->id,
+                'rating' => 5,
+                'comment' => 'Great share!',
+            ], ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertOk();
+
+        $this->assertDatabaseHas('peer_reviews', [
+            'reviewer_id' => $reviewer->id,
+            'reviewable_type' => Mcq::class,
+            'reviewable_id' => $sharedMcq->id,
+            'rating' => 5,
+        ]);
     }
 }
